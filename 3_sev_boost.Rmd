@@ -1,0 +1,587 @@
+---
+title: "Simulation for Gaussian Mixture Boosting"
+author: "Jiahong Li"
+date: "2021/7/13"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+# determine component distributions
+
+## overall distribution (three peaks)
+
+```{r}
+rm(list=ls())
+source("0_process.R")
+dat<-dat[which(dat$ClaimNb>0),]
+dat$Sev<-dat$ClaimTotal/dat$ClaimNb
+boxplot(dat$Sev)
+sort(dat$Sev,decreasing = T)[1:20]
+#M<-6000
+#dat<-dat[which(dat$Sev<M),]
+summary(dat$Sev)
+boxplot(dat$Sev)
+# png("../plots/sev/mean_excess.png")
+plot((mean_excess(dat$Sev)$x),(mean_excess(dat$Sev)$mean_ex), xlab="average claims amount",ylab="mean of excess E(Y|Y>Y0)")
+# dev.off()
+
+## original scale does not provide a good vision
+fn<-ecdf(dat$Sev)
+fn_log<-ecdf(log(dat$Sev))
+plot(ecdf(dat$Sev)) 
+plot(density((dat$Sev),width = 0.2)) 
+
+## log-log plot
+# png("../plots/sev/log-log.png")
+plot(log(knots(fn)),log(1-fn(knots(fn))),xlab="logged average claim amount", ylab="logged survival function")
+# dev.off()
+
+plot(log(knots(fn_log)),log(1-fn_log(knots(fn_log))))
+
+## logarithm is better
+# png("../plots/sev/cdf.png")
+plot(ecdf(log(dat$Sev)),xlab="logged average claims amount", ylab="cumulative distribution function",main="") ## jumps indicates probability mass
+# dev.off()
+# png("../plots/sev/hist.png")
+plot(density(log(dat$Sev),width = 0.2),xlab="logged average claims amount", ylab="density",main="") ## three peaks/modes
+# dev.off()
+set.seed(1)
+rgam<-rgamma(10000,shape=gamma_mle(dat$Sev,rep(1,nrow(dat)))$shape,rate=gamma_mle(dat$Sev,rep(1,nrow(dat)))$rate)
+rln<-rnorm(10000,mean=mean(log(dat$Sev)),sd=sd(log(dat$Sev)))
+rlg<-rgamma(10000,shape=gamma_mle(log(dat$Sev[dat$Sev>1]),rep(1,sum(dat$Sev>1)))$shape,scale=gamma_mle(log(dat$Sev[dat$Sev>1]),rep(1,sum(dat$Sev>1)))$scale)
+
+par(pty="s")
+qqplot(rgam, dat$Sev,ylim=range(rgam,dat$Sev),xlim=range(rgam,dat$Sev),xlab="gamma distribution",ylab="severities")
+abline(0,1)
+
+## however a single log-normal or log-gamma is not suitable due to mixed distribution
+par(pty="s")
+qqplot(rln, log(dat$Sev),ylim=range(rln,log(dat$Sev)),xlim=range(rln,log(dat$Sev)),xlab="normal distribution",ylab="logged severities")
+abline(0,1)
+
+par(pty="s")
+qqplot(rlg, log(dat$Sev[dat$Sev>1]), ylim=range(rlg,log(dat$Sev)),xlim=range(rlg,log(dat$Sev)),xlab="normal distribution",ylab="logged severities")
+abline(0,1)
+```
+
+## Pareto threshhold and tail index
+
+```{r}
+hill_a<-hill_alpha(dat$Sev)
+ind<-5:1000
+limts<-c(min(hill_a$alpha[ind]-2*hill_a$alpha_se[ind]),max(hill_a$alpha[ind]+2*hill_a$alpha_se[ind]))
+thres<-600
+(alpha<-hill_a$alpha[thres])
+(M<-sort(dat$Sev,decreasing = T)[thres])
+# png("../plots/sev/hill.png")
+plot(rev(hill_a$alpha[ind]),ylim=limts,xaxt="n",xlab="number of largest observations",ylab="tail index",type="l")
+lines(rev(hill_a$alpha[ind])+2*rev(hill_a$alpha_se[ind]))
+lines(rev(hill_a$alpha[ind])-2*rev(hill_a$alpha_se[ind]))
+at_p<-round(seq(1,length(ind),by=length(ind)/7),0)
+axis(1,at=at_p,labels = rev(ind)[at_p])
+abline(v=1000-thres,lty=2)
+abline(h=alpha,lty=2)
+# dev.off()
+fn<-ecdf(dat$Sev[dat$Sev>M])
+# png("../plots/sev/pareto-tail.png")
+plot(log(knots(fn)),log(1-fn(knots(fn))),xlab="logged average claims amount",ylab="logged survival function")
+abline(a=alpha*min(log(knots(fn))),b=-alpha)
+legend("topright",c("tail index = 1.18"),lty=1)
+# dev.off()
+```
+
+## Pareto v.s. Lomax
+
+```{r descriptive analysis}
+sigma_e<-2
+
+try1<-rPARETO1o(10000,mu=M,sigma=sigma_e) # 1o (M, infty)
+try2<-M+rPARETO2o(10000,mu=M,sigma=sigma_e) # M+ 2o (M,infty); M + lomax
+try3<-rPARETO2o(10000,mu=M,sigma=sigma_e) # 2o (0,infty); lomax
+
+qqplot(try1,try2)
+abline(0,1)
+mean(log(try1)-log(M))
+mean(log(try2)-log(M))
+mean(log(try3+M)-log(M))
+
+# M<-5000
+(sigma_e<-mean(log(dat$Sev[dat$Sev>=M]))-log(M))
+1/sigma_e;alpha # tail index
+
+par(pty="s")
+qqplot(log(rPARETO1o(10000,mu=M,sigma=1/sigma_e)),log(dat$Sev[dat$Sev>M]))
+abline(0,1)
+
+## the following Lomax is not appropriate
+M
+(sigma_e<-mean(log(dat$Sev+M))-log(M))
+par(pty="s")
+qqplot(log(rPARETO2o(10000,mu=M,sigma=1/sigma_e)),log(dat$Sev))
+abline(0,1)
+```
+
+# data split
+
+```{r}
+s4<-M
+split_p<-c(500,1000,1200,s4)
+dat$bucket<-NA
+dat$bucket[dat$Sev<split_p[1]]<-1
+dat$bucket[dat$Sev>=split_p[1]&dat$Sev<split_p[2]]<-2
+dat$bucket[dat$Sev>=split_p[2]&dat$Sev<split_p[3]]<-3
+dat$bucket[dat$Sev>=split_p[3]&dat$Sev<split_p[4]]<-4
+dat$bucket[dat$Sev>=split_p[4]]<-5
+
+dat<-dat[order(dat$Sev),]
+dat$ind<-rep(1:5,5000)[1:nrow(dat)]
+
+dat_low<-dat[which(dat$Sev<5000),]
+# dat<-dat_low
+par(mfrow=c(2,1),pty="m")
+plot(density(dat_low$Sev[dat_low$ind>1],width = 100),main="")
+plot(density(dat_low$Sev[dat_low$ind<5],width = 100))
+
+dat_test<-dat[dat$ind==5,]
+dat_valid<-dat[dat$ind==4,]
+dat_train<-dat[dat$ind<4,]
+par(mfrow=c(1,1),pty="m")
+```
+
+# difficulties with mean modeling
+
+```{r}
+gamma_fit<-glm(Sev ~ Area + VehAgeGLM + DrivAgeGLM + BonusMalusGLM + VehBrand + Region, data=dat_train[dat_train$Sev<M,], family = Gamma(link="log"))
+summary(gamma_fit)
+
+plot(log(dat_test$Sev[dat_test$Sev<M]),log(predict(gamma_fit,newdata = dat_test[dat_test$Sev<M,],type="response")))
+
+gamma_fit<-glm(Sev ~ Area + VehAgeGLM + DrivAgeGLM + BonusMalusGLM + VehBrand + Region, data=dat_train[dat_train$bucket==1,], family = Gamma(link="log"))
+summary(gamma_fit)
+
+plot(log(dat_test$Sev[dat_test$bucket==1]),log(predict(gamma_fit,newdata = dat_test[dat_test$bucket==1,],type="response")))
+```
+
+# null model
+
+## initialization 
+
+```{r em}
+### z (bucket selected)
+(K<-length(unique(dat_train$bucket)))
+
+z_hat<-matrix(NA,nrow=nrow(dat_train),ncol=K)
+for ( k in 1:K){
+  z_hat[,k]<-ifelse(dat_train$bucket==k,1,0)
+}
+
+### p (M-step)
+(p_hat<-apply(z_hat,2,mean))
+
+### shape and scale (M-step)
+par_mat<-data.frame(mu=rep(NA,K-1),shape=rep(NA,K-1),
+                    scale=rep(NA,K-1),rate=rep(NA,K-1))
+for (k in 1:(K-1)){
+  coef_v<-gamma_mle(dat_train$Sev, z_hat[,k])
+  par_mat$mu[k]<-coef_v$mu
+  par_mat$shape[k]<-coef_v$shape
+  par_mat$scale[k]<-coef_v$scale
+  par_mat$rate[k]<-coef_v$rate
+}
+#write.csv(round(par_mat,4),"../plots/sev_int.csv")
+aggregate(dat_train$Sev,by=list(dat_train$bucket),mean)
+
+### pareto threshold and tail index
+theta<-M
+(alpha<-alpha_wmle(y=dat_train$Sev, z=z_hat[,K],theta=theta))
+```
+
+## iterations
+
+```{r}
+## hyperpremeters 
+J <-100  #iterations of EM algorithm
+loss_train<-rep(NA,J)
+loss_valid<-loss_train
+for(i in 1:J){
+  
+  # expectation of Z
+  f_mat<-matrix(NA,nrow=nrow(dat_train),ncol=K)
+for (k in 1:(K-1)){
+    shape0<-par_mat$shape[k]
+    scale0<-par_mat$scale[k]
+    f_mat[,k]<-dgamma(dat_train$Sev,shape = shape0, scale = scale0)
+}
+  f_mat[,K]<-dpareto(y=dat_train$Sev,theta=theta,alpha=alpha)
+
+  pf_mat<-t(t(f_mat)*p_hat)
+  pf_sum<-apply(pf_mat,1,sum)
+  z_hat = pf_mat/pf_sum
+  
+  # MLE of p (given Z)
+  p_hat<-apply(z_hat,2,mean)
+  
+  # MLE of shape and scale (given Z)
+  for (k in 1:(K-1)){
+    coef_v<-gamma_mle(dat_train$Sev, z_hat[,k])
+    par_mat$mu[k]<-coef_v$mu
+    par_mat$shape[k]<-coef_v$shape
+    par_mat$scale[k]<-coef_v$scale
+    par_mat$rate[k]<-coef_v$rate
+  }
+  
+  # MLE of alpha
+  alpha<-alpha_wmle(y=dat_train$Sev, z=z_hat[,K],theta=theta)
+
+  loss_train[i]<-mean(-log(f_mix_cp(dat_train$Sev,p_hat,par_mat,alpha,theta)))
+  loss_valid[i]<-mean(-log(f_mix_cp(dat_valid$Sev,p_hat,par_mat,alpha,theta)))
+  print(c(i,loss_train[i]))
+}
+
+# png("../plots/sev/null_trace.png")
+matplot(cbind(loss_train,loss_valid)[-c(1:20),],type="l",xlab="iterations of EM", ylab="neg L")
+legend("topright",c("training loss","validation loss"),lty=c(1,2),col=c("black","red"))
+# dev.off()
+p_hat
+par_mat
+alpha
+
+at_y<-seq(0.1,theta,1)
+# png("../plots/sev/null_fitted")
+plot(at_y,f_mix_cp(at_y,p_hat,par_mat,alpha,theta),type="l")
+
+(null_loss<-mean(-log(f_mix_cp(dat_test$Sev,p_hat,par_mat,alpha,theta))))
+
+(p_hat_null<-p_hat)
+z_hat_null<-z_hat
+(par_mat_null<-par_mat)
+alpha_null<-alpha
+#write.csv(round(par_mat_null,4),"../plots/sev_null.csv")
+```
+
+# glm model for p
+
+## initialization 
+
+```{r em}
+### z_hat (from null model)
+z_hat<-z_hat_null
+### p_hat (does not matter if z_hat start from a good values)
+p_hat<-p_hat_null
+### shape and scale (does not matter if z_hat start from a good values)
+par_mat<-par_mat_null
+
+### pareto threshold and tail index
+(theta<-M)
+(alpha<-alpha_null)
+```
+
+## iterations
+
+```{r}
+## hyperpremeters 
+J <-1 #iterations of EM algorithm
+loss_train<-rep(NA,J)
+loss_valid<-loss_train
+
+for(i in 1:J){
+
+  # MLE of p (given Z)
+  glm_p<- multinom(z_hat ~ Area + VehAgeGLM + DrivAgeGLM + BonusMalusGLM + VehBrand + Region, data=dat_train, trace = F)
+  p_hat_mat<-fitted(glm_p)
+  p_hat_mat_valid<-predict(glm_p,newdata = dat_valid,type="probs")
+  
+  # MLE of shape and scale (given Z)
+  for (k in 1:(K-1)){
+    coef_v<-gamma_mle(dat_train$Sev, z_hat[,k])
+    par_mat$mu[k]<-coef_v$mu
+    par_mat$shape[k]<-coef_v$shape
+    par_mat$scale[k]<-coef_v$scale
+    par_mat$rate[k]<-coef_v$rate
+  }
+  
+  # MLE of alpha
+  alpha<-alpha_wmle(y=dat_train$Sev, z=z_hat[,K],theta=theta)
+  
+  # expectation of Z
+  f_mat<-matrix(NA,nrow=nrow(dat_train),ncol=K)
+for (k in 1:(K-1)){
+    shape0<-par_mat$shape[k]
+    scale0<-par_mat$scale[k]
+    f_mat[,k]<-dgamma(dat_train$Sev,shape = shape0, scale = scale0)
+}
+  f_mat[,K]<-dpareto(y=dat_train$Sev,theta=theta,alpha=alpha)
+  pf_mat<-f_mat*p_hat_mat
+  pf_sum<-apply(pf_mat,1,sum)
+  z_hat = pf_mat/pf_sum
+
+  loss_train[i]<-mean(-log(f_mix_vp(dat_train$Sev,p_hat_mat,par_mat,alpha,theta)))
+  loss_valid[i]<-mean(-log(f_mix_vp(dat_valid$Sev,p_hat_mat_valid, par_mat,alpha,theta)))
+  print(c(i,loss_train[i]))
+}
+
+matplot(cbind(loss_train,loss_valid),type="l",col=c("red","gray"),lty=1)
+apply(p_hat_mat,2,mean);p_hat
+par_mat
+# write.csv(round(par_mat,4),"../plots/sev_glm.csv")
+alpha
+
+p_hat_mat_test<-predict(glm_p, newdata = dat_test, type="probs")
+
+(glm_loss<-mean(-log(f_mix_vp(dat_test$Sev,p_hat_mat_test,par_mat,alpha,theta))))
+null_loss
+# png("../plots/sev/glm_p.png")
+boxplot(p_hat_mat_test,xlab="component distribution",ylab="p")
+lines(p_hat,lty=2)
+# dev.off()
+par_mat_glm<-par_mat
+alpha_glm<-alpha
+z_hat_glm<-z_hat
+```
+
+# boosting for forth gamma
+
+## start from null P 
+
+```{r em}
+### z_hat (from null model)
+z_hat<-z_hat_null
+### p_hat (does not matter if z_hat start from a good values)
+p_hat<-p_hat_null
+### shape and scale (does not matter if z_hat start from a good values)
+par_mat<-par_mat_null
+
+### pareto threshold and tail index
+(theta<-M)
+(alpha<-alpha_null)
+```
+
+
+```{r}
+## hyperpremeters
+J <- 1 #iterations of EM algorithm
+loss_train <- rep(NA, J)
+loss_test <- loss_train
+Mstop<-20
+nu<-0.1
+
+for (i in 1:J) {
+  # MLE of p (given Z)
+  p_hat<-apply(z_hat,2,mean)
+
+  # MLE of shape and scale for the first 3 (given Z)
+  for (k in 1:3) {
+    coef_v <- gamma_mle(dat_train$Sev, z_hat[, k])
+    par_mat$mu[k] <- coef_v$mu
+    par_mat$shape[k] <- coef_v$shape
+    par_mat$scale[k] <- coef_v$scale
+    par_mat$rate[k] <- coef_v$rate
+  }
+  
+  boost_four <-
+    blackboost(
+      Sev ~ Area + VehAgeGLM + DrivAgeGLM + BonusMalusGLM + VehBrand + Region,
+      weights = z_hat[, 4],
+      data = dat_train,
+      family = GammaReg(),
+      control = boost_control(mstop = Mstop, nu = nu)
+    )
+  
+  dat_train$four <- fitted(boost_four, type = "response")
+  dat_test$four <-
+    predict(boost_four, newdata = dat_test, type = "response")
+  
+  logL_shape <- function(shape_mle) {
+    sum(z_hat[, 4]) * shape_mle * log(shape_mle) -
+      sum(z_hat[, 4] * log(dat_train$four)) * shape_mle -
+      sum(z_hat[, 4]) * lgamma(shape_mle) +
+      (shape_mle - 1) * sum(z_hat[, 4] * log(dat_train$Sev)) -
+      shape_mle * sum(z_hat[, 4] * dat_train$Sev / dat_train$four)
+  }
+  shape4 <- optimise(logL_shape,
+                     maximum = T,
+                     interval = c(0, 1000))$maximum
+  # MLE of alpha
+  alpha <- alpha_wmle(y = dat_train$Sev,
+                      z = z_hat[, K],
+                      theta = theta)
+  
+  # expectation of Z
+  f_mat <- matrix(NA, nrow = nrow(dat_train), ncol = K)
+  f_mat_test <- matrix(NA, nrow = nrow(dat_test), ncol = K)
+  for (k in c(1, 2, 3)) {
+    shape0 <- par_mat$shape[k]
+    scale0 <- par_mat$scale[k]
+    f_mat[, k] <- dgamma(dat_train$Sev, shape = shape0, scale = scale0)
+    f_mat_test[, k] <-
+      dgamma(dat_test$Sev, shape = shape0, scale = scale0)
+  }
+  
+  f_mat[, 4] <-
+    dgamma(dat_train$Sev,
+           shape = shape4,
+           scale = dat_train$four / shape4)
+  f_mat_test[, 4] <-
+    dgamma(dat_test$Sev,
+           shape = shape4,
+           scale = dat_test$four / shape4)
+  f_mat[, K] <- dpareto(y = dat_train$Sev,
+                        theta = theta,
+                        alpha = alpha)
+  f_mat_test[, K] <- dpareto(y = dat_test$Sev,
+                             theta = theta,
+                             alpha = alpha)
+  
+  pf_mat<-t(t(f_mat)*p_hat)
+  pf_sum <- apply(pf_mat, 1, sum)
+  z_hat = pf_mat / pf_sum
+  
+  p_hat_mat_test <- p_hat
+  pf_mat_test <- t(t(f_mat_test)*p_hat) 
+  pf_sum_test <- apply(pf_mat_test, 1, sum)
+  
+  loss_train[i] <- mean(-log(pf_sum))
+  loss_test[i] <- mean(-log(pf_sum_test))
+  print(c(i, loss_train[i]))
+}
+
+matplot(cbind(loss_train,loss_test),type="l",col=c("red","blue"),lty=1)
+apply(p_hat_mat,2,mean);p_hat
+par_mat
+alpha
+
+min(loss_test)
+glm_loss
+null_loss
+```
+
+## start from glm P 
+
+```{r em}
+### z_hat (from null model)
+z_hat<-z_hat_glm
+### p_hat (does not matter if z_hat start from a good values)
+p_hat<-p_hat_null
+### shape and scale (does not matter if z_hat start from a good values)
+par_mat<-par_mat_glm
+
+### pareto threshold and tail index
+(theta<-M)
+(alpha<-alpha_glm)
+```
+
+```{r}
+## hyperpremeters
+J <- 1 #iterations of EM algorithm
+loss_train <- rep(NA, J)
+loss_test <- loss_train
+Mstop<-100
+nu<-0.1
+
+for (i in 1:J) {
+  # MLE of p (given Z)
+  glm_p<- multinom(z_hat ~ Area + VehAgeGLM + DrivAgeGLM + BonusMalusGLM + VehBrand + Region, data=dat_train, trace = F)
+  p_hat_mat<-fitted(glm_p)
+  p_hat_mat_test<-predict(glm_p,newdata = dat_test,type="probs")
+  
+  # MLE of shape and scale for the first 3 (given Z)
+  for (k in 1:3) {
+    coef_v <- gamma_mle(dat_train$Sev, z_hat[, k])
+    par_mat$mu[k] <- coef_v$mu
+    par_mat$shape[k] <- coef_v$shape
+    par_mat$scale[k] <- coef_v$scale
+    par_mat$rate[k] <- coef_v$rate
+  }
+  
+  boost_four <-
+    blackboost(
+      Sev ~ Area + VehAgeGLM + DrivAgeGLM + BonusMalusGLM + VehBrand + Region,
+      weights = z_hat[, 4],
+      data = dat_train,
+      family = GammaReg(),
+      control = boost_control(mstop = Mstop, nu = nu)
+    )
+  # glm_four<-glm(Sev ~ Area + VehAgeGLM + DrivAgeGLM + BonusMalusGLM + VehBrand + Region,
+  #     weights = z_hat[, 4],
+  #     data = dat_train,
+  #     family = Gamma(link="log")
+  #     )
+  
+  dat_train$four <- fitted(boost_four, type = "response")
+  # dat_train$four <- fitted(glm_four, type = "response")
+
+  dat_test$four <-
+    as.vector(predict(boost_four, newdata = dat_test, type = "response"))
+  
+  # dat_test$four <-
+  #   predict(glm_four, newdata = dat_test, type = "response")
+  
+  logL_shape <- function(shape_mle) {
+    sum(z_hat[, 4]) * shape_mle * log(shape_mle) -
+      sum(z_hat[, 4] * log(dat_train$four)) * shape_mle -
+      sum(z_hat[, 4]) * lgamma(shape_mle) +
+      (shape_mle - 1) * sum(z_hat[, 4] * log(dat_train$Sev)) -
+      shape_mle * sum(z_hat[, 4] * dat_train$Sev / dat_train$four)
+  }
+  shape4 <- optimise(logL_shape,
+                     maximum = T,
+                     interval = c(0, 1000))$maximum
+  # MLE of alpha
+  alpha <- alpha_wmle(y = dat_train$Sev,
+                      z = z_hat[, K],
+                      theta = theta)
+  
+  # expectation of Z
+  f_mat <- matrix(NA, nrow = nrow(dat_train), ncol = K)
+  f_mat_test <- matrix(NA, nrow = nrow(dat_test), ncol = K)
+  for (k in c(1, 2, 3)) {
+    shape0 <- par_mat$shape[k]
+    scale0 <- par_mat$scale[k]
+    f_mat[, k] <- dgamma(dat_train$Sev, shape = shape0, scale = scale0)
+    f_mat_test[, k] <-
+      dgamma(dat_test$Sev, shape = shape0, scale = scale0)
+  }
+  
+  f_mat[, 4] <-
+    dgamma(dat_train$Sev,
+           shape = shape4,
+           scale = dat_train$four / shape4)
+  f_mat_test[, 4] <-
+    dgamma(dat_test$Sev,
+           shape = shape4,
+           scale = dat_test$four / shape4)
+  f_mat[, K] <- dpareto(y = dat_train$Sev,
+                        theta = theta,
+                        alpha = alpha)
+  f_mat_test[, K] <- dpareto(y = dat_test$Sev,
+                             theta = theta,
+                             alpha = alpha)
+  
+  pf_mat<-f_mat*p_hat_mat
+  pf_sum <- apply(pf_mat, 1, sum)
+  z_hat = pf_mat / pf_sum
+  
+  pf_mat_test <- f_mat_test*p_hat_mat_test
+  pf_sum_test <- apply(pf_mat_test, 1, sum)
+  z_hat_test<-pf_mat_test/pf_sum_test
+  
+  loss_train[i] <- mean(-log(pf_sum))
+  loss_test[i] <- mean(-log(pf_sum_test))
+  print(c(i, loss_train[i]))
+}
+
+matplot(cbind(loss_train,loss_test),type="l",col=c("red","blue"),lty=1)
+apply(p_hat_mat,2,mean);p_hat
+par_mat
+alpha
+
+min(loss_test)
+glm_loss
+null_loss
+
+plot(log(dat_test$Sev[z_hat_test[,4]>0.99]), log(dat_test$four[z_hat_test[,4]>0.99]))
+
+hist(dat_test$Sev[z_hat_test[,5]>0.8])
+```
+
