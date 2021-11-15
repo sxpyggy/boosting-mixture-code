@@ -27,38 +27,38 @@ boxplot(dat[,c("P1","P2","P3")])
 boxplot(dat_test[,c("P1","P2","P3")])
 boxplot(dat[,c("Y1","Y2","Y3")])
 boxplot(dat_test[,c("Y1","Y2","Y3")])
-plot(density(dat$Y,width = 9))
+plot(density(dat$Y,width = 1))
 ```
 
 # Homogenous model
 
 ```{r}
-X<-dat[,c("X1","X2","X3","X4")]
+X<-dat[, c("X1","X2","X3","X4")]
 Y<-dat$Y
-Xval<-dat_test[,c("X1","X2","X3","X4")]
-Yval<-dat_test$Y
+Xtest<-dat_test[, c("X1","X2","X3","X4")]
+Ytest<-dat_test$Y
 M0<-15
 model<-"null"
 structure<-"null"
 trace<-T
-model_homo<-EM_gaussian(X=X, Y=Y, Xval=Xval, Yval=Yval, M0=M0, model=model, structure=structure, trace=trace)
+model_homo<-EM_gaussian(X=X, Y=Y, Xtest=Xtest, Ytest=Ytest, M0=M0, model=model, structure=structure, trace=trace)
 
-ylim0<-c(2.5,3.6)
+ylim0<-c(2.01,2.81)
 #png("../plots/normal/loss-null.png")
-plot(model_homo$train_loss,type = 'l',col='red',ylim=ylim0,xlab = "iterations of EM",ylab="neg LL")
-lines(model_homo$valid_loss,type="l",col="blue")
-legend("topright",c("train loss","valid loss"),col=c("red","blue"),lty=c(1,1))
-abline(v=which.min(model_homo$train_loss),lty=2,col="red")
-abline(v=which.min(model_homo$valid_loss),lty=2,col="blue")
+plot(model_homo$learn_loss,type = 'l',col='red',ylim=ylim0,xlab = "iterations of EM",ylab="neg LL")
+lines(model_homo$test_loss,type="l",col="blue")
+legend("topright",c("learn loss","test loss"),col=c("red","blue"),lty=c(1,1))
+abline(v=which.min(model_homo$learn_loss),lty=2,col="red")
+abline(v=which.min(model_homo$test_loss),lty=2,col="blue")
 #dev.off()
-which.min(model_homo$valid_loss)
+which.min(model_homo$test_loss)
 
-(homo_learn_loss <- min(model_homo$train_loss))
-(homo_test_loss <- min(model_homo$valid_loss))
+(homo_learn_loss <- min(model_homo$learn_loss))
+(homo_test_loss <- min(model_homo$test_loss))
 (true_test_loss<-neg_ll3(dat_test$Y,dat_test[,c("MU1","MU2","MU3")],dat_test[,c("SG1","SG2","SG3")], dat_test[,c("P1","P2","P3")]))
 
-(eH<-c(mean((dat_test$MU1-model_homo$valid$mu1)^2),mean((dat_test$MU2-model_homo$valid$mu2)^2),mean((dat_test$MU3-model_homo$valid$mu3)^2),mean((dat_test$F1-model_homo$valid$plinear1)^2), mean((dat_test$F2-model_homo$valid$plinear2)^2), mean((dat_test$F3-model_homo$valid$plinear3)^2) ))
-head(model_homo$valid)
+(eH<-c(mean((dat_test$MU1-model_homo$test$mu1)^2),mean((dat_test$MU2-model_homo$test$mu2)^2),mean((dat_test$MU3-model_homo$test$mu3)^2),mean((dat_test$F1-model_homo$test$plinear1)^2), mean((dat_test$F2-model_homo$test$plinear2)^2), mean((dat_test$F3-model_homo$test$plinear3)^2) ))
+# head(model_homo$valid)
 ```
 
 # GLMs 
@@ -68,30 +68,29 @@ head(model_homo$valid)
 ```{r}
 X<-dat[,c("X1","X2","X3","X4")]
 Y<-dat$Y
-Xval<-dat_test[,c("X1","X2","X3","X4")]
-Yval<-dat_test$Y
-M0<-25
+Xtest<-dat_test[,c("X1","X2","X3","X4")]
+Ytest<-dat_test$Y
+M0<-50
 model<-"glm"
 structure<-"mu"
 trace<-T
-model_glm_mu<-EM_gaussian(X=X, Y=Y, Xval=Xval, Yval=Yval, M0=M0, model=model, structure=structure, trace=trace)
+model_glm_mu<-EM_gaussian(X=X, Y=Y, Xtest=Xtest, Ytest = Ytest, M0=M0, model=model, structure=structure, trace=trace)
 
-ylim0<-c(2.5,3.6)
 #png("../plots/normal/loss-null.png")
-plot(model_glm_mu$train_loss,type = 'l',col='red',ylim=ylim0,xlab = "iterations of EM",ylab="neg LL")
-lines(model_glm_mu$valid_loss,type="l",col="blue")
-legend("topright",c("train loss","valid loss"),col=c("red","blue"),lty=c(1,1))
-abline(v=which.min(model_glm_mu$train_loss),lty=2,col="red")
-abline(v=which.min(model_glm_mu$valid_loss),lty=2,col="blue")
+plot(model_glm_mu$learn_loss,type = 'l',col='red',ylim=ylim0,xlab = "iterations of EM",ylab="neg LL")
+lines(model_glm_mu$test_loss,type="l",col="blue")
+legend("topright",c("learn loss","test loss"),col=c("red","blue"),lty=c(1,1))
+abline(v=which.min(model_glm_mu$learn_loss),lty=2,col="red")
+abline(v=which.min(model_glm_mu$test_loss),lty=2,col="blue")
 #dev.off()
-which.min(model_glm_mu$valid_loss)
+which.min(model_glm_mu$test_loss)
 
-(glm_learn_loss_mu <- min(model_glm_mu$train_loss))
-(glm_test_loss_mu <- min(model_glm_mu$valid_loss))
+(glm_learn_loss_mu <- min(model_glm_mu$learn_loss))
+(glm_test_loss_mu <- min(model_glm_mu$test_loss))
 homo_test_loss
 true_test_loss
 
-(eGLM_mu<-c(mean((dat_test$MU1-model_glm_mu$valid$mu1)^2),mean((dat_test$MU2-model_glm_mu$valid$mu2)^2),mean((dat_test$MU3-model_glm_mu$valid$mu3)^2),mean((dat_test$F1-model_glm_mu$valid$plinear1)^2), mean((dat_test$F2-model_glm_mu$valid$plinear2)^2), mean((dat_test$F3-model_glm_mu$valid$plinear3)^2) ))
+(eGLM_mu<-c(mean((dat_test$MU1-model_glm_mu$test$mu1)^2),mean((dat_test$MU2-model_glm_mu$test$mu2)^2),mean((dat_test$MU3-model_glm_mu$test$mu3)^2),mean((dat_test$F1-model_glm_mu$test$plinear1)^2), mean((dat_test$F2-model_glm_mu$test$plinear2)^2), mean((dat_test$F3-model_glm_mu$test$plinear3)^2) ))
 eH
 ```
 
@@ -100,31 +99,30 @@ eH
 ```{r}
 X<-dat[,c("X1","X2","X3","X4")]
 Y<-dat$Y
-Xval<-dat_test[,c("X1","X2","X3","X4")]
-Yval<-dat_test$Y
-M0<-25
+Xtest<-dat_test[,c("X1","X2","X3","X4")]
+Ytest<-dat_test$Y
+M0<-50
 model<-"glm"
 structure<-"p"
 trace<-T
-model_glm_p<-EM_gaussian(X=X, Y=Y, Xval=Xval, Yval=Yval, M0=M0, model=model, structure=structure, trace=trace)
+model_glm_p<-EM_gaussian(X=X, Y=Y, Xtest=Xtest, Ytest=Ytest, M0=M0, model=model, structure=structure, trace=trace)
 
-ylim0<-c(2.5,3.6)
 #png("../plots/normal/loss-null.png")
-plot(model_glm_p$train_loss,type = 'l',col='red',ylim=ylim0,xlab = "iterations of EM",ylab="neg LL")
-lines(model_glm_p$valid_loss,type="l",col="blue")
-legend("topright",c("train loss","valid loss"),col=c("red","blue"),lty=c(1,1))
-abline(v=which.min(model_glm_p$train_loss),lty=2,col="red")
-abline(v=which.min(model_glm_p$valid_loss),lty=2,col="blue")
+plot(model_glm_p$learn_loss,type = 'l',col='red',ylim=ylim0,xlab = "iterations of EM",ylab="neg LL")
+lines(model_glm_p$test_loss,type="l",col="blue")
+legend("topright",c("learn loss","test loss"),col=c("red","blue"),lty=c(1,1))
+abline(v=which.min(model_glm_p$learn_loss),lty=2,col="red")
+abline(v=which.min(model_glm_p$test_loss),lty=2,col="blue")
 #dev.off()
 which.min(model_glm_p$valid_loss)
 
-(glm_learn_loss_p <- min(model_glm_p$train_loss))
-(glm_test_loss_p <- min(model_glm_p$valid_loss))
+(glm_learn_loss_p <- min(model_glm_p$learn_loss))
+(glm_test_loss_p <- min(model_glm_p$test_loss))
 glm_test_loss_mu
 homo_test_loss
 true_test_loss
 
-(eGLM_p<-c(mean((dat_test$MU1-model_glm_p$valid$mu1)^2),mean((dat_test$MU2-model_glm_p$valid$mu2)^2),mean((dat_test$MU3-model_glm_p$valid$mu3)^2),mean((dat_test$F1-model_glm_p$valid$plinear1)^2), mean((dat_test$F2-model_glm_p$valid$plinear2)^2), mean((dat_test$F3-model_glm_p$valid$plinear3)^2) ))
+(eGLM_p<-c(mean((dat_test$MU1-model_glm_p$test$mu1)^2),mean((dat_test$MU2-model_glm_p$test$mu2)^2),mean((dat_test$MU3-model_glm_p$test$mu3)^2),mean((dat_test$F1-model_glm_p$test$plinear1)^2), mean((dat_test$F2-model_glm_p$test$plinear2)^2), mean((dat_test$F3-model_glm_p$test$plinear3)^2) ))
 eGLM_mu
 eH
 ```
@@ -134,32 +132,31 @@ eH
 ```{r}
 X<-dat[,c("X1","X2","X3","X4")]
 Y<-dat$Y
-Xval<-dat_test[,c("X1","X2","X3","X4")]
-Yval<-dat_test$Y
-M0<-25
+Xtest<-dat_test[,c("X1","X2","X3","X4")]
+Ytest<-dat_test$Y
+M0<-50
 model<-"glm"
 structure<-"both"
 trace<-T
-model_glm_both<-EM_gaussian(X=X, Y=Y, Xval=Xval, Yval=Yval, M0=M0, model=model, structure=structure, trace=trace)
+model_glm_both<-EM_gaussian(X=X, Y=Y, Xtest=Xtest, Ytest=Ytest, M0=M0, model=model, structure=structure, trace=trace)
 
-ylim0<-c(2.5,3.6)
 #png("../plots/normal/loss-null.png")
-plot(model_glm_both$train_loss,type = 'l',col='red',ylim=ylim0,xlab = "iterations of EM",ylab="neg LL")
-lines(model_glm_both$valid_loss,type="l",col="blue")
-legend("topright",c("train loss","valid loss"),col=c("red","blue"),lty=c(1,1))
-abline(v=which.min(model_glm_both$train_loss),lty=2,col="red")
-abline(v=which.min(model_glm_both$valid_loss),lty=2,col="blue")
+plot(model_glm_both$learn_loss,type = 'l',col='red',ylim=ylim0,xlab = "iterations of EM",ylab="neg LL")
+lines(model_glm_both$test_loss,type="l",col="blue")
+legend("topright",c("learn loss","test loss"),col=c("red","blue"),lty=c(1,1))
+abline(v=which.min(model_glm_both$learn_loss),lty=2,col="red")
+abline(v=which.min(model_glm_both$test_loss),lty=2,col="blue")
 #dev.off()
-which.min(model_glm_both$valid_loss)
+which.min(model_glm_both$test_loss)
 
-(glm_learn_loss_both <- min(model_glm_both$train_loss))
-(glm_test_loss_both <- min(model_glm_both$valid_loss))
+(glm_learn_loss_both <- min(model_glm_both$learn_loss))
+(glm_test_loss_both <- min(model_glm_both$test_loss))
 glm_test_loss_mu
 glm_test_loss_p
 homo_test_loss
 true_test_loss
 
-(eGLM_both<-c(mean((dat_test$MU1-model_glm_both$valid$mu1)^2),mean((dat_test$MU2-model_glm_both$valid$mu2)^2),mean((dat_test$MU3-model_glm_both$valid$mu3)^2),mean((dat_test$F1-model_glm_both$valid$plinear1)^2), mean((dat_test$F2-model_glm_both$valid$plinear2)^2), mean((dat_test$F3-model_glm_both$valid$plinear3)^2) ))
+(eGLM_both<-c(mean((dat_test$MU1-model_glm_both$test$mu1)^2),mean((dat_test$MU2-model_glm_both$test$mu2)^2),mean((dat_test$MU3-model_glm_both$test$mu3)^2),mean((dat_test$F1-model_glm_both$test$plinear1)^2), mean((dat_test$F2-model_glm_both$test$plinear2)^2), mean((dat_test$F3-model_glm_both$test$plinear3)^2) ))
 eGLM_mu
 eGLM_p
 eH
@@ -172,110 +169,24 @@ eH
 ```{r}
 X<-dat[,c("X1","X2","X3","X4")]
 Y<-dat$Y
-Xval<-dat_test[,c("X1","X2","X3","X4")]
-Yval<-dat_test$Y
-M0<-25
+Xtest<-dat_test[,c("X1","X2","X3","X4")]
+Ytest<-dat_test$Y
+M0<-20
 structure<-"mu"
 trace<-T
-model_bst_mu<-EB_gaussian(X=X, Y=Y, Xval=Xval, Yval=Yval, M0=M0,  structure=structure, trace=trace)
+model_bst_mu<-EB_gaussian(X=X, Y=Y, Xtest=Xtest, Ytest=Ytest, M0=M0,  structure=structure, trace=trace)
+matplot(cbind(model_bst_mu$train_loss,model_bst_mu$valid_loss),type="l",ylim = ylim0)
+abline(v=which.min(model_bst_mu$valid_loss),lty=2)
+min(model_bst_mu$valid_loss)
+```
 
+## with varying p
+
+```{r}
 model_bst_p<-EB_gaussian(X=X, Y=Y, Xval=Xval, Yval=Yval, M0=M0,  structure="p", trace=trace)
-
-par_mat<-dat_Norm(K=3,n=nrow(dat))
-par_mat_T<-dat_Norm(K=3, n=nrow(dat_test))
-names(par_mat)
-
-## hyperpremeters 
-M1 <- 25 #iterations of EM algorithm
-Mstop <- 100 #boosting iterations for mu
-nu <- 0.1 # learning rate
-maxdepth <- 4
-
-##initialization 
-par_mat$p1 <- 0.3
-par_mat$p2 <- 0.3
-par_mat$p3 <- 0.4
-par_mat$mu1 <- -10
-par_mat$mu2 <- 0
-par_mat$mu3 <- 15
-par_mat$sigma1 <- 0.5
-par_mat$sigma2 <- 0.5
-par_mat$sigma3 <- 0.5
-
-learn_loss <- rep(0, M0)
-test_loss <- rep(0, M0)
-
-for(m in 1:M1){
-  #expectation of latent variable
-  par_mat$f1 = dnorm(dat$Y, par_mat$mu1, par_mat$sigma1)
-  par_mat$f2 = dnorm(dat$Y, par_mat$mu2, par_mat$sigma2)
-  par_mat$f3 = dnorm(dat$Y, par_mat$mu3, par_mat$sigma3)
-  
-  sum_fz<-par_mat$p1*par_mat$f1+par_mat$p2*par_mat$f2+par_mat$p3*par_mat$f3
-  
-  par_mat$z1 = par_mat$p1*par_mat$f1/sum_fz
-  par_mat$z2 = par_mat$p2*par_mat$f2/sum_fz
-  par_mat$z3 = par_mat$p3*par_mat$f3/sum_fz
-  
-  mu1_bst <-
-    blackboost(
-      Y ~ X1 + X2 + X3 + X4,
-      weights = par_mat$z1/par_mat$sigma1^2,
-      family = Gaussian(),
-      control = boost_control(mstop = Mstop, nu = nu),
-      tree_controls = ctree_control(maxdepth = maxdepth),
-      data = dat
-    )
-  mu2_bst <-
-    blackboost(
-      Y ~ X1 + X2 + X3 + X4,
-      weights = par_mat$z2/par_mat$sigma2^2,
-      family = Gaussian(),
-      control = boost_control(mstop = Mstop, nu = nu),
-      tree_controls = ctree_control(maxdepth = maxdepth),
-      data = dat
-    )
-  mu3_bst <-
-    blackboost(
-      Y ~ X1 + X2 + X3 + X4,
-      weights = par_mat$z3/par_mat$sigma3^2,
-      family = Gaussian(),
-      control = boost_control(mstop = Mstop, nu = nu),
-      tree_controls = ctree_control(maxdepth = maxdepth),
-      data = dat
-    )
-  par_mat$mu1 <- fitted(mu1_bst)
-  par_mat$mu2 <- fitted(mu2_bst)
-  par_mat$mu3 <- fitted(mu3_bst)
-  
-  par_mat$p1 <- mean(par_mat$z1)
-  par_mat$p2 <- mean(par_mat$z2)
-  par_mat$p3 <- mean(par_mat$z3)
-
-  par_mat$sigma1<- sqrt(sum(par_mat$z1*(dat$Y-par_mat$mu1)^2)/sum(par_mat$z1))
-  par_mat$sigma2<- sqrt(sum(par_mat$z2*(dat$Y-par_mat$mu2)^2)/sum(par_mat$z2))
-  par_mat$sigma3<- sqrt(sum(par_mat$z3*(dat$Y-par_mat$mu3)^2)/sum(par_mat$z3))
-  
-  par_mat_T$mu1<-predict(mu1_bst,newdata=dat_test)
-  par_mat_T$mu2<-predict(mu2_bst,newdata=dat_test)
-  par_mat_T$mu3<-predict(mu3_bst,newdata=dat_test)
-  
-  par_mat_T$p1<-unique(par_mat$p1)
-  par_mat_T$p2<-unique(par_mat$p2)
-  par_mat_T$p3<-unique(par_mat$p3)
-  
-  par_mat_T$sigma1<-unique(par_mat$sigma1)
-  par_mat_T$sigma2<-unique(par_mat$sigma2)
-  par_mat_T$sigma3<-unique(par_mat$sigma3)
-  
-  learn_loss[m] <- neg_ll3(dat$Y,par_mat[,c("mu1","mu2","mu3")], par_mat[,c("sigma1","sigma2","sigma3")], par_mat[,c("p1","p2","p3")])
-  test_loss[m] <- neg_ll3(dat_test$Y,par_mat_T[,c("mu1","mu2","mu3")], par_mat_T[,c("sigma1","sigma2","sigma3")], par_mat_T[,c("p1","p2","p3")])
-  print(c(paste("iteration:",m),paste("learn_loss:",round(learn_loss[m],4)),paste("test_loss:",round(test_loss[m],4))))
-}
-
-par_mat_T[,c("pl1","pl2","pl3")]<-PtoF(par_mat_T[,c("p1","p2","p3")])
-
-ylim0<-c(3,3.6)
+matplot(cbind(model_bst_p$train_loss,model_bst_p$valid_loss),type="l")
+abline(v=which.min(model_bst_p$valid_loss),lty=2)
+min(model_bst_p$valid_loss)
 #png("../plots/normal/loss-null.png")
 plot(learn_loss,type = 'l',col='red',ylim=ylim0,xlab = "iterations of EM",ylab="neg LL")
 lines(test_loss,type="l",col="blue")
@@ -296,191 +207,13 @@ eGLM_vmu
 eH
 ```
 
-### old
-
-```{r warning=FALSE}
-library(mboost)
-## hyperpremeters 
-#J0 <- 2 # depth of the tree
-M1 <- 25 #iterations of EM algorithm
-Mstop_1 <- 100 #boosting iterations for mu1
-Mstop_2 <- 100 #boosting iterations for mu2
-nu <- 0.1 # learning rate
-phat_boost<-NULL
-loss_boost_train<-NULL
-loss_boost_vali<-NULL
-loss_boost_test<-NULL
-propose<-NULL
-##initialization from two linear models
-
-p_hat <- 0.5
-train$mu_1_boost <- 1.1*mean(train$y)
-train$mu_2_boost <- 0.9*mean(train$y)
-sigma_1_hat <- 1
-sigma_2_hat <- 1
-valid$mu_1_boost <- 1.1*mean(train$y)
-valid$mu_2_boost <- 0.9*mean(train$y)
-test$mu_1_boost <- 1.1*mean(train$y)
-test$mu_2_boost <- 0.9*mean(train$y)
-
-for(i in 1:M1){
-  
-  # expectation of z
-  train$f_1 = dnorm(train$y, train$mu_1_boost, sigma_1_hat)
-  train$f_2 = dnorm(train$y, train$mu_2_boost, sigma_2_hat)
-  
-  train$z_hat = (p_hat*train$f_1)/(p_hat*train$f_1 +(1-p_hat)*train$f_2)
-  
-  # maximization of p
-  p_hat <- mean(train$z_hat)
-  
-  # weights for boosting
-  train$weight_1 = train$z_hat/(sigma_1_hat^2)
-  train$weight_2 = (1-train$z_hat)/(sigma_2_hat^2)
-  
-  # boosting for mu1
-  mboost_1 <-
-    blackboost(
-      y ~ x_1 + x_2 + x_3,
-      weights = weight_1,
-      family = Gaussian(),
-      control = boost_control(mstop = Mstop_1, nu = nu),
-      data = train
-    )
-  
-  train$mu_1_boost <- fitted(mboost_1)
-  valid$mu_1_boost <- predict(mboost_1, newdata = valid)
-  test$mu_1_boost <- predict(mboost_1, newdata = test)
-  
-  # boosting for mu2
-  mboost_2 <-
-    blackboost(
-      y ~ x_1 + x_2 + x_3,
-      weights = weight_2,
-      family = Gaussian(),
-      control = boost_control(mstop = Mstop_2, nu = nu),
-      data = train
-    )
-  train$mu_2_boost <- fitted(mboost_2)
-  valid$mu_2_boost <- predict(mboost_2, newdata = valid)
-  test$mu_2_boost <- predict(mboost_2, newdata = test)
-  
-  # calculation of sigma
-  sigma_1_hat <- sqrt(sum(train$z_hat*(train$y-train$mu_1_boost)^2)/sum(train$z_hat))
-  sigma_2_hat <- sqrt(sum((1-train$z_hat)*(train$y-train$mu_2_boost)^2)/sum((1-train$z_hat)))
-  
-  # loss
-  loss_boost_train[i]<-neg_ll(train$y,train$mu_1_boost,train$mu_2_boost,sigma_1_hat,sigma_2_hat,p_hat)
-  loss_boost_vali[i]<-neg_ll(valid$y,valid$mu_1_boost,valid$mu_2_boost,sigma_1_hat,sigma_2_hat,p_hat)
-  loss_boost_test[i]<-neg_ll(test$y,test$mu_1_boost,test$mu_2_boost,sigma_1_hat,sigma_2_hat,p_hat)
-  phat_boost[i]<-p_hat
-}
-
-plot(propose,type="l")
-
-#png("../plots/normal/loss-bst1.png")
-plot(loss_boost_train,type="l",col="red",ylim =ylim0,xlab="iterations of EM", ylab="neg LL")
-lines(loss_boost_vali,col="gray")
-lines(loss_boost_test,col="blue")
-abline(v=which.min(loss_boost_train),lty=2,col="red")
-abline(v=which.min(loss_boost_vali),lty=2,col="gray")
-abline(v=which.min(loss_boost_test),lty=2,col="blue")
-
-legend("topright",c("train loss","validation loss","test loss"),lty=c(1,1,1),col=c("red","gray","blue"))
-#dev.off()
-
-plot(phat_boost)
-(p_mboost <- p_hat)
-(sigma_1_mboost <- sigma_1_hat)
-(sigma_2_mboost <- sigma_2_hat)
-plot(test$mu_1,test$mu_1_boost)
-plot(test$mu_2,test$mu_2_boost)
-
-(boost_loss_cp<-min(loss_boost_test))
-glm_test_loss_vp
-glm_test_loss_cp
-homo_test_loss
-
-(eBST_cp<-c(mean((test$mu_1-test$mu_1_boost)^2),mean((test$mu_2-test$mu_2_boost)^2),mean((p_linear(test$p)-p_linear(p_hat))^2)))
-eGLM_cp
-eGLM_vp
-eH
-```
-
-## with varying p
+## with varying both
 
 ```{r}
-par_mat<-dat_Norm(K=3,n=nrow(dat))
-par_mat_T<-dat_Norm(K=3, n=nrow(dat_test))
-names(par_mat)
-
-## hyperpremeters 
-M0 <- 25 #iterations of EM algorithm
-
-##initialization 
-par_mat$p1 <- 0.3
-par_mat$p2 <- 0.3
-par_mat$p3 <- 0.4
-par_mat$mu1 <- -10
-par_mat$mu2 <- 0
-par_mat$mu3 <- 15
-par_mat$sigma1 <- 0.5
-par_mat$sigma2 <- 0.5
-par_mat$sigma3 <- 0.5
-
-learn_loss <- rep(0, M0)
-test_loss <- rep(0, M0)
-
-for(m in 1:M0){
-  #expectation of latent variable
-  par_mat$f1 = dnorm(dat$Y, par_mat$mu1, par_mat$sigma1)
-  par_mat$f2 = dnorm(dat$Y, par_mat$mu2, par_mat$sigma2)
-  par_mat$f3 = dnorm(dat$Y, par_mat$mu3, par_mat$sigma3)
-  
-  sum_fz<-par_mat$p1*par_mat$f1+par_mat$p2*par_mat$f2+par_mat$p3*par_mat$f3
-  
-  par_mat$z1 = par_mat$p1*par_mat$f1/sum_fz
-  par_mat$z2 = par_mat$p2*par_mat$f2/sum_fz
-  par_mat$z3 = par_mat$p3*par_mat$f3/sum_fz
-  
-  par_mat$mu1 <- sum(par_mat$z1*dat$Y)/sum(par_mat$z1)
-  par_mat$mu2 <- sum(par_mat$z2*dat$Y)/sum(par_mat$z2)
-  par_mat$mu3 <- sum(par_mat$z3*dat$Y)/sum(par_mat$z3)
-  
-  p_bst <-
-  BST(
-    X = dat[1:6000,c("X1","X2","X3","X4")],
-    Y = par_mat[1:6000,c("z1","z2","z3")],
-    Xval = dat[6001:8000,c("X1","X2","X3","X4")],
-    Yval = par_mat[6001:8000,c("z1","z2","z3")],
-    M = 20,
-    cp = 0.001,
-    maxdepth = 4,
-    lr = 0.1
-  )
-  
-  par_mat[,c("p1","p2","p3")] <- predict_BST(X=dat[, c("X1","X2","X3","X4")], Y = par_mat[,c("z1","z2","z3")], BST_model=p_bst$Tree_save, M_best=20, lr=p_bst$lr)$prediction
-
-  par_mat$sigma1<- sqrt(sum(par_mat$z1*(dat$Y-par_mat$mu1)^2)/sum(par_mat$z1))
-  par_mat$sigma2<- sqrt(sum(par_mat$z2*(dat$Y-par_mat$mu2)^2)/sum(par_mat$z2))
-  par_mat$sigma3<- sqrt(sum(par_mat$z3*(dat$Y-par_mat$mu3)^2)/sum(par_mat$z3))
-  
-  par_mat_T$mu1<-unique(par_mat$mu1)
-  par_mat_T$mu2<-unique(par_mat$mu2)
-  par_mat_T$mu3<-unique(par_mat$mu3)
-  
-  par_mat_T[,c("p1","p2","p3")]<-predict_BST(X=dat_test[, c("X1","X2","X3","X4")], Y = par_mat_T[,c("z1","z2","z3")], BST_model=p_bst$Tree_save, M_best=20, lr=p_bst$lr)$prediction
-  
-  par_mat_T$sigma1<-unique(par_mat$sigma1)
-  par_mat_T$sigma2<-unique(par_mat$sigma2)
-  par_mat_T$sigma3<-unique(par_mat$sigma3)
-  
-  learn_loss[m] <- neg_ll3(dat$Y,par_mat[,c("mu1","mu2","mu3")], par_mat[,c("sigma1","sigma2","sigma3")], par_mat[,c("p1","p2","p3")])
-  test_loss[m] <- neg_ll3(dat_test$Y,par_mat_T[,c("mu1","mu2","mu3")], par_mat_T[,c("sigma1","sigma2","sigma3")], par_mat_T[,c("p1","p2","p3")])
-  print(c(paste("iteration:",m),paste("learn_loss:",round(learn_loss[m],4)),paste("test_loss:",round(test_loss[m],4))))
-}
-
-par_mat_T[,c("pl1","pl2","pl3")]<-PtoF(par_mat_T[,c("p1","p2","p3")])
+model_bst_both<-EB_gaussian(X=X, Y=Y, Xval=Xval, Yval=Yval, M0=M0,  structure="both", trace=trace)
+matplot(cbind(model_bst_both$train_loss,model_bst_both$valid_loss),type="l")
+abline(v=which.min(model_bst_both$valid_loss),lty=2)
+min(model_bst_both$valid_loss)
 
 #png("../plots/normal/loss-null.png")
 plot(learn_loss,type = 'l',col='red',ylim=ylim0,xlab = "iterations of EM",ylab="neg LL")
@@ -491,128 +224,18 @@ abline(v=which.min(test_loss),lty=2,col="blue")
 #dev.off()
 which.min(test_loss)
 
-(bst_learn_loss_vp <- min(learn_loss))
-(bst_test_loss_vp <- min(test_loss))
-bst_test_loss_vmu
+(bst_learn_loss_vmu <- min(learn_loss))
+(bst_test_loss_vmu <- min(test_loss))
 glm_test_loss_vmu
 homo_test_loss
 true_test_loss
 
-(eBST_vp<-c(mean((dat_test$MU1-par_mat_T$mu1)^2),mean((dat_test$MU2-par_mat_T$mu2)^2),mean((dat_test$MU3-par_mat_T$mu3)^2),mean((dat_test$F1-par_mat_T$pl1)^2), mean((dat_test$F2-par_mat_T$pl2)^2), mean((dat_test$F3-par_mat_T$pl3)^2) ))
-eBST_vmu
+(eBST_vmu<-c(mean((dat_test$MU1-par_mat_T$mu1)^2),mean((dat_test$MU2-par_mat_T$mu2)^2),mean((dat_test$MU3-par_mat_T$mu3)^2),mean((dat_test$F1-par_mat_T$pl1)^2), mean((dat_test$F2-par_mat_T$pl2)^2), mean((dat_test$F3-par_mat_T$pl3)^2) ))
 eGLM_vmu
-eGLM_vp
 eH
 ```
 
-
-### old
-```{r warning=FALSE}
-library(mboost)
-## hyperpremeters 
-#J0 <- 2 # depth of the tree
-M1 <- 25 #iterations of EM algorithm
-Mstop_1 <- 100 #boosting iterations for mu1
-Mstop_2 <- 100 #boosting iterations for mu2
-Mstop_p <- 200 #boosting iterations for p
-nu <- 0.1 # learning rate
-loss_boost_train<-NULL
-loss_boost_vali<-NULL
-loss_boost_test<-NULL
-##initialization from two linear models
-
-train$p_mboost <- 0.5
-train$mu_1_boost <- 1.1*mean(train$y)
-train$mu_2_boost <- 0.9*mean(train$y)
-sigma_1_hat <- 1
-sigma_2_hat <- 1
-valid$mu_1_boost <- 1.1*mean(train$y)
-valid$mu_2_boost <- 0.9*mean(train$y)
-test$mu_1_boost <- 1.1*mean(train$y)
-test$mu_2_boost <- 0.9*mean(train$y)
-
-for(i in 1:M1){
-  
-  # expectation of z
-  train$f_1 = dnorm(train$y, train$mu_1_boost, sigma_1_hat)
-  train$f_2 = dnorm(train$y, train$mu_2_boost, sigma_2_hat)
-  
-  train$z_hat = (train$p_mboost*train$f_1)/(train$p_mboost*train$f_1 +(1-train$p_mboost)*train$f_2)
-  
-  # maximization of p
-  mboost_p <- blackboost(z_hat ~ x_1 + x_2 + x_3, data = train, family = binomial_p(), control = boost_control(mstop = Mstop_p, nu = nu))
-  train$p_mboost <- predict(mboost_p, newdata = train, type = 'response')
-  test$p_mboost <- predict(mboost_p, newdata = test, type = 'response')
-  valid$p_mboost <- predict(mboost_p, newdata = valid, type = 'response')
-  
-  # weights for boosting
-  train$weight_1 = train$z_hat/(sigma_1_hat^2)
-  train$weight_2 = (1-train$z_hat)/(sigma_2_hat^2)
-  
-  # boosting for mu1
-  mboost_1 <-
-    blackboost(
-      y ~ x_1 + x_2 + x_3,
-      weights = weight_1,
-      family = Gaussian(),
-      control = boost_control(mstop = Mstop_1, nu = nu),
-      data = train
-    )
-  
-  train$mu_1_boost <- fitted(mboost_1)
-  valid$mu_1_boost <- predict(mboost_1, newdata = valid)
-  test$mu_1_boost <- predict(mboost_1, newdata = test)
-  
-  # boosting for mu2
-  mboost_2 <-
-    blackboost(
-      y ~ x_1 + x_2 + x_3,
-      weights = weight_2,
-      family = Gaussian(),
-      control = boost_control(mstop = Mstop_2, nu = nu),
-      data = train
-    )
-  train$mu_2_boost <- fitted(mboost_2)
-  valid$mu_2_boost <- predict(mboost_2, newdata = valid)
-  test$mu_2_boost <- predict(mboost_2, newdata = test)  
-  
-  # calculation of sigma
-  sigma_1_hat <- sqrt(sum(train$z_hat*(train$y-train$mu_1_boost)^2)/sum(train$z_hat))
-  sigma_2_hat <- sqrt(sum((1-train$z_hat)*(train$y-train$mu_2_boost)^2)/sum((1-train$z_hat)))
-  
-  loss_boost_train[i]<-neg_ll(train$y,train$mu_1_boost,train$mu_2_boost,sigma_1_hat,sigma_2_hat,train$p_mboost)
-  loss_boost_vali[i]<-neg_ll(valid$y,valid$mu_1_boost,valid$mu_2_boost,sigma_1_hat,sigma_2_hat,valid$p_mboost)
-  loss_boost_test[i]<-neg_ll(test$y,test$mu_1_boost,test$mu_2_boost,sigma_1_hat,sigma_2_hat,test$p_mboost)
-}
-
-#png("../plots/normal/loss-bst2.png")
-plot(loss_boost_train,type="l",col="red",ylim =ylim0,xlab="iterations of EM", ylab="neg LL")
-lines(loss_boost_vali,col="gray")
-lines(loss_boost_test,col="blue")
-abline(v=which.min(loss_boost_train),lty=2,col="red")
-abline(v=which.min(loss_boost_vali),lty=2,col="gray")
-abline(v=which.min(loss_boost_test),lty=2,col="blue")
-legend("topright",c("train loss","validation loss","test loss"),lty=c(1,1,1),col=c("red","gray","blue"))
-#dev.off()
-
-(sigma_1_mboost <- sigma_1_hat)
-(sigma_2_mboost <- sigma_2_hat)
-plot(test$mu_1,test$mu_1_boost)
-plot(test$mu_2,test$mu_2_boost)
-plot(test$p,test$p_mboost)
-
-(boost_loss_vp<-min(loss_boost_test))
-boost_loss_cp
-glm_test_loss_vp
-glm_test_loss_cp
-homo_test_loss
-
-(eBST_vp<-c(mean((test$mu_1-test$mu_1_boost)^2),mean((test$mu_2-test$mu_2_boost)^2),mean((p_linear(test$p)-p_linear(test$p_mboost))^2)))
-eBST_cp
-eGLM_vp
-eGLM_cp
-eH
-
+```{r}
 loss_mat<-data.frame(model=c("homo","glm_cp","glm_vp","boosting_cp","boosting_vp"),negL=c(homo_test_loss,glm_test_loss_cp,glm_test_loss_vp,boost_loss_cp,boost_loss_vp),mu1_error=NA,mu2_error=NA,plinear_error=NA)
 
 loss_mat[,3:5]<-rbind(eH,eGLM_cp,eGLM_vp,eBST_cp,eBST_vp)

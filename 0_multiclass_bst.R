@@ -82,65 +82,13 @@ sim_data<-function(n,size,seed){
   dat
 }
 
-sim_gaussian <- function(n, seed) {
-  set.seed(seed)
-  X1 = rnorm(n, 2, 1)
-  X2 = rexp(n, 2)
-  X3 = rbinom(n, 1, 0.5)
-  X4 = rgamma(n, 0.5, 0.5)
-  F1 = X1 + log(X2)
-  F2 = 1 - X1 + 2 * X3 - X1 * X2
-  F3 = log(X2) + X3 * X1 + 2 * sin(X1)
-  P <- FtoP(FF = cbind(F1, F2, F3))
-  MU1 <- 7 + 2 * X1 + exp(0.3 * X2)
-  MU2 <- 1 - 0.1 * X1 ^ 2 + 5 * X3 - X1 * X2
-  MU3 <- -5 - 2 * X1 + 4 * sin(X2) + 0.2 * log(X4)
-  dat <-
-    data.frame(
-      X1,
-      X2,
-      X3,
-      X4,
-      F1,
-      F2,
-      F3,
-      P1 = P[, 1],
-      P2 = P[, 2],
-      P3 = P[, 3],
-      MU1,
-      MU2,
-      MU3,
-      SG1 = 3,
-      SG2 = 1,
-      SG3 = 3,
-      Z1 = NA,
-      Z2 = NA,
-      Z3 = NA,
-      Y1 = NA,
-      Y2 = NA,
-      Y3 = NA,
-      Y = NA
-    )
-  for (i in 1:nrow(dat)) {
-    dat[i, c("Z1", "Z2", "Z3")] <-
-      t(rmultinom(1, size = 1, dat[i, c("P1", "P2", "P3")]))
-    dat[i, c("Y1", "Y2", "Y3")] <-
-      t(rnorm(3, mean = as.numeric(dat[i, c("MU1", "MU2", "MU3")]), sd =
-                as.numeric(dat[i, c("SG1", "SG2", "SG3")])))
-    dat$Y[i] <-
-      sum(dat[i, c("Z1", "Z2", "Z3")] * dat[i, c("Y1", "Y2", "Y3")])
-  }
-  dat[,c("F1","F2","F3")]<-PtoF(dat[,c("P1","P2","P3")])
-  dat
-}
-
-BST <- function(X, Y, Xval, Yval, M, cp, maxdepth, lr, trace) {
+BST <- function(X, Y, Pinit, Xval, Yval, Pvalinit, M, cp, maxdepth, lr, trace) {
   K <- ncol(Y)
   n <- nrow(Y)
   n_val <- nrow(Yval)
   val_bst <- NULL
   if (is.null(Yval)!=TRUE){
-  val_bst <- dat_BST(K, n_val)
+   val_bst <- dat_BST(K, n_val)
   }
   dat_bst <- dat_BST(K, n)
   Ind_y <- which(grepl("y", names(dat_bst)) == T)
@@ -148,11 +96,11 @@ BST <- function(X, Y, Xval, Yval, M, cp, maxdepth, lr, trace) {
   Ind_p <- which(grepl("p", names(dat_bst)) == T)
 
   # initialization
-  dat_bst[, Ind_p] <- 1 / K
+  dat_bst[, Ind_p]<- ifelse(is.null(Pinit),1/K ,Pinit)
   dat_bst[, Ind_f] <- PtoF(dat_bst[, Ind_p])
   dat_bst[, Ind_y] <- Y - dat_bst[, Ind_p]
   if (is.null(Yval)!=TRUE){
-  val_bst[, Ind_p] <- 1 / K
+  val_bst[, Ind_p] <- ifelse(is.null(Pvalinit),1/K ,Pinit)
   val_bst[, Ind_f] <- PtoF(val_bst[, Ind_p])
   }
   Train_loss <- NULL
@@ -231,7 +179,7 @@ BST <- function(X, Y, Xval, Yval, M, cp, maxdepth, lr, trace) {
        Tree_save=Tree_save, lr=lr)
 }
 
-predict_BST <- function(X, BST_model, M_best, lr) {
+predict_BST <- function(X, BST_model, Pinit, M_best, lr) {
   # number of iterations
   M <- length(BST_model)
   # number of levels
@@ -242,7 +190,7 @@ predict_BST <- function(X, BST_model, M_best, lr) {
   Ind_y <- which(grepl("y", names(test_bst)) == T)
   Ind_f <- which(grepl("f", names(test_bst)) == T)
   Ind_p <- which(grepl("p", names(test_bst)) == T)
-  test_bst[,Ind_p]<-1/K
+  test_bst[,Ind_p]<-ifelse(is.null(Pinit), 1/K ,Pinit)
   test_bst[,Ind_f]<-PtoF(test_bst[,Ind_p])
   Test_loss<-NULL
 

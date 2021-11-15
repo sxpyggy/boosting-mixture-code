@@ -40,8 +40,12 @@ dat_test[,c("P1_GLM","P2_GLM","P3_GLM")]<-predict(fit_glm,newdata=dat_test,type=
 ```{r}
 X <- dat[1:8000, c("X1", "X2", "X3", "X4")]
 Y <- dat[1:8000, c("Y1", "Y2", "Y3")]
+Pinit <- NULL
 Xval <- dat[8001:10000, c("X1", "X2", "X3", "X4")]
 Yval <- dat[8001:10000, c("Y1", "Y2", "Y3")]
+Pvalinit <- NULL
+
+
 # X <- dat[, c("X1", "X2", "X3", "X4")]
 # Y <- dat[, c("Y1", "Y2", "Y3")]
 # Xval <- NULL
@@ -55,8 +59,10 @@ bst_fit <-
   BST(
     X = X,
     Y = Y,
+    Pinit = Pinit,
     Xval = Xval,
     Yval = Yval,
+    Pvalinit = Pvalinit,
     M = M,
     cp = cp,
     maxdepth = maxdepth,
