@@ -13,7 +13,7 @@ editor_options:
 
 ```{r}
 rm(list=ls())
-source("0_process.R")
+source("0_sev_process.R")
 dat<-dat[which(dat$ClaimNb>0),]
 dat$Sev<-dat$ClaimTotal/dat$ClaimNb
 boxplot(dat$Sev)
