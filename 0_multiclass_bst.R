@@ -82,7 +82,8 @@ sim_data<-function(n,size,seed){
   dat
 }
 
-BST <- function(X, Y, Pinit, Xval, Yval, Pvalinit, M, cp, maxdepth, lr, trace) {
+BST <- function(X, Y, Pinit, Xval, Yval, Pvalinit,
+                M, cp, maxdepth, lr, trace, patience) {
   K <- ncol(Y)
   n <- nrow(Y)
   n_val <- nrow(Yval)
@@ -100,11 +101,15 @@ BST <- function(X, Y, Pinit, Xval, Yval, Pvalinit, M, cp, maxdepth, lr, trace) {
   dat_bst[, Ind_f] <- PtoF(dat_bst[, Ind_p])
   dat_bst[, Ind_y] <- Y - dat_bst[, Ind_p]
   if (is.null(Yval)!=TRUE){
-  val_bst[, Ind_p] <- ifelse(is.null(Pvalinit),1/K ,Pinit)
+  val_bst[, Ind_p] <- ifelse(is.null(Pvalinit),1/K ,Pvalinit)
   val_bst[, Ind_f] <- PtoF(val_bst[, Ind_p])
   }
   Train_loss <- NULL
   Valid_loss <- NULL
+  Valid_imp<- NULL
+  Valid_imp[1] <- 0
+  Valid_impT<-NULL
+  Valid_impT[1]<-T
   Tree_save <- list()
 
   # boosting
@@ -161,16 +166,28 @@ BST <- function(X, Y, Pinit, Xval, Yval, Pvalinit, M, cp, maxdepth, lr, trace) {
     if(is.null(Yval)!=TRUE){
     Valid_loss[m] <- negLL(Yval, val_bst[, Ind_p])
     }
+    if(is.null(Yval)!=TRUE&m>1){
+      Valid_imp[m] <- Valid_loss[m-1]-Valid_loss[m]
+      Valid_impT[m]<- Valid_imp[m]>10^-4
+    }
     Tree_save[[m]]<- tree_save
+
     if(is.null(Yval)!=TRUE&trace==T){
-    print(paste("iteration:",round(m,0),";","train loss:",
-                round(Train_loss[m],4),";","validation loss:",
-                round(Valid_loss[m],4)))
+    print(paste("iteration:",round(m,0),"; ","train loss:",
+                round(Train_loss[m],4),"; ","validation loss:",
+                round(Valid_loss[m],4),"; ","validation improve:",
+                round(Valid_imp[m],4),"; ", Valid_impT[m],sep=""
+                ))
     }
     if(is.null(Yval)==TRUE&trace==T){
-      print(paste("iteration:",round(m,0),";","train loss:",
-                  round(Train_loss[m],4),";","validation loss: NULL"))
+      print(paste("iteration:",round(m,0),"; ","train loss:",
+                  round(Train_loss[m],4),"; ","validation loss: NULL",sep=""))
 
+    }
+    if(is.null(Yval)!=TRUE&m>patience){
+      if (sum(Valid_impT[(m-patience+1):m])==0){
+        break
+      }
     }
   }
   list(Train_loss=Train_loss, Valid_loss=Valid_loss,
