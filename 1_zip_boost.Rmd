@@ -44,8 +44,8 @@ eta<--x1^2 + 0.2*log(x3) - 0.2*x4 +0.2*x4*x1
 lambda <- exp(eta)
 hist(lambda)
 hist(exp(-lambda))
-pi_f<--2*x2^2 +x2 + 0.2*x5+0.3
-# pi_f<-0
+# pi_f<--2*x2^2 +x2 + 0.2*x5+0.3
+pi_f<-0
 pi0<-exp(pi_f)/(1+exp(pi_f))
 mean(pi0)
 hist(pi0)
@@ -337,10 +337,11 @@ mean(dat_test$pi_boost)+(1-mean(dat_test$pi_boost))*exp(-mean(dat_test$lambda_bo
 ```
 
 # comparison
+
 ```{r}
 loss_mat<-data.frame(model=c("glm_cp","glm_vp","bst_cp","bst_vp","true"),negL=c(loss_glm_cp,loss_glm_vp,loss_BST_cp,loss_BST_vp,loss_true),error_eta=NA, error_pif=NA)
 loss_mat$error_eta<-c(eGLM_cp_eta,eGLM_vp_eta,eBST_cp_eta,eBST_vp_eta,NA)
 loss_mat$error_pif<-c(eGLM_cp_pif,eGLM_vp_pif,eBST_cp_pif,eBST_vp_pif,NA)
 loss_mat
-# write.csv(loss_mat,"../plots/zip_loss_mat.csv")
+# write.csv(loss_mat,"./plots/zip_loss_mat.csv")
 ```

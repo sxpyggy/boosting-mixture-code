@@ -1,4 +1,5 @@
 library("gbm")
+library("splines")
 neg_ll3 <- function(y, mu, sigma, p) {
   ## y has dimension of n; mu, sigma, p have dimension of K*n ##
   return(-sum(log(
@@ -15,13 +16,13 @@ sim_gaussian <- function(n, seed) {
   X3 = rbinom(n, 1, 0.5)
   X4 = rgamma(n,0.5,0.5)
   F1 = X1+log(X2)
-  # F2 = 1-0.5*X1+2*X3-X1*X2
-  F2 = 1-0.5*X1^2+2*X3-X1*X2
+  F2 = 1-0.5*X1+2*X3-X1*X2
   F3 = log(X2)+X3*X1+2*sin(X1)
+
   P <- FtoP(FF = cbind(F1, F2, F3))
-  MU1 <- rep(-8,n)
+  MU1 <- rep(-5,n)
   MU2 <- rep(0,n)
-  MU3 <- rep(8,n)
+  MU3 <- rep(5,n)
   # MU1 <- 7 + 2 * X1 + exp(0.3 * X2)
   # MU2 <- 1 - 0.1 * X1 ^ 2 + 5 * X3 - X1 * X2
   # MU3 <- -5 - 2 * X1 + 4 * sin(X2) + 0.2 * log(X4)
@@ -40,9 +41,9 @@ sim_gaussian <- function(n, seed) {
       MU1,
       MU2,
       MU3,
-      SG1 = 3,
+      SG1 = 1,
       SG2 = 1,
-      SG3 = 3,
+      SG3 = 1,
       Z1 = NA,
       Z2 = NA,
       Z3 = NA,
@@ -81,7 +82,7 @@ EM_gaussian <-
     par_mat$p3 <- 1/3
     par_mat$mu1 <- -10
     par_mat$mu2 <- 0
-    par_mat$mu3 <- 15
+    par_mat$mu3 <- 10
     par_mat$sigma1 <- 0.5
     par_mat$sigma2 <- 0.5
     par_mat$sigma3 <- 0.5
@@ -219,7 +220,7 @@ EB_gaussian <-
     par_mat$p3 <- 1/3
     par_mat$mu1 <- -10
     par_mat$mu2 <- 0
-    par_mat$mu3 <- 15
+    par_mat$mu3 <- 10
     par_mat$sigma1 <- 0.5
     par_mat$sigma2 <- 0.5
     par_mat$sigma3 <- 0.5
@@ -231,7 +232,7 @@ EB_gaussian <-
       par_mat_val$p3 <- 1/3
       par_mat_val$mu1 <- -10
       par_mat_val$mu2 <- 0
-      par_mat_val$mu3 <- 15
+      par_mat_val$mu3 <- 10
       par_mat_val$sigma1 <- 0.5
       par_mat_val$sigma2 <- 0.5
       par_mat_val$sigma3 <- 0.5

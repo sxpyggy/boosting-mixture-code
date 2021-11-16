@@ -70,7 +70,7 @@ sim_data<-function(n,size,seed){
   X3 = rbinom(n, 1, 0.5)
   X4 = rgamma(n,0.5,0.5)
   F1 = X1+log(X2)
-  F2 = 1-X1+2*X3-X1*X2
+  F2 = 1-0.5*X1+2*X3-X1*X2
   F3 = log(X2)+X3*X1+2*sin(X1)
 
   P<-FtoP(FF=cbind(F1,F2,F3))
