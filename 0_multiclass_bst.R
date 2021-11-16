@@ -196,8 +196,10 @@ BST <- function(X, Y, Pinit, Xval, Yval, Pvalinit,
        Tree_save=Tree_save, lr=lr)
 }
 
-predict_BST <- function(X, BST_model, Pinit, M_best, lr) {
+predict_BST <- function(X, bst, Pinit, M_best,type) {
   # number of iterations
+  BST_model<-bst$Tree_save
+  lr <- bst$lr
   M <- length(BST_model)
   # number of levels
   K <- unique(sapply(BST_model, length))
@@ -230,5 +232,10 @@ predict_BST <- function(X, BST_model, Pinit, M_best, lr) {
     }
     test_bst[, Ind_p] <- FtoP(test_bst[, Ind_f])
   }
-  data.frame(test_bst)
+  if (type=="response"){
+    return(data.frame(test_bst[,Ind_p]))
+  }
+  if (type=="link"){
+    return(data.frame(test_bst[,Ind_f]))
+  }
 }
