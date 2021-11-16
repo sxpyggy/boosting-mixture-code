@@ -15,7 +15,8 @@ sim_gaussian <- function(n, seed) {
   X3 = rbinom(n, 1, 0.5)
   X4 = rgamma(n,0.5,0.5)
   F1 = X1+log(X2)
-  F2 = 1-0.5*X1+2*X3-X1*X2
+  # F2 = 1-0.5*X1+2*X3-X1*X2
+  F2 = 1-0.5*X1^2+2*X3-X1*X2
   F3 = log(X2)+X3*X1+2*sin(X1)
   P <- FtoP(FF = cbind(F1, F2, F3))
   MU1 <- rep(-8,n)
@@ -75,12 +76,12 @@ EM_gaussian <-
 
     #initialization
 
-    par_mat$p1 <- 0.3
-    par_mat$p2 <- 0.3
-    par_mat$p3 <- 0.4
-    par_mat$mu1 <- 0
-    par_mat$mu2 <- 5
-    par_mat$mu3 <- 10
+    par_mat$p1 <- 1/3
+    par_mat$p2 <- 1/3
+    par_mat$p3 <- 1/3
+    par_mat$mu1 <- -10
+    par_mat$mu2 <- 0
+    par_mat$mu3 <- 15
     par_mat$sigma1 <- 0.5
     par_mat$sigma2 <- 0.5
     par_mat$sigma3 <- 0.5
@@ -236,9 +237,12 @@ EB_gaussian <-
       par_mat_val$sigma3 <- 0.5
     }
 
-    train_loss <- rep(0, M0)
-    valid_loss <- rep(0, M0)
+    train_loss <- NULL
+    valid_loss <- NULL
     mu_iter<-NULL
+    train_impT <- NULL
+    train_impT[1]<-T
+    train_imp <- 0
 
     for (m in 1:M0) {
 
@@ -305,7 +309,7 @@ EB_gaussian <-
                        bag.fraction = 1,
                        train.fraction = length(Y)/(length(Y)+length(Yval)),
                        verbose = F)
-        mu_iter[1]<- gbm.perf(mu1_bst)
+        mu_iter[1]<- gbm.perf(mu1_bst,plot.it = F)
         print(paste("best iteration for mu1:", mu_iter[1]))
         mu2_bst <- gbm(c(Y,Yval) ~ ., data = rbind(X,Xval),
                        weights = c(par_mat$weight2, par_mat_val$weight2),
@@ -314,7 +318,7 @@ EB_gaussian <-
                        bag.fraction = 1,
                        train.fraction = length(Y)/(length(Y)+length(Yval)),
                        verbose = F)
-        mu_iter[2]<- gbm.perf(mu2_bst)
+        mu_iter[2]<- gbm.perf(mu2_bst,plot.it = F)
         print(paste("best iteration for mu2:", mu_iter[2]))
         mu3_bst <- gbm(c(Y,Yval) ~ ., data = rbind(X,Xval),
                        weights = c(par_mat$weight3, par_mat_val$weight3),
@@ -323,7 +327,7 @@ EB_gaussian <-
                        bag.fraction = 1,
                        train.fraction = length(Y)/(length(Y)+length(Yval)),
                        verbose = F)
-        mu_iter[3]<- gbm.perf(mu3_bst)
+        mu_iter[3]<- gbm.perf(mu3_bst,plot.it = F)
         print(paste("best iteration for mu3:", mu_iter[3]))
       }
 
@@ -338,12 +342,12 @@ EB_gaussian <-
             Xval = Xval,
             Yval = par_mat_val[, c("z1", "z2", "z3")],
             Pvalinit = NULL,
-            M = 15,
+            M = 50,
             cp = 0.01,
             maxdepth = 3,
-            lr = 0.2,
+            lr = 0.3,
             trace =T,
-            patience=3
+            patience=2
           )
         par_mat[, c("p1", "p2", "p3")] <-
           p_bst$fitted[,c("BST_p1","BST_p2","BST_p3")]
@@ -393,17 +397,32 @@ EB_gaussian <-
       valid_loss[m] <-
         neg_ll3(Yval, par_mat_val[, c("mu1", "mu2", "mu3")], par_mat_val[, c("sigma1", "sigma2", "sigma3")], par_mat_val[, c("p1", "p2", "p3")])
       }
+      if (m>1){
+        train_imp <- train_loss[m-1]-train_loss[m]
+        train_impT[m] <- (train_imp>10^-4)
+      }
       if (trace == T) {
         print(paste(
           "iteration:",
           m,
-          ";",
+          "; ",
           "train_loss:",
           round(train_loss[m], 4),
-          ";",
+          "; ",
           "valid_loss:",
-          round(valid_loss[m], 4)
+          round(valid_loss[m], 4),
+          "; ",
+          "train_loss_improve",
+          round(train_imp, 4),
+          "; ",
+          train_impT[m],
+          sep=""
         ))
+      }
+      if (m>patience){
+        if (sum(train_impT[(m-patience+1):m])==0){
+          break
+        }
       }
     }
     par_mat[, c("plinear1", "plinear2", "plinear3")] <-

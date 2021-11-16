@@ -101,7 +101,7 @@ BST_model<-bst_fit$Tree_save
 (M_best<-which.min(bst_fit$Valid_loss))
 (lr <- bst_fit$lr)
 
-test_pred <- predict_BST(X=Xtest,BST_model=BST_model, Pinit=NULL, M_best=M_best, lr=lr)
+test_pred <- predict_BST(X=Xtest, BST_model=BST_model, Pinit=NULL, M_best=M_best, lr=lr)
 names(test_pred)
 
 (negLL_BST<-negLL(Ytest,test_pred[,c("BST_p1","BST_p2","BST_p3")]))
