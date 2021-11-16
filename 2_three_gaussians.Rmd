@@ -40,7 +40,7 @@ trace<-T
 patience<-3
 model_homo<-EM_gaussian(X=X, Y=Y, Xtest=Xtest, Ytest=Ytest, M0=M0, model=model, structure=structure, trace=trace, patience=patience)
 
-ylim0<-c(2.8,3.4)
+ylim0<-c(2.85,3.4)
 #png("../plots/normal/loss-null.png")
 plot(model_homo$learn_loss,type = 'l',col='red',ylim=ylim0,xlab = "iterations of EM",ylab="neg LL")
 lines(model_homo$test_loss,type="l",col="blue")
@@ -241,7 +241,6 @@ matplot(cbind(model_bst_both$train_loss,model_bst_both$valid_loss),type="l",ylim
 abline(v=which.min(model_bst_both$valid_loss),lty=2)
 min(model_bst_both$valid_loss)
 
-
 dat_test$mu1<-predict(model_bst_both$mu_models[[1]],newdata = dat_test, n.trees = model_bst_both$mu_iter[1])
 dat_test$mu2<-predict(model_bst_both$mu_models[[2]],newdata = dat_test, n.trees = model_bst_both$mu_iter[2])
 dat_test$mu3<-predict(model_bst_both$mu_models[[3]],newdata = dat_test, n.trees = model_bst_both$mu_iter[3])
@@ -275,6 +274,7 @@ loss_mat <-
       bst_test_loss_both
     )
   )
+loss_mat
 # write.csv(loss_mat,"./plots/gaussian_loss_mat.csv")
 ```
 
