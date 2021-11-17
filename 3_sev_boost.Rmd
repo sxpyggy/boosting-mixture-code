@@ -34,17 +34,17 @@ plot(ecdf(dat$Sev))
 plot(density((dat$Sev),width = 0.2)) 
 
 ## log-log plot
-# png("../plots/sev/log-log.png")
+# png("./plots/sev/log-log.png")
 plot(log(knots(fn)),log(1-fn(knots(fn))),xlab="logged average claim amount", ylab="logged survival function")
 # dev.off()
 
 plot(log(knots(fn_log)),log(1-fn_log(knots(fn_log))))
 
 ## logarithm is better
-# png("../plots/sev/cdf.png")
+# png("./plots/sev/cdf.png")
 plot(ecdf(log(dat$Sev)),xlab="logged average claims amount", ylab="cumulative distribution function",main="") ## jumps indicates probability mass
 # dev.off()
-# png("../plots/sev/hist.png")
+# png("./plots/sev/hist.png")
 plot(density(log(dat$Sev),width = 0.2),xlab="logged average claims amount", ylab="density",main="") ## three peaks/modes
 # dev.off()
 set.seed(1)
@@ -75,7 +75,7 @@ limts<-c(min(hill_a$alpha[ind]-2*hill_a$alpha_se[ind]),max(hill_a$alpha[ind]+2*h
 thres<-600
 (alpha<-hill_a$alpha[thres])
 (M<-sort(dat$Sev,decreasing = T)[thres])
-# png("../plots/sev/hill.png")
+# png("./plots/sev/hill.png")
 plot(rev(hill_a$alpha[ind]),ylim=limts,xaxt="n",xlab="number of largest observations",ylab="tail index",type="l")
 lines(rev(hill_a$alpha[ind])+2*rev(hill_a$alpha_se[ind]))
 lines(rev(hill_a$alpha[ind])-2*rev(hill_a$alpha_se[ind]))
@@ -85,7 +85,7 @@ abline(v=1000-thres,lty=2)
 abline(h=alpha,lty=2)
 # dev.off()
 fn<-ecdf(dat$Sev[dat$Sev>M])
-# png("../plots/sev/pareto-tail.png")
+# png("./plots/sev/pareto-tail.png")
 plot(log(knots(fn)),log(1-fn(knots(fn))),xlab="logged average claims amount",ylab="logged survival function")
 abline(a=alpha*min(log(knots(fn))),b=-alpha)
 legend("topright",c("tail index = 1.18"),lty=1)
@@ -142,7 +142,7 @@ dat_low<-dat[which(dat$Sev<5000),]
 # dat<-dat_low
 par(mfrow=c(2,1),pty="m")
 plot(density(dat_low$Sev[dat_low$ind>1],width = 100),main="")
-plot(density(dat_low$Sev[dat_low$ind<5],width = 100))
+plot(density(dat_low$Sev[dat_low$ind<5],width = 100),main="")
 
 dat_test<-dat[dat$ind==5,]
 dat_valid<-dat[dat$ind==4,]
@@ -194,7 +194,7 @@ for (k in 1:(K-1)){
   par_mat$scale[k]<-coef_v$scale
   par_mat$rate[k]<-coef_v$rate
 }
-#write.csv(round(par_mat,4),"../plots/sev_int.csv")
+# write.csv(round(par_mat,4),"./plots/sev/sev_int.csv")
 aggregate(dat_learn$Sev,by=list(dat_learn$bucket),mean)
 
 ### pareto threshold and tail index
@@ -242,9 +242,9 @@ for (k in 1:(K-1)){
   # loss_valid[i]<-mean(-log(f_mix_cp(dat_valid$Sev,p_hat,par_mat,alpha,theta)))
   print(c(i,loss_learn[i]))
 }
-
-# png("../plots/sev/null_trace.png")
-plot(loss_learn,type="l",xlab="iterations of EM", ylab="neg L")
+ylim0<-c(7.545,7.642)
+# png("./plots/sev/null_trace.png")
+plot(loss_learn,type="l",xlab="iterations of EM", ylab="neg L",ylim=ylim0)
 legend("topright",c("learn loss"),lty=c(1),col=c("black"))
 # dev.off()
 p_hat
@@ -252,8 +252,9 @@ par_mat
 alpha
 
 at_y<-seq(0.1,theta,1)
-# png("../plots/sev/null_fitted")
+# png("./plots/sev/null_fitted")
 plot(at_y,f_mix_cp(at_y,p_hat,par_mat,alpha,theta),type="l")
+# dev.off()
 
 (null_loss<-mean(-log(f_mix_cp(dat_test$Sev,p_hat,par_mat,alpha,theta))))
 
@@ -261,7 +262,7 @@ plot(at_y,f_mix_cp(at_y,p_hat,par_mat,alpha,theta),type="l")
 z_hat_null<-z_hat
 (par_mat_null<-par_mat)
 alpha_null<-alpha
-#write.csv(round(par_mat_null,4),"../plots/sev_null.csv")
+# write.csv(round(par_mat_null,4),"./plots/sev/sev_null.csv")
 ```
 
 # glm model
@@ -326,17 +327,21 @@ for (k in 1:(K-1)){
   print(c(i,loss_learn[i]))
 }
 
-plot(loss_learn,type="l",col=c("red"),lty=1)
+# png("./plots/sev/glm_p_trace.png")
+plot(loss_learn,type="l",xlab="iterations of EM", ylab="neg L",ylim=ylim0)
+legend("topright",c("learn loss"),lty=c(1),col=c("black"))
+# dev.off()
+
 apply(p_hat_mat,2,mean);p_hat
 par_mat
-# write.csv(round(par_mat,4),"../plots/sev_glm.csv")
+# write.csv(round(par_mat,4),"./plots/sev/sev_glm.csv")
 alpha
 
 p_hat_mat_test<-predict(glm_p, newdata = dat_test, type="probs")
 
 (glm_loss<-mean(-log(f_mix_vp(dat_test$Sev,p_hat_mat_test,par_mat,alpha,theta))))
 null_loss
-# png("../plots/sev/glm_p.png")
+# png("./plots/sev/glm_p.png")
 boxplot(p_hat_mat_test,xlab="component distribution",ylab="p")
 lines(p_hat,lty=2)
 # dev.off()
@@ -487,6 +492,7 @@ z_hat_valid<-z_hat_glm[dat_learn$ind==4,]
 ```{r}
 ## hyperpremeters 
 J <-1 #iterations of EM algorithm
+# I have tried J=5, but J=1 is sufficient
 loss_train<-NULL
 loss_valid<-NULL
 variables_name<-c("VehPower","VehAge","DrivAge","BonusMalus","VehBrandOrd","VehGasGLM","AreaGLM","DensityGLM","RegionOrd")
@@ -494,7 +500,7 @@ variables_name<-c("VehPower","VehAge","DrivAge","BonusMalus","VehBrandOrd","VehG
 for(i in 1:J){
 
   # MLE of p (given Z)
-  bst_p<- BST(X=dat_train[,variables_name], Y=z_hat_train, Pinit=NULL, Xval = dat_valid[,variables_name], Yval=z_hat_valid, Pvalinit = NULL, M=50, cp=0.001, maxdepth = 4, lr=0.1, trace = T, patience = 2)
+  bst_p<- BST(X=dat_train[,variables_name], Y=z_hat_train, Pinit=NULL, Xval = dat_valid[,variables_name], Yval=z_hat_valid, Pvalinit = NULL, M=50, cp=0.001, maxdepth = 4, lr=0.2, trace = T, patience = 2)
   
   p_hat_mat_train<-bst_p$fitted[,c("BST_p1","BST_p2","BST_p3","BST_p4","BST_p5")]
   p_hat_mat_valid<-bst_p$valid[,c("BST_p1","BST_p2","BST_p3","BST_p4","BST_p5")]
@@ -538,11 +544,13 @@ for (k in 1:(K-1)){
   print(paste("test loss:",bst_loss))
 }
 
-
-matplot(cbind(loss_train,loss_valid),type="l",col=c("red","gray"),lty=1)
+# png("./plots/sev/bst_p_trace.png")
+matplot(cbind(loss_train,loss_valid),type="l",col=c("red","gray"),lty=1,xlab="iterations of EM", ylab="neg L",ylim=ylim0)
+legend("topright",c("train loss","validation loss"),lty=c(1,1),col=c("red","gray"))
+# dev.off()
 apply(p_hat_mat_train,2,mean);p_hat
 par_mat
-# write.csv(round(par_mat,4),"../plots/sev_glm.csv")
+# write.csv(round(par_mat,4),"./plots/sev/sev_bst_p.csv")
 alpha
 
 p_hat_mat_test<-predict_BST(X=dat_test[,variables_name], bst_p, Pinit=NULL, M_best = NULL, type="response")
@@ -550,7 +558,7 @@ p_hat_mat_test<-predict_BST(X=dat_test[,variables_name], bst_p, Pinit=NULL, M_be
 (bst_loss<-mean(-log(f_mix_vp(dat_test$Sev,p_hat_mat_test,par_mat,alpha,theta))))
 glm_loss
 null_loss
-# png("../plots/sev/glm_p.png")
+# png("./plots/sev/bst_p.png")
 boxplot(p_hat_mat_test,xlab="component distribution",ylab="p")
 lines(p_hat,lty=2)
 # dev.off()
@@ -590,7 +598,7 @@ variables_name<-c("VehPower","VehAge","DrivAge","BonusMalus","VehBrandOrd","VehG
 
 for (i in 1:J) {
   # MLE of p (given Z)
-  bst_p<- BST(X=dat_learn[,variables_name], Y=z_hat, Pinit=NULL, Xval = dat_learn[,variables_name], Yval=z_hat, Pvalinit = NULL, M=50, cp=0.001, maxdepth = 4, lr=0.1, trace = T, patience = 2)
+  bst_p<- BST(X=dat_learn[,variables_name], Y=z_hat, Pinit=NULL, Xval = dat_learn[,variables_name], Yval=z_hat, Pvalinit = NULL, M=50, cp=0.001, maxdepth = 4, lr=0.2, trace = T, patience = 2)
   p_hat_mat<-bst_p$fitted[,c("BST_p1","BST_p2","BST_p3","BST_p4","BST_p5")]
   p_hat_mat_test<-predict_BST(X=dat_test[,variables_name], bst_p, Pinit=NULL, M_best = NULL, type="response")
   
@@ -671,11 +679,14 @@ for (i in 1:J) {
 }
 
 matplot(cbind(loss_learn,loss_test),type="l",col=c("red","blue"),lty=1)
+
 apply(p_hat_mat,2,mean);p_hat
 par_mat
 alpha
 
 (bst_loss_both<-loss_test[J])
+bst_loss
+glm_loss_both
 glm_loss
 null_loss
 
@@ -691,8 +702,7 @@ glm_loss_both
 glm_loss
 null_loss
 
+(test_loss<-data.frame(model=c("null","glm-p","bst-p","glm-p-mu","bst-p-mu"),loss=c(7.581538, 7.558955, 7.558401,7.578587, 7.557301)))
 
-test_loss<-data.frame(model=c("null","glm-p","bst-p","glm-p-mu","bst-p","bst-p-mu",loss=c(7.581538, 7.558955, 7.558401,7.578587, 7.557301)))
-
-# write.csv(test_loss,"./plots/sev_loss.csv")
+# write.csv(test_loss,"./plots/sev/sev_loss.csv")
 ```

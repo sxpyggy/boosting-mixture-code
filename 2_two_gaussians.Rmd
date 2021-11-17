@@ -529,6 +529,6 @@ loss_mat<-data.frame(model=c("homo","glm_cp","glm_vp","boosting_cp","boosting_vp
 
 loss_mat[,3:5]<-rbind(eH,eGLM_cp,eGLM_vp,eBST_cp,eBST_vp)
 loss_mat
-# write.csv(loss_mat,"./plots/two_gaussians.csv")
+# write.csv(loss_mat,"./plots/two_gaussians/two_gaussians.csv")
 ```
 

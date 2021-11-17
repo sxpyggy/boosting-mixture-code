@@ -343,10 +343,10 @@ EB_gaussian <-
             Xval = Xval,
             Yval = par_mat_val[, c("z1", "z2", "z3")],
             Pvalinit = NULL,
-            M = 50,
-            cp = 0.01,
+            M = 80,
+            cp = 0.001,
             maxdepth = 3,
-            lr = 0.3,
+            lr = 0.2,
             trace =T,
             patience=2
           )

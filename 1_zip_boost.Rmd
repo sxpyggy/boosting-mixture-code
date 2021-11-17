@@ -343,5 +343,5 @@ loss_mat<-data.frame(model=c("glm_cp","glm_vp","bst_cp","bst_vp","true"),negL=c(
 loss_mat$error_eta<-c(eGLM_cp_eta,eGLM_vp_eta,eBST_cp_eta,eBST_vp_eta,NA)
 loss_mat$error_pif<-c(eGLM_cp_pif,eGLM_vp_pif,eBST_cp_pif,eBST_vp_pif,NA)
 loss_mat
-# write.csv(loss_mat,"./plots/zip_loss_mat.csv")
+# write.csv(loss_mat,"./plots/zip/zip_loss_mat.csv")
 ```
