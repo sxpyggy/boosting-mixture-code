@@ -235,7 +235,7 @@ dat_test$mu3<-predict(model_bst_p$mu_models[[3]],newdata = dat_test)
 dat_test$sigma1<-unique(model_bst_p$sigma[1])
 dat_test$sigma2<-unique(model_bst_p$sigma[2])
 dat_test$sigma3<-unique(model_bst_p$sigma[3])
-dat_test[,c("p1","p2","p3")]<-predict_BST(Xtest, model_bst_p$p_model$Tree_save, Pinit=NULL, M_best = which.min(model_bst_p$p_model$Valid_loss), lr= model_bst_p$p_model$lr)[,c("BST_p1","BST_p2","BST_p3")]
+dat_test[,c("p1","p2","p3")]<-predict_BST(Xtest, model_bst_p$p_model, Pinit=NULL, M_best = which.min(model_bst_p$p_model$Valid_loss),type="response")
 
 (bst_test_loss_p <- neg_ll3(dat_test$Y, dat_test[, c("mu1", "mu2", "mu3")], dat_test[, c("sigma1", "sigma2", "sigma3")], dat_test[, c("p1", "p2", "p3")]))
 ```
@@ -268,7 +268,7 @@ dat_test$mu3<-predict(model_bst_both$mu_models[[3]],newdata = dat_test, n.trees 
 dat_test$sigma1<-unique(model_bst_both$sigma[1])
 dat_test$sigma2<-unique(model_bst_both$sigma[2])
 dat_test$sigma3<-unique(model_bst_both$sigma[3])
-dat_test[,c("p1","p2","p3")]<-predict_BST(Xtest, model_bst_both$p_model$Tree_save, Pinit=NULL, M_best = which.min(model_bst_both$p_model$Valid_loss), lr= model_bst_both$p_model$lr)[,c("BST_p1","BST_p2","BST_p3")]
+dat_test[,c("p1","p2","p3")]<-predict_BST(Xtest, model_bst_both$p_model, Pinit=NULL, M_best = which.min(model_bst_both$p_model$Valid_loss), type="response")
 
 (bst_test_loss_both <- neg_ll3(dat_test$Y, dat_test[, c("mu1", "mu2", "mu3")], dat_test[, c("sigma1", "sigma2", "sigma3")], dat_test[, c("p1", "p2", "p3")]))
 ```

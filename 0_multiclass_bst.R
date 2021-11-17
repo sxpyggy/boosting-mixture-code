@@ -201,6 +201,7 @@ predict_BST <- function(X, bst, Pinit, M_best,type) {
   BST_model<-bst$Tree_save
   lr <- bst$lr
   M <- length(BST_model)
+  M_best<-ifelse(is.null(M_best),M,M_best)
   # number of levels
   K <- unique(sapply(BST_model, length))
   # number of samples

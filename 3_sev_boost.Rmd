@@ -14,15 +14,16 @@ editor_options:
 ```{r}
 rm(list=ls())
 source("0_sev_process.R")
-dat<-dat[which(dat$ClaimNb>0),]
-dat$Sev<-dat$ClaimTotal/dat$ClaimNb
+source("0_sev_functions.R")
+source("0_multiclass_bst.R")
+str(dat)
 boxplot(dat$Sev)
 sort(dat$Sev,decreasing = T)[1:20]
 #M<-6000
 #dat<-dat[which(dat$Sev<M),]
 summary(dat$Sev)
 boxplot(dat$Sev)
-# png("../plots/sev/mean_excess.png")
+# png("./plots/sev/mean_excess.png")
 plot((mean_excess(dat$Sev)$x),(mean_excess(dat$Sev)$mean_ex), xlab="average claims amount",ylab="mean of excess E(Y|Y>Y0)")
 # dev.off()
 
@@ -146,21 +147,24 @@ plot(density(dat_low$Sev[dat_low$ind<5],width = 100))
 dat_test<-dat[dat$ind==5,]
 dat_valid<-dat[dat$ind==4,]
 dat_train<-dat[dat$ind<4,]
+dat_learn<-dat[dat$ind<5,]
 par(mfrow=c(1,1),pty="m")
 ```
 
 # difficulties with mean modeling
 
 ```{r}
-gamma_fit<-glm(Sev ~ Area + VehAgeGLM + DrivAgeGLM + BonusMalusGLM + VehBrand + Region, data=dat_train[dat_train$Sev<M,], family = Gamma(link="log"))
+gamma_fit<-glm(Sev ~ Area + VehAgeGLM + DrivAgeGLM + BonusMalusGLM + VehBrand + Region, data=dat_learn[dat_learn$Sev<M,], family = Gamma(link="log"))
 summary(gamma_fit)
 
-plot(log(dat_test$Sev[dat_test$Sev<M]),log(predict(gamma_fit,newdata = dat_test[dat_test$Sev<M,],type="response")))
+test_pred<-predict(gamma_fit,newdata = dat_test[dat_test$Sev<M,],type="response")
+plot(log(dat_test$Sev[dat_test$Sev<M]),log(test_pred))
 
-gamma_fit<-glm(Sev ~ Area + VehAgeGLM + DrivAgeGLM + BonusMalusGLM + VehBrand + Region, data=dat_train[dat_train$bucket==1,], family = Gamma(link="log"))
+gamma_fit<-glm(Sev ~ Area + VehAgeGLM + DrivAgeGLM + BonusMalusGLM + VehBrand + Region, data=dat_learn[dat_learn$bucket==1,], family = Gamma(link="log"))
 summary(gamma_fit)
 
-plot(log(dat_test$Sev[dat_test$bucket==1]),log(predict(gamma_fit,newdata = dat_test[dat_test$bucket==1,],type="response")))
+test_pred<-predict(gamma_fit,newdata = dat_test[dat_test$bucket==1,],type="response")
+plot(log(dat_test$Sev[dat_test$bucket==1]),log(test_pred))
 ```
 
 # null model
@@ -169,11 +173,12 @@ plot(log(dat_test$Sev[dat_test$bucket==1]),log(predict(gamma_fit,newdata = dat_t
 
 ```{r em}
 ### z (bucket selected)
-(K<-length(unique(dat_train$bucket)))
+(K<-length(unique(dat_learn$bucket)))
 
-z_hat<-matrix(NA,nrow=nrow(dat_train),ncol=K)
+z_hat<-matrix(NA,nrow=nrow(dat_learn),ncol=K)
+
 for ( k in 1:K){
-  z_hat[,k]<-ifelse(dat_train$bucket==k,1,0)
+  z_hat[,k]<-ifelse(dat_learn$bucket==k,1,0)
 }
 
 ### p (M-step)
@@ -183,18 +188,18 @@ for ( k in 1:K){
 par_mat<-data.frame(mu=rep(NA,K-1),shape=rep(NA,K-1),
                     scale=rep(NA,K-1),rate=rep(NA,K-1))
 for (k in 1:(K-1)){
-  coef_v<-gamma_mle(dat_train$Sev, z_hat[,k])
+  coef_v<-gamma_mle(dat_learn$Sev, z_hat[,k])
   par_mat$mu[k]<-coef_v$mu
   par_mat$shape[k]<-coef_v$shape
   par_mat$scale[k]<-coef_v$scale
   par_mat$rate[k]<-coef_v$rate
 }
 #write.csv(round(par_mat,4),"../plots/sev_int.csv")
-aggregate(dat_train$Sev,by=list(dat_train$bucket),mean)
+aggregate(dat_learn$Sev,by=list(dat_learn$bucket),mean)
 
 ### pareto threshold and tail index
 theta<-M
-(alpha<-alpha_wmle(y=dat_train$Sev, z=z_hat[,K],theta=theta))
+(alpha<-alpha_wmle(y=dat_learn$Sev, z=z_hat[,K],theta=theta))
 ```
 
 ## iterations
@@ -202,18 +207,17 @@ theta<-M
 ```{r}
 ## hyperpremeters 
 J <-100  #iterations of EM algorithm
-loss_train<-rep(NA,J)
-loss_valid<-loss_train
+loss_learn<-NULL
 for(i in 1:J){
   
   # expectation of Z
-  f_mat<-matrix(NA,nrow=nrow(dat_train),ncol=K)
+  f_mat<-matrix(NA,nrow=nrow(dat_learn),ncol=K)
 for (k in 1:(K-1)){
     shape0<-par_mat$shape[k]
     scale0<-par_mat$scale[k]
-    f_mat[,k]<-dgamma(dat_train$Sev,shape = shape0, scale = scale0)
+    f_mat[,k]<-dgamma(dat_learn$Sev,shape = shape0, scale = scale0)
 }
-  f_mat[,K]<-dpareto(y=dat_train$Sev,theta=theta,alpha=alpha)
+  f_mat[,K]<-dpareto(y=dat_learn$Sev,theta=theta,alpha=alpha)
 
   pf_mat<-t(t(f_mat)*p_hat)
   pf_sum<-apply(pf_mat,1,sum)
@@ -224,7 +228,7 @@ for (k in 1:(K-1)){
   
   # MLE of shape and scale (given Z)
   for (k in 1:(K-1)){
-    coef_v<-gamma_mle(dat_train$Sev, z_hat[,k])
+    coef_v<-gamma_mle(dat_learn$Sev, z_hat[,k])
     par_mat$mu[k]<-coef_v$mu
     par_mat$shape[k]<-coef_v$shape
     par_mat$scale[k]<-coef_v$scale
@@ -232,16 +236,16 @@ for (k in 1:(K-1)){
   }
   
   # MLE of alpha
-  alpha<-alpha_wmle(y=dat_train$Sev, z=z_hat[,K],theta=theta)
+  alpha<-alpha_wmle(y=dat_learn$Sev, z=z_hat[,K],theta=theta)
 
-  loss_train[i]<-mean(-log(f_mix_cp(dat_train$Sev,p_hat,par_mat,alpha,theta)))
-  loss_valid[i]<-mean(-log(f_mix_cp(dat_valid$Sev,p_hat,par_mat,alpha,theta)))
-  print(c(i,loss_train[i]))
+  loss_learn[i]<-mean(-log(f_mix_cp(dat_learn$Sev,p_hat,par_mat,alpha,theta)))
+  # loss_valid[i]<-mean(-log(f_mix_cp(dat_valid$Sev,p_hat,par_mat,alpha,theta)))
+  print(c(i,loss_learn[i]))
 }
 
 # png("../plots/sev/null_trace.png")
-matplot(cbind(loss_train,loss_valid)[-c(1:20),],type="l",xlab="iterations of EM", ylab="neg L")
-legend("topright",c("training loss","validation loss"),lty=c(1,2),col=c("black","red"))
+plot(loss_learn,type="l",xlab="iterations of EM", ylab="neg L")
+legend("topright",c("learn loss"),lty=c(1),col=c("black"))
 # dev.off()
 p_hat
 par_mat
@@ -260,9 +264,11 @@ alpha_null<-alpha
 #write.csv(round(par_mat_null,4),"../plots/sev_null.csv")
 ```
 
-# glm model for p
+# glm model
 
-## initialization 
+## only p
+
+### initialization for p
 
 ```{r em}
 ### z_hat (from null model)
@@ -277,24 +283,23 @@ par_mat<-par_mat_null
 (alpha<-alpha_null)
 ```
 
-## iterations
+### iterations for p
 
 ```{r}
 ## hyperpremeters 
-J <-1 #iterations of EM algorithm
-loss_train<-rep(NA,J)
-loss_valid<-loss_train
+J <-10 #iterations of EM algorithm
+loss_learn<-NULL
 
 for(i in 1:J){
 
   # MLE of p (given Z)
-  glm_p<- multinom(z_hat ~ Area + VehAgeGLM + DrivAgeGLM + BonusMalusGLM + VehBrand + Region, data=dat_train, trace = F)
+  glm_p<- multinom(z_hat ~ Area + VehAgeGLM + DrivAgeGLM + BonusMalusGLM + VehBrand + Region, data=dat_learn, trace = F)
   p_hat_mat<-fitted(glm_p)
-  p_hat_mat_valid<-predict(glm_p,newdata = dat_valid,type="probs")
+  # p_hat_mat_valid<-predict(glm_p,newdata = dat_valid,type="probs")
   
   # MLE of shape and scale (given Z)
   for (k in 1:(K-1)){
-    coef_v<-gamma_mle(dat_train$Sev, z_hat[,k])
+    coef_v<-gamma_mle(dat_learn$Sev, z_hat[,k])
     par_mat$mu[k]<-coef_v$mu
     par_mat$shape[k]<-coef_v$shape
     par_mat$scale[k]<-coef_v$scale
@@ -302,26 +307,26 @@ for(i in 1:J){
   }
   
   # MLE of alpha
-  alpha<-alpha_wmle(y=dat_train$Sev, z=z_hat[,K],theta=theta)
+  alpha<-alpha_wmle(y=dat_learn$Sev, z=z_hat[,K],theta=theta)
   
   # expectation of Z
-  f_mat<-matrix(NA,nrow=nrow(dat_train),ncol=K)
+  f_mat<-matrix(NA,nrow=nrow(dat_learn),ncol=K)
 for (k in 1:(K-1)){
     shape0<-par_mat$shape[k]
     scale0<-par_mat$scale[k]
-    f_mat[,k]<-dgamma(dat_train$Sev,shape = shape0, scale = scale0)
+    f_mat[,k]<-dgamma(dat_learn$Sev,shape = shape0, scale = scale0)
 }
-  f_mat[,K]<-dpareto(y=dat_train$Sev,theta=theta,alpha=alpha)
+  f_mat[,K]<-dpareto(y=dat_learn$Sev,theta=theta,alpha=alpha)
   pf_mat<-f_mat*p_hat_mat
   pf_sum<-apply(pf_mat,1,sum)
   z_hat = pf_mat/pf_sum
 
-  loss_train[i]<-mean(-log(f_mix_vp(dat_train$Sev,p_hat_mat,par_mat,alpha,theta)))
-  loss_valid[i]<-mean(-log(f_mix_vp(dat_valid$Sev,p_hat_mat_valid, par_mat,alpha,theta)))
-  print(c(i,loss_train[i]))
+  loss_learn[i]<-mean(-log(f_mix_vp(dat_learn$Sev,p_hat_mat,par_mat,alpha,theta)))
+  #loss_valid[i]<-mean(-log(f_mix_vp(dat_valid$Sev,p_hat_mat_valid, par_mat,alpha,theta)))
+  print(c(i,loss_learn[i]))
 }
 
-matplot(cbind(loss_train,loss_valid),type="l",col=c("red","gray"),lty=1)
+plot(loss_learn,type="l",col=c("red"),lty=1)
 apply(p_hat_mat,2,mean);p_hat
 par_mat
 # write.csv(round(par_mat,4),"../plots/sev_glm.csv")
@@ -338,95 +343,96 @@ lines(p_hat,lty=2)
 par_mat_glm<-par_mat
 alpha_glm<-alpha
 z_hat_glm<-z_hat
+p_test_glm<-p_hat_mat_test
 ```
 
-# boosting for forth gamma
+## p and mu
 
-## start from null P 
+### initialization
 
 ```{r em}
 ### z_hat (from null model)
-z_hat<-z_hat_null
+z_hat<-z_hat_glm
 ### p_hat (does not matter if z_hat start from a good values)
-p_hat<-p_hat_null
+# p_hat<-p_hat_glm
 ### shape and scale (does not matter if z_hat start from a good values)
-par_mat<-par_mat_null
+# par_mat<-par_mat_glm
 
 ### pareto threshold and tail index
 (theta<-M)
 (alpha<-alpha_null)
 ```
 
+### iteration for mu
 
 ```{r}
 ## hyperpremeters
-J <- 1 #iterations of EM algorithm
-loss_train <- rep(NA, J)
-loss_test <- loss_train
+J <- 7 #iterations of EM algorithm
+loss_learn <- NULL
+loss_test <- NULL
 Mstop<-20
 nu<-0.1
 
 for (i in 1:J) {
   # MLE of p (given Z)
-  p_hat<-apply(z_hat,2,mean)
+  glm_p<- multinom(z_hat ~ Area + VehAgeGLM + DrivAgeGLM + BonusMalusGLM + VehBrand + Region, data=dat_learn, trace = F)
+  p_hat_mat<-fitted(glm_p)
+  # p_hat_mat_valid<-predict(glm_p,newdata = dat_valid,type="probs")
 
   # MLE of shape and scale for the first 3 (given Z)
   for (k in 1:3) {
-    coef_v <- gamma_mle(dat_train$Sev, z_hat[, k])
+    coef_v <- gamma_mle(dat_learn$Sev, z_hat[, k])
     par_mat$mu[k] <- coef_v$mu
     par_mat$shape[k] <- coef_v$shape
     par_mat$scale[k] <- coef_v$scale
     par_mat$rate[k] <- coef_v$rate
   }
   
-  boost_four <-
-    blackboost(
-      Sev ~ Area + VehAgeGLM + DrivAgeGLM + BonusMalusGLM + VehBrand + Region,
+  glm_four<-glm(Sev ~ Area + VehAgeGLM + DrivAgeGLM + BonusMalusGLM + VehBrand + Region,
       weights = z_hat[, 4],
-      data = dat_train,
-      family = GammaReg(),
-      control = boost_control(mstop = Mstop, nu = nu)
-    )
+      data = dat_learn,
+      family = Gamma(link="log")
+      )
   
-  dat_train$four <- fitted(boost_four, type = "response")
+  dat_learn$four <- fitted(glm_four, type = "response")
   dat_test$four <-
-    predict(boost_four, newdata = dat_test, type = "response")
+    predict(glm_four, newdata = dat_test, type = "response")
   
   logL_shape <- function(shape_mle) {
     sum(z_hat[, 4]) * shape_mle * log(shape_mle) -
-      sum(z_hat[, 4] * log(dat_train$four)) * shape_mle -
+      sum(z_hat[, 4] * log(dat_learn$four)) * shape_mle -
       sum(z_hat[, 4]) * lgamma(shape_mle) +
-      (shape_mle - 1) * sum(z_hat[, 4] * log(dat_train$Sev)) -
-      shape_mle * sum(z_hat[, 4] * dat_train$Sev / dat_train$four)
+      (shape_mle - 1) * sum(z_hat[, 4] * log(dat_learn$Sev)) -
+      shape_mle * sum(z_hat[, 4] * dat_learn$Sev / dat_learn$four)
   }
   shape4 <- optimise(logL_shape,
                      maximum = T,
                      interval = c(0, 1000))$maximum
   # MLE of alpha
-  alpha <- alpha_wmle(y = dat_train$Sev,
+  alpha <- alpha_wmle(y = dat_learn$Sev,
                       z = z_hat[, K],
                       theta = theta)
   
   # expectation of Z
-  f_mat <- matrix(NA, nrow = nrow(dat_train), ncol = K)
+  f_mat <- matrix(NA, nrow = nrow(dat_learn), ncol = K)
   f_mat_test <- matrix(NA, nrow = nrow(dat_test), ncol = K)
   for (k in c(1, 2, 3)) {
     shape0 <- par_mat$shape[k]
     scale0 <- par_mat$scale[k]
-    f_mat[, k] <- dgamma(dat_train$Sev, shape = shape0, scale = scale0)
+    f_mat[, k] <- dgamma(dat_learn$Sev, shape = shape0, scale = scale0)
     f_mat_test[, k] <-
       dgamma(dat_test$Sev, shape = shape0, scale = scale0)
   }
   
   f_mat[, 4] <-
-    dgamma(dat_train$Sev,
+    dgamma(dat_learn$Sev,
            shape = shape4,
-           scale = dat_train$four / shape4)
+           scale = dat_learn$four / shape4)
   f_mat_test[, 4] <-
     dgamma(dat_test$Sev,
            shape = shape4,
            scale = dat_test$four / shape4)
-  f_mat[, K] <- dpareto(y = dat_train$Sev,
+  f_mat[, K] <- dpareto(y = dat_learn$Sev,
                         theta = theta,
                         alpha = alpha)
   f_mat_test[, K] <- dpareto(y = dat_test$Sev,
@@ -441,53 +447,156 @@ for (i in 1:J) {
   pf_mat_test <- t(t(f_mat_test)*p_hat) 
   pf_sum_test <- apply(pf_mat_test, 1, sum)
   
-  loss_train[i] <- mean(-log(pf_sum))
+  loss_learn[i] <- mean(-log(pf_sum))
   loss_test[i] <- mean(-log(pf_sum_test))
-  print(c(i, loss_train[i]))
+  print(c(i, loss_learn[i]))
 }
 
-matplot(cbind(loss_train,loss_test),type="l",col=c("red","blue"),lty=1)
+matplot(cbind(loss_learn,loss_test),type="l",col=c("red","blue"),lty=1)
 apply(p_hat_mat,2,mean);p_hat
 par_mat
 alpha
 
-min(loss_test)
+(glm_loss_both<-loss_test[J])
 glm_loss
 null_loss
 ```
 
-## start from glm P 
+# boosting
+
+## only p
+
+### initialization start from z_hat_glm
 
 ```{r em}
 ### z_hat (from null model)
-z_hat<-z_hat_glm
+z_hat_train<-z_hat_glm[dat_learn$ind<4,]
+z_hat_valid<-z_hat_glm[dat_learn$ind==4,]
 ### p_hat (does not matter if z_hat start from a good values)
-p_hat<-p_hat_null
+# p_hat<-p_hat_null
 ### shape and scale (does not matter if z_hat start from a good values)
-par_mat<-par_mat_glm
+# par_mat<-par_mat_null
 
 ### pareto threshold and tail index
 (theta<-M)
 (alpha<-alpha_glm)
 ```
 
+### iterations for p
+
+```{r}
+## hyperpremeters 
+J <-1 #iterations of EM algorithm
+loss_train<-NULL
+loss_valid<-NULL
+variables_name<-c("VehPower","VehAge","DrivAge","BonusMalus","VehBrandOrd","VehGasGLM","AreaGLM","DensityGLM","RegionOrd")
+
+for(i in 1:J){
+
+  # MLE of p (given Z)
+  bst_p<- BST(X=dat_train[,variables_name], Y=z_hat_train, Pinit=NULL, Xval = dat_valid[,variables_name], Yval=z_hat_valid, Pvalinit = NULL, M=50, cp=0.001, maxdepth = 4, lr=0.1, trace = T, patience = 2)
+  
+  p_hat_mat_train<-bst_p$fitted[,c("BST_p1","BST_p2","BST_p3","BST_p4","BST_p5")]
+  p_hat_mat_valid<-bst_p$valid[,c("BST_p1","BST_p2","BST_p3","BST_p4","BST_p5")]
+  
+  # MLE of shape and scale (given Z)
+  for (k in 1:(K-1)){
+    coef_v<-gamma_mle(dat_train$Sev, z_hat_train[,k])
+    par_mat$mu[k]<-coef_v$mu
+    par_mat$shape[k]<-coef_v$shape
+    par_mat$scale[k]<-coef_v$scale
+    par_mat$rate[k]<-coef_v$rate
+  }
+  
+  # MLE of alpha
+  alpha<-alpha_wmle(y=dat_train$Sev, z=z_hat_train[,K],theta=theta)
+  
+  # expectation of Z
+  f_mat<-matrix(NA,nrow=nrow(dat_train),ncol=K)
+  f_matV<-matrix(NA,nrow=nrow(dat_valid),ncol=K)
+for (k in 1:(K-1)){
+    shape0<-par_mat$shape[k]
+    scale0<-par_mat$scale[k]
+    f_mat[,k]<-dgamma(dat_train$Sev,shape = shape0, scale = scale0)
+    f_matV[,k]<-dgamma(dat_valid$Sev,shape = shape0, scale = scale0)
+}
+  f_mat[,K]<-dpareto(y=dat_train$Sev,theta=theta,alpha=alpha)
+  f_matV[,K]<-dpareto(y=dat_valid$Sev,theta=theta,alpha=alpha)
+  pf_mat<-f_mat*p_hat_mat_train
+  pf_sum<-apply(pf_mat,1,sum)
+  z_hat_train = pf_mat/pf_sum
+  
+  pf_matV<-f_matV*p_hat_mat_valid
+  pf_sumV<-apply(pf_matV,1,sum)
+  z_hat_valid = pf_matV/pf_sumV
+
+  loss_train[i]<-mean(-log(f_mix_vp(dat_train$Sev,p_hat_mat_train,par_mat,alpha,theta)))
+  loss_valid[i]<-mean(-log(f_mix_vp(dat_valid$Sev,p_hat_mat_valid, par_mat,alpha,theta)))
+  print(paste(i,"train loss:",loss_train[i],"valid loss",loss_valid[i]))
+  p_hat_mat_test<-predict_BST(X=dat_test[,variables_name], bst_p, Pinit=NULL, M_best = NULL, type="response")
+ bst_loss<-mean(-log(f_mix_vp(dat_test$Sev,p_hat_mat_test,par_mat,alpha,theta)))
+  print(paste("test loss:",bst_loss))
+}
+
+
+matplot(cbind(loss_train,loss_valid),type="l",col=c("red","gray"),lty=1)
+apply(p_hat_mat_train,2,mean);p_hat
+par_mat
+# write.csv(round(par_mat,4),"../plots/sev_glm.csv")
+alpha
+
+p_hat_mat_test<-predict_BST(X=dat_test[,variables_name], bst_p, Pinit=NULL, M_best = NULL, type="response")
+
+(bst_loss<-mean(-log(f_mix_vp(dat_test$Sev,p_hat_mat_test,par_mat,alpha,theta))))
+glm_loss
+null_loss
+# png("../plots/sev/glm_p.png")
+boxplot(p_hat_mat_test,xlab="component distribution",ylab="p")
+lines(p_hat,lty=2)
+# dev.off()
+z_hat_bst_T<-z_hat_train
+z_hat_bst_V<-z_hat_valid
+p_test_bst<-p_hat_mat_test
+```
+
+
+## p and mu
+
+### initialization
+
+```{r em}
+### z_hat (from glm model)
+z_hat<-z_hat_glm
+### p_hat (does not matter if z_hat start from a good values)
+# p_hat<-p_hat_null
+### shape and scale (does not matter if z_hat start from a good values)
+# par_mat<-par_mat_glm
+
+### pareto threshold and tail index
+(theta<-M)
+(alpha<-alpha_glm)
+```
+
+### iterations for mu
+
 ```{r}
 ## hyperpremeters
 J <- 1 #iterations of EM algorithm
-loss_train <- rep(NA, J)
-loss_test <- loss_train
+loss_learn <- NULL
+loss_test <- NULL
 Mstop<-100
 nu<-0.1
+variables_name<-c("VehPower","VehAge","DrivAge","BonusMalus","VehBrandOrd","VehGasGLM","AreaGLM","DensityGLM","RegionOrd")
 
 for (i in 1:J) {
   # MLE of p (given Z)
-  glm_p<- multinom(z_hat ~ Area + VehAgeGLM + DrivAgeGLM + BonusMalusGLM + VehBrand + Region, data=dat_train, trace = F)
-  p_hat_mat<-fitted(glm_p)
-  p_hat_mat_test<-predict(glm_p,newdata = dat_test,type="probs")
+  bst_p<- BST(X=dat_learn[,variables_name], Y=z_hat, Pinit=NULL, Xval = dat_learn[,variables_name], Yval=z_hat, Pvalinit = NULL, M=50, cp=0.001, maxdepth = 4, lr=0.1, trace = T, patience = 2)
+  p_hat_mat<-bst_p$fitted[,c("BST_p1","BST_p2","BST_p3","BST_p4","BST_p5")]
+  p_hat_mat_test<-predict_BST(X=dat_test[,variables_name], bst_p, Pinit=NULL, M_best = NULL, type="response")
   
   # MLE of shape and scale for the first 3 (given Z)
   for (k in 1:3) {
-    coef_v <- gamma_mle(dat_train$Sev, z_hat[, k])
+    coef_v <- gamma_mle(dat_learn$Sev, z_hat[, k])
     par_mat$mu[k] <- coef_v$mu
     par_mat$shape[k] <- coef_v$shape
     par_mat$scale[k] <- coef_v$scale
@@ -496,62 +605,52 @@ for (i in 1:J) {
   
   boost_four <-
     blackboost(
-      Sev ~ Area + VehAgeGLM + DrivAgeGLM + BonusMalusGLM + VehBrand + Region,
+      Sev ~ VehPower + VehAge + DrivAge + BonusMalus + VehBrandOrd + VehGasGLM + AreaGLM + DensityGLM + RegionOrd,
       weights = z_hat[, 4],
-      data = dat_train,
+      data = dat_learn,
       family = GammaReg(),
       control = boost_control(mstop = Mstop, nu = nu)
     )
-  # glm_four<-glm(Sev ~ Area + VehAgeGLM + DrivAgeGLM + BonusMalusGLM + VehBrand + Region,
-  #     weights = z_hat[, 4],
-  #     data = dat_train,
-  #     family = Gamma(link="log")
-  #     )
-  
-  dat_train$four <- fitted(boost_four, type = "response")
-  # dat_train$four <- fitted(glm_four, type = "response")
-
+ 
+  dat_learn$four <- fitted(boost_four, type = "response")
   dat_test$four <-
     as.vector(predict(boost_four, newdata = dat_test, type = "response"))
   
-  # dat_test$four <-
-  #   predict(glm_four, newdata = dat_test, type = "response")
-  
   logL_shape <- function(shape_mle) {
     sum(z_hat[, 4]) * shape_mle * log(shape_mle) -
-      sum(z_hat[, 4] * log(dat_train$four)) * shape_mle -
+      sum(z_hat[, 4] * log(dat_learn$four)) * shape_mle -
       sum(z_hat[, 4]) * lgamma(shape_mle) +
-      (shape_mle - 1) * sum(z_hat[, 4] * log(dat_train$Sev)) -
-      shape_mle * sum(z_hat[, 4] * dat_train$Sev / dat_train$four)
+      (shape_mle - 1) * sum(z_hat[, 4] * log(dat_learn$Sev)) -
+      shape_mle * sum(z_hat[, 4] * dat_learn$Sev / dat_learn$four)
   }
   shape4 <- optimise(logL_shape,
                      maximum = T,
                      interval = c(0, 1000))$maximum
   # MLE of alpha
-  alpha <- alpha_wmle(y = dat_train$Sev,
+  alpha <- alpha_wmle(y = dat_learn$Sev,
                       z = z_hat[, K],
                       theta = theta)
   
   # expectation of Z
-  f_mat <- matrix(NA, nrow = nrow(dat_train), ncol = K)
+  f_mat <- matrix(NA, nrow = nrow(dat_learn), ncol = K)
   f_mat_test <- matrix(NA, nrow = nrow(dat_test), ncol = K)
   for (k in c(1, 2, 3)) {
     shape0 <- par_mat$shape[k]
     scale0 <- par_mat$scale[k]
-    f_mat[, k] <- dgamma(dat_train$Sev, shape = shape0, scale = scale0)
+    f_mat[, k] <- dgamma(dat_learn$Sev, shape = shape0, scale = scale0)
     f_mat_test[, k] <-
       dgamma(dat_test$Sev, shape = shape0, scale = scale0)
   }
   
   f_mat[, 4] <-
-    dgamma(dat_train$Sev,
+    dgamma(dat_learn$Sev,
            shape = shape4,
-           scale = dat_train$four / shape4)
+           scale = dat_learn$four / shape4)
   f_mat_test[, 4] <-
     dgamma(dat_test$Sev,
            shape = shape4,
            scale = dat_test$four / shape4)
-  f_mat[, K] <- dpareto(y = dat_train$Sev,
+  f_mat[, K] <- dpareto(y = dat_learn$Sev,
                         theta = theta,
                         alpha = alpha)
   f_mat_test[, K] <- dpareto(y = dat_test$Sev,
@@ -566,22 +665,34 @@ for (i in 1:J) {
   pf_sum_test <- apply(pf_mat_test, 1, sum)
   z_hat_test<-pf_mat_test/pf_sum_test
   
-  loss_train[i] <- mean(-log(pf_sum))
+  loss_learn[i] <- mean(-log(pf_sum))
   loss_test[i] <- mean(-log(pf_sum_test))
-  print(c(i, loss_train[i]))
+  print(c(i, loss_learn[i],loss_test[i]))
 }
 
-matplot(cbind(loss_train,loss_test),type="l",col=c("red","blue"),lty=1)
+matplot(cbind(loss_learn,loss_test),type="l",col=c("red","blue"),lty=1)
 apply(p_hat_mat,2,mean);p_hat
 par_mat
 alpha
 
-min(loss_test)
+(bst_loss_both<-loss_test[J])
 glm_loss
 null_loss
 
 plot(log(dat_test$Sev[z_hat_test[,4]>0.99]), log(dat_test$four[z_hat_test[,4]>0.99]))
-
 hist(dat_test$Sev[z_hat_test[,5]>0.8])
 ```
 
+# results saved
+```{r}
+bst_loss_both
+bst_loss
+glm_loss_both
+glm_loss
+null_loss
+
+
+test_loss<-data.frame(model=c("null","glm-p","bst-p","glm-p-mu","bst-p","bst-p-mu",loss=c(7.581538, 7.558955, 7.558401,7.578587, 7.557301)))
+
+# write.csv(test_loss,"./plots/sev_loss.csv")
+```
