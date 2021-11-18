@@ -68,6 +68,10 @@ sum(dat1$y==0)/length(dat1$y)
 (loss_true_cp<-mean(neg_ll(dat_test$y,mean(dat_test$pi0),dat_test$lambda)))
 (loss_true_cl<-mean(neg_ll(dat_test$y,dat_test$pi0,mean(dat_test$lambda))))
 (loss_true_cpl<-mean(neg_ll(dat_test$y,mean(dat_test$pi0),mean(dat_test$lambda))))
+# png("./plots/zip/hist_poisson.png")
+hist(dat0$y,freq = F, main="",xlab="number of claims", ylab="frequency")
+box()
+# dev.off()
 ```
 
 # zip glm

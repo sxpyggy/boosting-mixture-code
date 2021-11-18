@@ -1,0 +1,48 @@
+This is BibTeX, Version 0.99d (TeX Live 2021/W32TeX)
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: boosting for mixed distributions.aux
+The style file: boosting.bst
+Database file #1: boosting.bib
+Warning--there's a number but no volume in wuethrich:2021
+You've used 3 entries,
+            2921 wiz_defined-function locations,
+            657 strings with 5508 characters,
+and the built_in function-call counts, 18100 in all, are:
+= -- 2959
+> -- 292
+< -- 0
++ -- 1463
+- -- 91
+* -- 1625
+:= -- 3570
+add.period$ -- 6
+call.type$ -- 3
+change.case$ -- 42
+chr.to.int$ -- 3
+cite$ -- 4
+duplicate$ -- 41
+empty$ -- 94
+format.name$ -- 103
+if$ -- 3246
+int.to.chr$ -- 5
+int.to.str$ -- 0
+missing$ -- 3
+newline$ -- 15
+num.names$ -- 32
+pop$ -- 6
+preamble$ -- 1
+purify$ -- 45
+quote$ -- 0
+skip$ -- 41
+stack$ -- 0
+substring$ -- 4238
+swap$ -- 5
+text.length$ -- 42
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 12
+warning$ -- 1
+while$ -- 67
+width$ -- 0
+write$ -- 45
+(There was 1 warning)
