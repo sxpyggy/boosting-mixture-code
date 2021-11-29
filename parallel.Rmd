@@ -1,0 +1,201 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+---
+output: html_document
+editor_options: 
+  chunk_output_type: inline
+---
+# functions
+
+```{r}
+rm(list=ls())
+source("1_parallel_2ndV.R")
+```
+
+# generate data
+
+```{r}
+n = 10000
+ntest = 2000
+dat<-sim_data(n,size=1,seed=1)
+dat_test<-sim_data(ntest,size=1,seed=2)
+names(dat)
+boxplot(dat[,c("P1","P2","P3")])
+boxplot(dat_test[,c("P1","P2","P3")])
+```
+
+# null model
+```{r}
+dat_test$P1_Null<-mean(dat$Y1)
+dat_test$P2_Null<-mean(dat$Y2)
+dat_test$P3_Null<-mean(dat$Y3)
+(negLL_T<-negLL(dat_test[,c("Y1","Y2","Y3")],dat_test[,c("P1","P2","P3")]))
+(negLL_Null<-negLL(dat_test[,c("Y1","Y2","Y3")],dat_test[,c("P1_Null","P2_Null","P3_Null")]))
+```
+
+# generalized linear model
+
+```{r}
+fit_glm<-multinom(as.matrix(dat[,c("Y1","Y2","Y3")]) ~ X1 + X2 + X3 + X4, data=dat, trace=T)
+
+dat<-data.frame(dat,P1_GLM=NA,P2_GLM=NA,P3_GLM=NA)
+dat[,c("P1_GLM","P2_GLM","P3_GLM")]<-predict(fit_glm,newdata=dat,type="probs")
+
+dat_test<-data.frame(dat_test,P1_GLM=NA,P2_GLM=NA,P3_GLM=NA)
+dat_test[,c("P1_GLM","P2_GLM","P3_GLM")]<-predict(fit_glm,newdata=dat_test,type="probs")
+(negLL_GLM<-negLL(dat_test[,c("Y1","Y2","Y3")],dat_test[,c("P1_GLM","P2_GLM","P3_GLM")]))
+```
+
+# boosting
+
+```{r}
+t1=proc.time()
+X <- dat[1:8000, c("X1", "X2", "X3", "X4")]
+Y <- dat[1:8000, c("Y1", "Y2", "Y3")]
+#Pinit <- NULL
+Pinit <- dat[1:8000, c("P1_GLM","P2_GLM","P3_GLM")]
+Xval <- dat[8001:10000, c("X1", "X2", "X3", "X4")]
+Yval <- dat[8001:10000, c("Y1", "Y2", "Y3")]
+#Pvalinit <- NULL
+Pvalinit <- dat[8001:10000, c("P1_GLM","P2_GLM","P3_GLM")]
+
+
+# X <- dat[, c("X1", "X2", "X3", "X4")]
+# Y <- dat[, c("Y1", "Y2", "Y3")]
+# Xval <- NULL
+# Yval <- NULL
+M <- 50
+cp <- 0.001
+maxdepth <- 4
+lr = 0.2
+patience = 5
+
+#clusterExport(c1, varlist=c("X","maxdepth","cp","lr","M","patience","Pinit","Xval","Yval","node_pre"))
+
+bst_fit_parallel <-
+  BST(
+    X = X,
+    Y = Y,
+    Pinit = Pinit,
+    Xval = Xval,
+    Yval = Yval,
+    Pvalinit = Pvalinit,
+    M = M,
+    cp = cp,
+    maxdepth = maxdepth,
+    lr = lr,
+    trace=T,
+    patience = patience
+  )
+
+t2=proc.time()
+t_parallel=t2-t1
+
+t_parallel
+stopCluster(c1)
+matplot(cbind(bst_fit_parallel$Train_loss,bst_fit_parallel$Valid_loss), type = "l")
+abline(v = which.min(bst_fit_parallel$Valid_loss), lty = 3)
+min(bst_fit_parallel$Valid_loss)
+
+negLL_GLM
+negLL_Null
+negLL_T
+```
+
+
+
+```{r}
+source("0_multiclass_bst.R")
+```
+
+
+# boosting_initial
+
+```{r}
+t1=proc.time()
+X <- dat[1:8000, c("X1", "X2", "X3", "X4")]
+Y <- dat[1:8000, c("Y1", "Y2", "Y3")]
+#Pinit <- NULL
+Pinit <- dat[1:8000, c("P1_GLM","P2_GLM","P3_GLM")]
+Xval <- dat[8001:10000, c("X1", "X2", "X3", "X4")]
+Yval <- dat[8001:10000, c("Y1", "Y2", "Y3")]
+#Pvalinit <- NULL
+Pvalinit <- dat[8001:10000, c("P1_GLM","P2_GLM","P3_GLM")]
+
+
+# X <- dat[, c("X1", "X2", "X3", "X4")]
+# Y <- dat[, c("Y1", "Y2", "Y3")]
+# Xval <- NULL
+# Yval <- NULL
+M <- 50
+cp <- 0.001
+maxdepth <- 4
+lr = 0.2
+patience = 5
+
+#clusterExport(c1, varlist=c("X","maxdepth","cp","lr","M","patience","Pinit","Xval","Yval","node_pre"))
+
+bst_fit <-
+  BST(
+    X = X,
+    Y = Y,
+    Pinit = Pinit,
+    Xval = Xval,
+    Yval = Yval,
+    Pvalinit = Pvalinit,
+    M = M,
+    cp = cp,
+    maxdepth = maxdepth,
+    lr = lr,
+    trace=T,
+    patience = patience
+  )
+
+t2=proc.time()
+t_initial=t2-t1
+
+t_initial
+matplot(cbind(bst_fit$Train_loss,bst_fit$Valid_loss), type = "l")
+abline(v = which.min(bst_fit$Valid_loss), lty = 3)
+min(bst_fit$Valid_loss)
+
+negLL_GLM
+negLL_Null
+negLL_T
+```
+
+
+
+```{r}
+t_initial - t_parallel
+```
+
+
+
+
+
+
+## predict boosting
+
+```{r}
+Xtest <- dat_test[,c("X1", "X2", "X3", "X4")]
+Ytest <- dat_test[,c("Y1", "Y2", "Y3")]
+(M_best<-which.min(bst_fit$Valid_loss))
+(lr <- bst_fit$lr)
+
+test_pred <- predict_BST(X=Xtest, bst=bst_fit, Pinit=NULL, M_best=M_best,type="response")
+names(test_pred)
+
+(negLL_BST<-negLL(Ytest,test_pred))
+negLL_GLM
+negLL_Null
+negLL_T
+```
+
+```{r}
+
+```
+

@@ -1,6 +1,6 @@
 \documentclass[professionalfont]{beamer}
-\usetheme{CambridgeUS}%%preamble
-\usecolortheme{dove}
+\usetheme{Berlin}
+% \usecolortheme{dove}
 \beamertemplatenavigationsymbolsempty
 \setbeamertemplate{footline}[frame number]
 \setbeamertemplate{caption}[numbered]
@@ -230,22 +230,23 @@ This step is similar to \eqref{p-reg} and \eqref{comp-reg}. However, now we have
 
 \section{Expectation-Boosting algorithm}
 
-\begin{frame}{Our proposal}
 
-	We replace the maximization step in the EM algorithm by a \blue{boosting step}.
-
-	~
-
-	The boosting step  increases the likelihood, but \blue{overfitting-sensitively}.
-
-
-	~
-
-	The boosting step follows a \blue{generic functional gradient descent algorithm}.
-
-\end{frame}
 
 \subsection{Generic functional gradient descent algorithm}
+\begin{frame}{Our proposal}
+	
+	We replace the maximization step in the EM algorithm by a \blue{boosting step}.
+	
+	~
+	
+	The boosting step  increases the likelihood, but \blue{overfitting-sensitively}.
+	
+	
+	~
+	
+	The boosting step follows a \blue{generic functional gradient descent algorithm}.
+	
+\end{frame}
 \begin{frame}{General setting}
 	Suppose \blue{non-parametric regression function} as $F:\R^P\rightarrow\R$. Our purpose is to  estimate $F$ to minimize the expected loss $$\hat{F}=\underset{F}{\arg\min}\E\left[C(Y,F(\bx))\right],$$
 	where $C:\R\times\R\rightarrow\R_+$ is the \blue{loss function}.
