@@ -1,9 +1,9 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.23 (TeX Live 2021/W32TeX) (preloaded format=pdflatex 2021.9.15)  14 DEC 2021 15:55
+This is pdfTeX, Version 3.141592653-2.6-1.40.23 (TeX Live 2021/W32TeX) (preloaded format=pdflatex 2021.9.15)  14 DEC 2021 15:51
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
-**"boosting for mixed distributions.tex"
-(./boosting for mixed distributions.tex
+**"not used.tex"
+(./not used.tex
 LaTeX2e <2021-06-01> patch level 1
 L3 programming layer <2021-08-27>
 (f:/texlive/2021/texmf-dist/tex/latex/base/article.cls
@@ -222,23 +222,23 @@ File: l3backend-pdftex.def 2021-08-04 L3 backend support: PDF output (pdfTeX)
 \l__color_backend_stack_int=\count283
 \l__pdf_internal_box=\box54
 )
-(./boosting for mixed distributions.aux)
-\openout1 = `"boosting for mixed distributions.aux"'.
+(./not used.aux)
+\openout1 = `"not used.aux"'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 39.
-LaTeX Font Info:    ... okay on input line 39.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 39.
-LaTeX Font Info:    ... okay on input line 39.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 39.
-LaTeX Font Info:    ... okay on input line 39.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 39.
-LaTeX Font Info:    ... okay on input line 39.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 39.
-LaTeX Font Info:    ... okay on input line 39.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 39.
-LaTeX Font Info:    ... okay on input line 39.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 39.
-LaTeX Font Info:    ... okay on input line 39.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 38.
+LaTeX Font Info:    ... okay on input line 38.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 38.
+LaTeX Font Info:    ... okay on input line 38.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 38.
+LaTeX Font Info:    ... okay on input line 38.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 38.
+LaTeX Font Info:    ... okay on input line 38.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 38.
+LaTeX Font Info:    ... okay on input line 38.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 38.
+LaTeX Font Info:    ... okay on input line 38.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 38.
+LaTeX Font Info:    ... okay on input line 38.
 \c@lstlisting=\count284
 
 (f:/texlive/2021/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
@@ -263,115 +263,62 @@ Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 4
 File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Liv
 e
 ))
-LaTeX Font Info:    Trying to load font information for U+msa on input line 41.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 40.
 
 
 (f:/texlive/2021/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 41.
+LaTeX Font Info:    Trying to load font information for U+msb on input line 40.
 
 
 (f:/texlive/2021/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
-Overfull \hbox (6.75537pt too wide) in paragraph at lines 75--76
-[]\OT1/cmr/m/n/10.95 Binary clas-si-fi-ca-tion: Ad-aBoost, Log-it-Boost (real, 
-dis-crete, gen-tle Ad-aBoost), Ad-aBoost.M1 
- []
+LaTeX Font Info:    Trying to load font information for U+bbm on input line 66.
 
-[1
-
-{f:/texlive/2021/texmf-var/fonts/map/pdftex/updmap/pdftex.map}] [2]
-LaTeX Font Info:    Trying to load font information for U+bbm on input line 115
-.
 
 (f:/texlive/2021/texmf-dist/tex/latex/bbm-macros/ubbm.fd
 File: ubbm.fd 1999/03/15 V 1.2 Font definition for bbm font - TH
-) [3] [4] [5] [6]
-[7] [8]
-<../plots/two_gaussians/yone.png, id=48, 481.8pt x 481.8pt>
-File: ../plots/two_gaussians/yone.png Graphic file (type png)
-<use ../plots/two_gaussians/yone.png>
-Package pdftex.def Info: ../plots/two_gaussians/yone.png  used on input line 38
-5.
-(pdftex.def)             Requested size: 136.5746pt x 136.5719pt.
-<../plots/two_gaussians/ytwo.png, id=49, 481.8pt x 481.8pt>
-File: ../plots/two_gaussians/ytwo.png Graphic file (type png)
-<use ../plots/two_gaussians/ytwo.png>
-Package pdftex.def Info: ../plots/two_gaussians/ytwo.png  used on input line 38
-6.
-(pdftex.def)             Requested size: 136.5746pt x 136.5719pt.
-<../plots/two_gaussians/y.png, id=50, 481.8pt x 481.8pt>
-File: ../plots/two_gaussians/y.png Graphic file (type png)
-<use ../plots/two_gaussians/y.png>
-Package pdftex.def Info: ../plots/two_gaussians/y.png  used on input line 387.
-(pdftex.def)             Requested size: 136.5746pt x 136.5719pt.
- [9]
-<../plots/sev/hist.png, id=54, 481.8pt x 481.8pt>
-File: ../plots/sev/hist.png Graphic file (type png)
-<use ../plots/sev/hist.png>
-Package pdftex.def Info: ../plots/sev/hist.png  used on input line 430.
-(pdftex.def)             Requested size: 159.3382pt x 159.33266pt.
-<../plots/sev/log-log.png, id=55, 481.8pt x 481.8pt>
-File: ../plots/sev/log-log.png Graphic file (type png)
-<use ../plots/sev/log-log.png>
-Package pdftex.def Info: ../plots/sev/log-log.png  used on input line 431.
-(pdftex.def)             Requested size: 159.3382pt x 159.33266pt.
- [10 <../plots/two_gaussians/yone.png> <../plots/two_gaussians/ytwo.png> <../pl
-ots/two_gaussians/y.png>]
-<../plots/sev/null_trace.png, id=62, 481.8pt x 481.8pt>
-File: ../plots/sev/null_trace.png Graphic file (type png)
-<use ../plots/sev/null_trace.png>
-Package pdftex.def Info: ../plots/sev/null_trace.png  used on input line 460.
-(pdftex.def)             Requested size: 159.3382pt x 159.33266pt.
+) [1
 
+{f:/texlive/2021/texmf-var/fonts/map/pdftex/updmap/pdftex.map}] [2] [3] [4] [5]
+ [6] [7]
+Overfull \hbox (22.428pt too wide) detected at line 341
+[] \OT1/cmr/m/n/10.95 = []\OML/cmm/m/it/10.95 :
+ []
 
-LaTeX Warning: `!h' float specifier changed to `!ht'.
-
-[11 <../plots/sev/hist.png> <../plots/sev/log-log.png>]
-<../plots/sev/glm_p.png, id=69, 481.8pt x 481.8pt>
-File: ../plots/sev/glm_p.png Graphic file (type png)
-<use ../plots/sev/glm_p.png>
-Package pdftex.def Info: ../plots/sev/glm_p.png  used on input line 487.
-(pdftex.def)             Requested size: 159.3382pt x 159.33266pt.
- [12 <../plots/sev/null_trace.png> <../plots/sev/glm_p.png>] (./boosting for mi
-xed distributions.bbl)
-[13] (./boosting for mixed distributions.aux) ) 
+[8] (./not used.bbl) [9] (./not used.aux) ) 
 Here is how much of TeX's memory you used:
- 4622 strings out of 480050
- 64609 string characters out of 5890936
- 551902 words of memory out of 5000000
- 22216 multiletter control sequences out of 15000+600000
- 415163 words of font info for 71 fonts, out of 8000000 for 9000
+ 4527 strings out of 480050
+ 61750 string characters out of 5890936
+ 555854 words of memory out of 5000000
+ 22133 multiletter control sequences out of 15000+600000
+ 414654 words of font info for 69 fonts, out of 8000000 for 9000
  319 hyphenation exceptions out of 8191
- 57i,12n,66p,863b,264s stack positions out of 5000i,500n,10000p,200000b,80000s
- <c:/Users/Guangyuan/.texlive202
-1/texmf-var/fonts/pk/ljfour/public/bbm/bbm10.657pk>{f:/texlive/2021/texmf-dist/
-fonts/enc/dvips/cm-super/cm-super-ts1.enc}<f:/texlive/2021/texmf-dist/fonts/typ
-e1/public/amsfonts/cm/cmbx10.pfb><f:/texlive/2021/texmf-dist/fonts/type1/public
-/amsfonts/cm/cmbx12.pfb><f:/texlive/2021/texmf-dist/fonts/type1/public/amsfonts
-/cm/cmex10.pfb><f:/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cmextra/
-cmex8.pfb><f:/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb
-><f:/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi6.pfb><f:/texli
-ve/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb><f:/texlive/2021/te
-xmf-dist/fonts/type1/public/amsfonts/cm/cmmib10.pfb><f:/texlive/2021/texmf-dist
-/fonts/type1/public/amsfonts/cmextra/cmmib8.pfb><f:/texlive/2021/texmf-dist/fon
-ts/type1/public/amsfonts/cm/cmr10.pfb><f:/texlive/2021/texmf-dist/fonts/type1/p
-ublic/amsfonts/cm/cmr12.pfb><f:/texlive/2021/texmf-dist/fonts/type1/public/amsf
-onts/cm/cmr17.pfb><f:/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cm
-r6.pfb><f:/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb><f:/
-texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb><f:/texlive/2
+ 57i,13n,66p,839b,264s stack positions out of 5000i,500n,10000p,200000b,80000s
+ <c:/Users/Guangyuan/.texlive2021/te
+xmf-var/fonts/pk/ljfour/public/bbm/bbm10.657pk><f:/texlive/2021/texmf-dist/font
+s/type1/public/amsfonts/cm/cmbx10.pfb><f:/texlive/2021/texmf-dist/fonts/type1/p
+ublic/amsfonts/cm/cmbx12.pfb><f:/texlive/2021/texmf-dist/fonts/type1/public/ams
+fonts/cm/cmex10.pfb><f:/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/
+cmmi10.pfb><f:/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi6.pfb
+><f:/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb><f:/texli
+ve/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmmib10.pfb><f:/texlive/2021/
+texmf-dist/fonts/type1/public/amsfonts/cmextra/cmmib8.pfb><f:/texlive/2021/texm
+f-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb><f:/texlive/2021/texmf-dist/fon
+ts/type1/public/amsfonts/cm/cmr12.pfb><f:/texlive/2021/texmf-dist/fonts/type1/p
+ublic/amsfonts/cm/cmr17.pfb><f:/texlive/2021/texmf-dist/fonts/type1/public/amsf
+onts/cm/cmr6.pfb><f:/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmr
+8.pfb><f:/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb><f:
+/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy6.pfb><f:/texlive/2
 021/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb><f:/texlive/2021/texmf-
 dist/fonts/type1/public/amsfonts/cm/cmti10.pfb><f:/texlive/2021/texmf-dist/font
-s/type1/public/amsfonts/cm/cmtt10.pfb><f:/texlive/2021/texmf-dist/fonts/type1/p
-ublic/amsfonts/symbols/msbm10.pfb><f:/texlive/2021/texmf-dist/fonts/type1/publi
-c/cm-super/sfrm1095.pfb>
-Output written on "boosting for mixed distributions.pdf" (13 pages, 312451 byte
-s).
+s/type1/public/amsfonts/symbols/msbm10.pfb>
+Output written on "not used.pdf" (9 pages, 243036 bytes).
 PDF statistics:
- 167 PDF objects out of 1000 (max. 8388607)
- 96 compressed objects within 1 object stream
+ 129 PDF objects out of 1000 (max. 8388607)
+ 80 compressed objects within 1 object stream
  0 named destinations out of 1000 (max. 500000)
- 36 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 1 words of extra memory for PDF output out of 10000 (max. 10000000)
 

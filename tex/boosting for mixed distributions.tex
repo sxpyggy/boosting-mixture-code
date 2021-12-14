@@ -24,11 +24,16 @@
 \def\bm{\boldsymbol{m}}
 \def\by{\boldsymbol{y}}
 
+\newcounter{saveenumi}
+\newcommand{\seti}{\setcounter{saveenumi}{\value{enumi}}}
+\newcommand{\conti}{\setcounter{enumi}{\value{saveenumi}}}
+
 \newcommand{\blue}[1]{\textcolor{blue}{#1}}
+\newcommand{\red}[1]{\textcolor{red}{#1}}
 \usepackage{url}%For ref url
 %\bibliographystyle{plain}
 %opening
-\title{Gradient boosted mixture models and their applications in insurance loss prediction}
+\title{Non-life insurance pricing with gradient tree-boosted mixture models.}
 \author{Guangyuan Gao \and Jiahong Li}
 
 \begin{document}
@@ -36,7 +41,9 @@
 \maketitle
 
 \begin{abstract}
-	The Expectation-Maximization (EM) algorithm is often used to estimate parameters in mixture of regression models. In this paper, we propose a gradient boosting algorithm for mixture of  models, which combines the EM algorithm and functional gradient decent techniques. The proposed algorithm fully explores the predictive power of covariates and performs variable selection during model fitting. We illustrate those advantages in two simulated examples and a real data set: a simulated mixture of Gaussians, a simulated zero-inflated Poisson, and a real insurance claims amount data.   
+Insurance loss data often cannot be well modeled by a single distribution. Mixture of models are often applied in insurance loss modeling. The Expectation-Maximization (EM) algorithm is used for parameter estimation in mixture of models. Feature engineering and variable selection are challenging for mixture of models due to several component models involving. Overfitting is also a concern when predicting future loss. To address those issues, we propose an Expectation-Boosting (EB) algorithm, which replaces the maximization step in the EM algorithm by a gradient boosting decision tree. The boosting is overfitting-sensitive, and it performs automated feature engineering, model fitting and variable selection simultaneously. The EB algorithm fully explores the predictive power of covariate space.
+
+We illustrate those advantages using two simulated data and a real insurance loss data.
 
 \end{abstract}
 
@@ -52,329 +59,474 @@ When the individual risk factors are available, we can extend mixture of distrib
 
 Parameter estimation in mixture models is challenging since each component distribution/regression parameters are related to each other. 
 The expectation-maximization algorithm is an iterative method to estimate component parameters and (hidden) component indicator variable.   
-Variable selection and component selection in mixture models is also challenging. And we always performs variable selection and component selection after parameter estimation.   
+Variable selection  is also challenging since we need
+to perform variable selection for each component regression.  
 
 In this paper, we propose an expectation-boosting (EB) algorithm, which replaces the maximization step by an overfitting-sensitive boosting step. 
-There are several advantages of EB algorithm over the EM algorithm. First, boosting algorithm is a flexible non-parametric regression facilitating both non-linear effects and interaction. Second, boosting algorithm is overfitting-sensitive, if we add suitable normalization to boosting step we can perform variable selection simultaneously during the EB algorithm. Third, by investigating the final boosted component, we can select component by removing those components containing very few weak learners. 
-     
-
-\section{Review of mixed distributions}
-We review the mixed distributions and the EM algorithm.
-We mixed K different EDF densities $f_k$ by
-\begin{equation}
-	Y \sim \sum_{k=1}^{K} p_{k} f_{k}\left(y ; \theta_{k}, v / \varphi_{k}\right)=\sum_{k=1}^{K} p_{k} \exp \left\{\frac{y \theta_{k}-\kappa_{k}\left(\theta_{k}\right)}{\varphi_{k} / v}+a_{k}\left(y ; v / \varphi_{k}\right)\right\}
-	\label{mixed_pdf}
-\end{equation}
-with canonical parameter $\theta_k$, exposure $v_k>0$, dispersion parameters $\varphi_k>0$ and $\sum_{k=1}^K p_k =1$. If we consider the log-likelihood function of $n$ observations 
-$$\mathcal{D}=\{(Y_1,\bx_1,v_1),(Y_n,\bx_2,v_2),\ldots,(Y_n,\bx_n,v_n)\},$$ the log-likelihood function of mixed distribution \eqref{mixed_pdf} is given by 
-\begin{equation}
-	\ell_{\boldsymbol{Y}}(\boldsymbol{\theta}, \boldsymbol{p})=\sum_{i=1}^{n} \ell_{Y_{i}}(\boldsymbol{\theta}, \boldsymbol{p})=\sum_{i=1}^{n} \log \left(\sum_{k=1}^{K} p_{ki} f_{ki}\left(Y_{i} ; \theta_{ki}, v_{i} / \varphi_{k}\right)\right),
-	\label{loglike_mixed}
-\end{equation}
-where both canonical parameter $\theta_{ki}=h_k(\mu_k(\bx_i))$ and $p_{ki}=p_{k}(\bx_i)$ are regression functions.
-
-Mixed distribution can be defined as \eqref{mixed_pdf} and also can be defined in a more constructive way using a latent variable $Z$. $Z$ is a categorical r.v. having probabilities $\Pr[Z=k]=p_k >0$ for $k=1,\ldots,K$. We use $Z$ to form the mixed distribution i.e. we first choose $Z \in \{1, \cdots, K\}$ and $Y|Z=k \sim  f_{k}\left(y ; \theta_{k}, v / \varphi_{k}\right)$. Using one-hot coding, $Z$ can be represent by random vector $\boldsymbol{Z}$:
-\begin{equation}
-	\boldsymbol{Z} = (Z_1,\cdots, Z_K)^{\top}=(\mathbbm{1}_{\{Z=1\}},\ldots,\mathbbm{1}_{\{Z=K\}})^{\top}.
-\end{equation}
-$Y$ can also be expressed as 
-\begin{equation}
-	Y = \sum_{k=1}^K Z_k Y_k^{*},
-\end{equation}
-where the pdf of $Y_k^{*}$ is denoted by $f_{k}\left(y ; \theta_{k}, v / \varphi_{k}\right)$. Therefore, under complete information $(Y,\boldsymbol{Z})$ is given by
-\begin{equation}
-	\begin{aligned}
-		\ell_{(Y, Z)}(\boldsymbol{\theta}, \boldsymbol{p}) &=\log \left(\prod_{k=1}^{K}\left(p_{k} f_{k}\left(Y ; \theta_{k}, v / \varphi_{k}\right)\right)^{Z_{k}}\right) \\
-		&=\log \left(\prod_{k=1}^{K}\left(p_{k} \exp \left\{\frac{Y \theta_{k}-\kappa_{k}\left(\theta_{k}\right)}{\varphi_{k} / v}+a_{k}\left(Y ; v / \varphi_{k}\right)\right\}\right)^{Z_{k}}\right) \\
-		&=\sum_{k=1}^{K} Z_{k}\left(\log \left(p_{k}\right)+\frac{Y \theta_{k}-\kappa_{k}\left(\theta_{k}\right)}{\varphi_{k} / v}+a_{k}\left(Y ; v / \varphi_{k}\right)\right).
-	\end{aligned}
-\end{equation}
-In fact, the information of $Z$ is missing, so we can use EM algorithm to estimate the $(\boldsymbol{\theta},\boldsymbol{p})$ under incomplete information $\boldsymbol{Y}$. The EM algorithm for mixed distribution usually contains two steps: Expectation step and Maximization step. 
-
-\paragraph{Expectation step.} Using Bayes' rule, we can calculate the posterior probability of $Z_k =1$ given $Y$ as 
-\begin{equation*}
-	\mathbb{E}\left(Z_{k} \mid Y\right)=\mathbb{P}\left[Z_{k}=1 \mid Y\right]=\frac{p_{k} f_{k}\left(Y ; \theta_{k}, v / \varphi_{k}\right)}{\sum_{l=1}^{K} p_{l} f_{l}\left(Y ; \theta_{l}, v / \varphi_{l}\right)},
-\end{equation*}
-which is used as an estimate of latent variable $Z_k$, denoted by $\hat{Z}_k$. 
-
-\paragraph{Expectation step.} The joint log-likelihood function for the data set $(Y_i,\hat{Z}_{ki},\bx_i)$ is given by 
-\begin{equation}
-	\ell(\boldsymbol{\theta},\boldsymbol{p})=\sum_{i=1}^n \sum_{k=1}^{K} \hat{Z}_{ki}\left(\log \left(p_{ki}\right)+\frac{Y_i \theta_{ki}-\kappa_{k}\left(\theta_{ki}\right)}{\varphi_{k} / v_i}+a_{k}\left(Y_i ; v_i / \varphi_{k}\right)\right).
-	\label{log_hat}
-\end{equation}
-Therefore, the MLE of $\boldsymbol{\theta}$ and $\boldsymbol{p}$ can be obtained by maximizing the log-likelihood function \eqref{log_hat}. Iterating the expectation step and maximization step leads to the MLE of $\boldsymbol{\theta}$ and $\boldsymbol{p}$.
-
-\section{Special Case: Zero-inflated Poisson model}
-A special example of mixed distribution is Zero-inflated Poisson distribution, which is given by 
-\begin{equation}
-	f_{\text{ZIP}}(N;\lambda,\pi_0) = \left\{ 
-	\begin{array}{ccl}
-		\pi_0+(1-\pi_0)e^{-\lambda} & \mbox{for}
-		& N=0 \\
-		(1-\pi_0)\frac{e^{-\lambda}\lambda^N}{N!} & \mbox{for} &N\in\N_+.
-	\end{array}\right.
-\end{equation}
-Given the data $(N_0,\bx_i)_{i=1:n}$ the likelihood is
-\begin{equation}\label{ZIP}
-	\begin{aligned}
-		L(\beta,\gamma)=&\prod_{i=1}^{n}\left\{\pi_0(\bx_i;\beta)+[1-\pi_0(\bx_i;\beta)]e^{-\lambda(\bx_i;\gamma)}\right\}\mathbbm{1}_{\{N_i=0\}}+ \\
-		&[1-\pi_0(\bx_i;\beta)]\frac{e^{-\lambda(\bx_i;\gamma)}\lambda(\bx_i;\gamma)^{N_i}}{N_i!}\mathbbm{1}_{\{N_i>0\}}.
-	\end{aligned}
-\end{equation}
-The log-likelihood is then
-\begin{equation}\label{ZIP-log}
-	\begin{aligned}
-		l(\beta,\gamma)=&\sum_{i:N_i=0}\log\left\{\pi_0(\bx_i;\beta)+[1-\pi_0(\bx_i;\beta)]e^{-\lambda(\bx_i;\gamma)}\right\}+ \\
-		&\sum_{i:N_i>0}\log[1-\pi_0(\bx_i;\beta)]+N_i\log \lambda(\bx_i;\gamma)-\lambda(\bx_i;\gamma).
-	\end{aligned}
-\end{equation} 
-The MLE of $\beta$ and $\gamma$ are difficult to obtain based on the log-likelihood \eqref{ZIP-log}.  
-
-\paragraph{Expectation-Maximization algorithm.}
-
-The ZIP distribution can be interpreted as a mixture of two distributions, the Poisson distribution and a single point measure distribution in $N=0$, with mixing probability $\pi_0$:
-$$f_\text{ZIP}(N;\lambda,\pi_0)= \pi_0\mathbbm{1}_{\{N=0\}} + 
-(1-\pi_0)\frac{e^{-\lambda}\lambda^N}{N!}.$$
-Therefore, we explore the Expectation-Maximization algorithm for the ZIP model.
-We introduce a latent Bernoulli variable $Z$ with $\Pr(Z=1)=\pi_0$, which indicates the component distribution, i.e., 1 for a single point measure distribution and 0 for the Poisson distribution.
-The joint probability mass function of $(N,Z)$ can be written as 
-\begin{equation}
-	f_\text{ZIP}(N,Z;\lambda,\pi_0)= \left(\pi_0\mathbbm{1}_{\{N=0\}}\right)^{Z}
-	\left[(1-\pi_0)\frac{e^{-\lambda}\lambda^N}{N!}\right]^{1-Z}.
-\end{equation}
+There are several advantages of EB algorithm over the EM algorithm. 
+First, boosting algorithm is a flexible non-parametric regression facilitating both non-linear effects and interaction. 
+Second, boosting algorithm is overfitting-sensitive, if we add suitable normalization to boosting step we can perform variable selection simultaneously. 
+Third, by investigating the final boosted component, we can select component by removing those components containing very few weak learners. 
 
 
+Commonly used boosting algorithms are listed below
+	\begin{enumerate}
+		
+		\item Binary classification: {AdaBoost}, LogitBoost (real, discrete, gentle AdaBoost), AdaBoost.M1
+		
+		\item Multinomial classification: Stagewise Additive Modeling using a Multi-class Exponential loss (SAMME), SAMME.R (multi-class real AdaBoost),
+		\item {Gradient based}: {gradient boosting machine/model (GBM)}, Newton boosting, gradient boosting decision tree (GBDT), {eXtreme Gradient Boosting (XGBoost)}, {light gradient boosting machine (LightGBM)}
+	\end{enumerate}
+	
+	The last type is based on {gradient of loss function}, and our EB algorithm uses this version of boosting.
+
+\section{Reviews: mixture of models and the EM algorithm}
+
+\subsection{Mixture of models}
+
+	Suppose a random variable $y$ follows the $k$-th {\it component distribution} from
+	$$\{f_1(y;\mu_1,\phi_1),\ldots,f_K(y;\mu_K,\phi_K)\}$$
+	with \textit{mixing probability} $p_k, k=1,\ldots,K$,
+	then the probability density function for $y$ is
+	$$f(y)=\sum_{k=1}^Kp_kf_k(y;\mu_k,\phi_k).$$
+
+	If {\it individual features $\bx_i$} are available and they have systematic effects on the distribution of $y_i$, then we establish a mixture of regressions:
+	$$f(y|\bx)=\sum_{k=1}^Kp_k(\bx)f_k(y;\mu_k(\bx),\phi_k(\bx)).$$
+	
+	Above is the most general form of mixing. In applications, we always put some constraints on the \textit{mixing structure}:
+	
+	\begin{itemize}
+		\item Mixing probabilities are not related to $\bx$
+		$$f(y)=\sum_{k=1}^Kp_kf_k(y;\mu_k(\bx),\phi_k(\bx)).$$
+		\item Both mixing probabilities and dispersions are not related to $\bx$
+		$$f(y)=\sum_{k=1}^Kp_kf_k(y;\mu_k(\bx),\phi_k),$$
+
+		\item If component distributions are from the same distribution family, we might assume different component distributions have the same dispersion
+		$$f(y)=\sum_{k=1}^Kp_kf_k(y;\mu_k(\bx),\phi).$$
+		\item Covariates $\bx$ are only related to the mixing probabilities:
+		$$f(y)=\sum_{k=1}^Kp_k(\bx)f_k(y;\mu_k,\phi_k).$$
+	\end{itemize}
+	
+	We need to determine the mixture structure according to the data and our aim. Imposing suitable constraints on mixture, we can {accelerate model fitting} without compromising predictive performance.
+
+\subsection{EM algorithm}
+
+	Suppose we know which component distribution each sample is from. That is we know the \textit{full information} $(Y,Z,\bx)$ where
+	$$Z=(Z_1,\ldots,Z_K)^\top=(\mathbbm{1}_1(k),\ldots,\mathbbm{1}_K(k))^\top$$
+	is the one-hot encoding of \textit{component indicator variable}.
+	The joint distribution function for full information (one sample) is given by
+	$$f(y,z|
+	\bx) = \prod_{k=1}^K\left[p_k(\bx)f_k(y;\mu_k(\bx),\phi_k(\bx))\right]^{z_k}$$
+	The {log-likelihood function} is given by
+	\begin{equation}\label{full-L}
+		l(p,\mu,\phi|y,z,\bx)=\sum_{k=1}^K z_k\left[\log p_k(\bx) + \log f_k(y;\mu_k(\bx),\phi_k(\bx))\right]
+	\end{equation}
+	The parameters in $p,\mu,\phi$ can be estimated by $K+1$ {independent optimizations}
+	\begin{equation}\label{p-reg}
+		\hat{\theta}_p=\underset{\theta_p}{\arg\max}\sum_{i=1}^n\sum_{k=1}^Kz_{i,k}\log p_k(\bx_i;\theta_p)
+	\end{equation}
+	\begin{equation}\label{comp-reg}
+		\left(\hat{\theta}_\mu^{(k)},\hat{\theta}_\phi^{(k)}\right)=\underset{\theta^{(k)}_\mu,\theta^{(k)}_\phi}{\arg\max}\sum_{i=1}^n\sum_{k=1}^Kz_{i,k}\log f_k\left(y_i;\mu_k\left(\bx_i;\theta_\mu^{(k)}\right),\phi_k\left(\bx_i;\theta_\phi^{(k)}\right)\right)
+	\end{equation}
+	Those optimizations are corresponding to  {\it a multinomial logistic classification} and {\it $K$ regressions}.
+Note that the multinomial logistic classification are fitted to all samples, while $K$ regressions are fitted to {partial} samples with $\{i:z_{i,k}=1\}$.
+
+However, we do not have full information  $(Y,Z,\bx)$ but only the incomplete information $(Y,\bx)$. The following EM algorithm is inspired by the above discussion.
 \paragraph{Expectation step.}
-When $N>0$, the latent variable is known as $Z=\hat{Z}=0$. However, when $N=0$, $Z$ can be either $0$ or $1$. The conditional expectation of $Z$ given $N=0$ is 
-$$\E(Z|N=0)=\Pr(Z=1|N=0)=\frac{\Pr(Z=1,N=0)}{\Pr(N=0)}=\frac{\pi_0}{\pi_0+(1-\pi_0)e^{-\lambda}},$$
-which is used as an estimate of latent variable $Z$, denoted by $\hat{Z}$. 
+	With iterated $\hat{p},\hat{\mu},\hat{\phi}$, calculate the \textit{conditional expectation} of $z$:
+	$$\hat{z}_{i,k}=\hat{z}_k(\bx_i)=\frac{\hat{p}_{i,k}f_k(y_i;\hat{\mu}_{i,k},\hat{\phi}_{i,k})}{\sum_{l=1}^K\hat{p}_{i,l}f_l(y_i;\hat{\mu}_{i,l},\hat{\phi}_{i,l})},$$
+	where
+	$\hat{p}_{i,k}=\hat{p}_k(\bx_i),\hat{\mu}_{i,k}=\hat{\mu}_k(\bx_i),\hat{\phi}_{i,k}=\hat{\phi}_k(\bx_i)$.
 
 \paragraph{Maximization step.}
-The joint log-likelihood function for the data set $(N_i,\hat{Z}_i,\bx_i)_{\{i:N_i=0\}}\cup(N_i,Z_i,\bx_i)_{\{i:N_i>0\}}$ is given by
-\begin{equation}
-	\begin{aligned}
-		l(\beta,\gamma)=&\sum_{i:N_i=0}\hat{Z}_i\log\pi_0(\bx_i;\beta)+(1-\hat{Z}_i)\log(1-\pi_0(\bx_i;\beta))-(1-\hat{Z}_i)\lambda(\bx_i,\gamma)+\\
-		&\sum_{i:N_i>0}	\log(1-\pi_0(\bx_i,\beta))+N_i\log\lambda(\bx_i;\gamma)-\lambda(\bx_i;\gamma)\\
-		=&\sum_{i=1}^n\hat{Z}_i\log\pi_0(\bx_i;\beta)+\left(n-\sum_{i=1}^n\hat{Z}_i\right)\log(1-\pi_0(\bx_i;\beta)) +\\
-		& \sum_{i=1}^n(1-\hat{Z}_i)\left[N_i\log\lambda(\bx_i;\gamma)-\lambda(\bx_i;\gamma)\right].
-	\end{aligned}
-\end{equation}
-Therefore, the MLE of parameters $\beta$ and $\gamma$ can be obtained by maximizing the following two log-likelihood functions, respectively,
-\begin{equation}\label{ZIP1}
-	l_\text{ZIP1}(\beta)=\sum_{i=1}^n\hat{Z}_i\log\pi_0(\bx_i;\beta)+\left(n-\sum_{i=1}^n\hat{Z}_i\right)\log(1-\pi_0(\bx_i;\beta))
-\end{equation}
-and 
-\begin{equation}\label{ZIP2}
-	l_\text{ZIP2}(\gamma)=\sum_{i=1}^n(1-\hat{Z}_i)\left(N_i\log\lambda(\bx_i;\gamma)-\lambda(\bx_i;\gamma)\right).
-\end{equation}
-Iterating the expectation step and maximization step leads to the MLE of $\beta$ and $\gamma$ in the log-likelihood \eqref{ZIP-log}.
+	Based on the following likelihood function for full information, calculate the MLE of parameters.
+	\begin{equation}
+		\begin{aligned}
+			&l(p,\mu,\phi|y,\hat{z},\bx)\\
+			=&\sum_{i=1}^n\sum_{k=1}^K \hat{z}_{i,k}\left[\log p_k(\bx_i) + \log f_k(y_i;\mu_k(\bx_i),\phi_k(\bx_i))\right]\\
+			=&\sum_{i=1}^n\sum_{k=1}^K \hat{z}_{i,k}\log p_k(\bx_i) + \sum_{i=1}^n\sum_{k=1}^K \hat{z}_{i,k}\log f_k(y_i;\mu_k(\bx_i),\phi_k(\bx_i))
+		\end{aligned}
+	\end{equation}
+	This step is similar to \eqref{p-reg} and \eqref{comp-reg}. However, now we have $\hat{z}_{i,k}\in(0,1)$, so we need to consider 
+	\begin{itemize}
+		\item A multinomial logistic classification with {fractional} response.
+		\item $K$ {weighted}-regressions fitted to {all} samples.
+	\end{itemize}
 
-\section{Gradient boosting for mixed EDFs}
+\section{Expectation-Boosting algorithm}
+We replace the maximization step in the EM algorithm by a boosting step. The boosting step increases the likelihood in each iteration, but overfitting-sensitively.
+The boosting step follows a generic functional gradient descent algorithm.
+We first review generic functional gradient descent algorithm, then describe our proposed EB algorithm.
 
-A cyclic algorithm proposed by \cite{mayr:2012} or a non-cyclic algorithm proposed by \cite{thomas:2018} can be implemented to iteratively estimate $\pi_0$ and $\lambda$ based on the log-likelihood function \eqref{ZIP-log}. 
-We propose a new algorithm which embeds expectation of latent variable into a non-cyclic boosting algorithm.
+\subsection{Generic functional gradient descent algorithm}
 
-Essentially, the boosting algorithms are functional gradient decent techniques. The task is to estimate the function $F:\R^p\rightarrow\R$, minimizing an expected cost:
-$$\E[C(Y,F(\bx))], ~~~~ C: \R^2\rightarrow\R,$$
-based on data $$\mathcal{D}=\{(Y_1,\bx_1,v_1),(Y_n,\bx_2,v_2),\ldots,(Y_n,\bx_n,v_n)\},$$ where $\bx$ denotes a $p$-dimensional covariate. In statistical modeling, the cost function is usually chosen as the negative log-likelihood.
+	Suppose {non-parametric regression function} as $F:\R^P\rightarrow\R$. Our purpose is to  estimate $F$ to minimize the expected loss $$\hat{F}=\underset{F}{\arg\min}\E\left[C(Y,F(\bx))\right],$$
+	where $C:\R\times\R\rightarrow\R_+$ is the \textit{loss function}.
+	We always replace the expected loss by sample average loss:
+	$$\hat{F}=\underset{F}{\arg\min} \frac{1}{n}\sum_{i=1}^nC(y_i,F(\bx_i))$$
+	We choose the \textit{negative log-likelihood} function as the loss function. Hence, minimizing the loss function is equivalent to maximizing the likelihood function.
+The link function is used to link the regression function $F$ with the parameter interested such as mean, probability odds, etc. 
+	Commonly used {link function} and loss functions in different boosting algorithms are listed below:
+	\begin{itemize}
+		\item AdaBoost: $$C(y,F)=\exp(yF),  ~~ y\in\{-1,1\}$$
+		$$F(\bx)=\frac{1}{2}\log\left(\frac{\Pr[Y=1|\bx]}{\Pr[Y=-1|\bx]}\right)$$
+		\item LogitBoost: $$C(y,F)=\log_2(1+\exp(-2yF)), ~~ y\in\{-1,1\}$$
+		$$F(\bx)=\frac{1}{2}\log\left(\frac{\Pr[Y=1|\bx]}{\Pr[Y=-1|\bx]}\right)$$
+		\item $L_2$Boost: $$C(y,F)=(y-F)^2/2, ~~ y\in \R$$
+		$$F(\bx)=\E(Y|\bx)$$
+	\end{itemize}
 
-Let $F_1(\bx),\ldots,F_{K-1}(\bx)$ be $K-1$ regression functions. The probability of $Z=k$ is given by
-\begin{equation}
-	p_k(\bx)=\Pr(Z_k=1|\bx)=\frac{\exp{F_k(\bx)}}{1+\sum_{l=1}^{K-1}\exp{F_l(\bx)}}, ~~k=1,\ldots,K-1
-\end{equation}
-and
-\begin{equation}
-	p_K(\bx)=\Pr(Z_K=1|\bx)=\frac{1}{1+\sum_{l=1}^{K-1}\exp{F_l(\bx)}}.
-\end{equation}
-We use the negative log-likelihood function corresponds to the cost function 
-\begin{equation}
-	\begin{aligned}
-		    C_{Z}(\boldsymbol{Z}, \boldsymbol{F}(\bx))=& - \sum_{k=1}^K Z_k \log p_k\\
-		    =& -\sum_{k=1}^{K-1}  Z_k F_k(\bx)  + \log[1+ \sum_{l=1}^{K-1}\exp{F_l(\bx)}].
-	\end{aligned}
-\end{equation}
-The negative gradient of the two cost functions w.r.t. $F_k$ is given by
-\begin{equation}
-	U(Z_k,F_k(\bx))=-\frac{\partial C_{Z}(Z_k,F_k(\bx))}{\partial F_k(\bx)}=
-	Z_k-\frac{\exp F_k(\bx)}{1+ \sum_{l=1}^{K-1}\exp{F_l(\bx)}}, ~~k=1,\cdots,K-1
-\end{equation}
+We follow \citet{buehlmann:2003} to review the generic functional gradient decent algorithm:
 
-Similarly, we can also use negative log-likelihood as cost function for $Y_{k}^*$:
-\begin{equation}
-	\begin{aligned}
-		C_{Y_k^*}(Y,Z_k,G_k(\bx))=& -\frac{v}{\varphi_k}Z_k\left[Y G_k(\bx)-\kappa_k\left(G_k(\bx)\right)\right]-a\left(Y ; v / \varphi_k\right).
-	\end{aligned}
-\end{equation}
-where $G_k(\bx)=h_k(\mu_k(\bx))$.
-
-\begin{equation}
-	V_k(Y,Z_k,G_k(\bx))=-\frac{\partial C_{Y_k^*}(Y,Z_k,G_k(\bx))}{\partial G_k(\bx)}=
-	\frac{v}{\varphi}Z_k\left[Y -\kappa_k^{\prime}\left(G_k(\bx)\right)\right].
-\end{equation}
-
-\paragraph{Algorithm 1.} Mixed distribution boosting (cyclical)
-\begin{itemize}
-	\item[Step 1] (initialization)  Initialize $\hat{p}_1^{[0]}, \ldots, \hat{p}_K^{[0]}, \hat{\mu}_1^{[0]},\ldots,\hat{\mu}_K^{[0]}, \hat{F}_1^{[0]}, \ldots, \hat{F}_{K-1}^{[0]}$, and $\hat{G}_1^{[0]},\ldots,\hat{\mu}_K^{[0]}$:
-	$$\hat{p}_k^{[0]}=\frac{1}{K},~~ \hat{\mu}_k^{[0]}=\frac{\sum_{i=1}^nY_i}{\sum_{i=1}^n v_i},~~
-	\hat{G}^{[0]}=h_k(\hat{\mu}_k^{[0]})$$ and $\hat{F}_1^{[0]}, \ldots, \hat{F}_{K-1}^{[0]}$ can be gained by solving the equation
-	$$ \frac{1}{K} = \frac{1}{1+(K-1)\exp{F}_k}$$ 
+	\begin{enumerate}
+		\item Initialization: $\hat{F}^{[0]}(\bx;\hat{\theta}^{[0]}),$ where $\hat{\theta}^{[0]}$ are determined by $(y_i,\bx_i)_{i=1:n}$.
+		Let $m=0.$
+		\item Projection of gradient to weak learner:
+		Calculate \textit{negative gradient} $$u_i=\left.-\frac{\partial C(y_i,F)}{\partial F}\middle|_{F=\hat{F}^{[m]}(\bx_i)}\right., i=1,\ldots,n.$$
+		Data $(u_i,\bx_i)_{i=1:n}$ is used to calibrate a weak learner $\hat{f}^{[m+1]}(\bx;\hat{\theta}^{[m+1]})$ with \textit{loss function $L_2$}.
 	
-	Set $m=0$.
+		\item One-dimensional optimization:
+		Solve an one-dimensional optimization  to find \textit{expansion coefficient} $\hat{\omega}^{[m+1]}$:
+		$$\hat{\omega}^{[m+1]}=\underset{\omega}{\arg\min}\sum_{i=1}^n C(y_i, \hat{F}^{[m]}(\bx_i)+\omega\hat{f}^{[m+1]}(\bx_i))$$
+		Update $$\hat{F}^{[m+1]}=\hat{F}^{[m]}+s\hat{\omega}^{[m+1]}\hat{f}^{[m+1]},$$
+		where $s$ is \textit{shrinkage factor or learning rate}.
+		\item Iteration: Let $m$ increase by 1, and repeat steps 2-3.
+			\end{enumerate}
+In the algorithm, weak learners are fitted to negative gradient $U$ rather than $Y$.
+		 Loss function in weak learners is always $L_2$, independently with model loss function $C$. 
+		 If weak learners are trees, the algorithm is called \textit{gradient boosting decision tree (GBDT)}.
+		 If weak learners are trees,  {calibration and variable selection} are performed simultaneously.
+		\citet{buhlmann2007boosting} argue that step 3 of one-dimensional optimization seems unnecessary given learning rate is sufficiently small according to some empirical experiments.
+
+
+
+
+\subsection{Expectation-Boosting algorithm}
+
+We denote the regression functions for $p,\mu,\phi$ by {$F,G,H$}. In the EB algorithm, we need to specify link functions and cost/loss functions, and derive negative gradient function.
+		
+We choose multiple logistic link function for mixing probabilities.	
+	\begin{equation}\label{logistic}
+		p_k(\bx)=\Pr(Z_k=1|\bx)=\frac{\exp{F_k(\bx)}}{\sum_{l=1}^{K}\exp{F_l(\bx)}},
+	\end{equation}
+	or equivalently
+	\begin{equation}\label{inv-logistic}
+		F_k(\bx)=\log p_k(\bx)-\frac{1}{K}\sum_{l=1}^K\log p_l(\bx),~~k=1,\ldots,K.
+	\end{equation}
+We use the negative log-likelihood function as the cost function
+\begin{equation}
+	\begin{aligned}
+		{C_{Z}(Z, F(\bx))}=& - \sum_{k=1}^K Z_k \log p_k(\bx).
+	\end{aligned}
+\end{equation}
+The negative gradient of the cost function w.r.t. $F_k$ is given by
+\begin{equation}
+	{U_k(Z,F(\bx))}=-\frac{\partial C_{Z}(Z,F(\bx))}{\partial F_k(\bx)}=
+	Z_k-p_k(\bx), ~~k=1,\ldots,K
+\end{equation}
+
+Commonly used link functions in component models are listed below
+	\begin{itemize}
+		\item Component Gaussian model:
+		$$\mu_k(\bx)=G_k(\bx)$$
+		$$\phi_k(\bx)=\exp H_k(\bx)$$
+		\item Component Poisson model:
+		$$\mu_k(\bx)=\exp G_k(\bx)$$
+		\item Component gamma model:
+		$$\mu_k(\bx)=\exp G_k(\bx)$$
+		$$\phi_k(\bx)=\exp H_k(\bx)$$
+	\end{itemize}
+Similarly, we use negative log-likelihood function of each component model as its cost function:
+	\begin{equation}
+		\begin{aligned}
+			{C_k(Y,Z,G(\bx))}=& -Z_k\log f_k(Y;\mu_k(G_k(\bx)),\phi_k), ~ k=1:K.
+		\end{aligned}
+	\end{equation}
+	The negative gradient of $C_k$ w.r.t. $G_k$ is denoted by ${V_k(Y,Z,G(\bx))}$.
+	Note that we have assumed that dispersion $\phi_k$ is fixed among samples (not related to $\bx$).
+
+We first summarize the proposed EB algorithm as follows, then we detail each step.
+\begin{enumerate}
+	\item[1] Initialization of EB algorithm $\hat{p}^{[0]},\hat{\mu}^{[0]},\hat{\phi}^{[0]}$. Set $t=0$.
 	
-	\item[Step 2] (expectation of latent variable) 
-	Set $\hat{Z}_{ki}^{[m]}$ as 
+	\item[2] Calculating conditional expectation of latent variable $\hat{z}^{[t]}$ given $\hat{p}^{[t]},\hat{\mu}^{[t]},\hat{\phi}^{[t]}$.
+	
+	\item[3.1]  Gradient boosting mixing probabilities $\hat{p}^{[t+1]}$  given latent variable $\hat{z}^{[t]}$.
+	\item[3.2] Gradient boosting component models $\hat{\mu}^{[t+1]}$ given latent variable $\hat{z}^{[t]}$.
+	\item[4]  Calculate the MLE $\hat{\phi}^{[t+1]}$. Increase $t$ by 1. Repeat steps 2-3 until $t$ reaches to $T$.
+	
+\end{enumerate}
+Note that we can perform steps 3.1 and 3.2 simultaneously by parallel computing which dramatically save running time.  
+	
+In step 1 of initialization of EB algorithm, we neeed to initialize the following quantities.
+	\begin{enumerate}
+		\item[1.1] Initialize $\hat{p}_1^{[0]}, \ldots,\hat{p}_K^{[0]}$ and   $\hat{F}_1^{[0]}, \ldots, \hat{F}_{K}^{[0]}$:
+		
+		\begin{itemize}
+			\item 	$\hat{p}_k^{[0]}=\frac{1}{K}$
+			\item $\hat{F}_1^{[0]}, \ldots, \hat{F}_{K}^{[0]}$ are obtained by \eqref{inv-logistic}.
+		\end{itemize}
+		\item[1.2]
+		Initialize $\hat{\mu}_1^{[0]},\ldots,\hat{\mu}_K^{[0]}$ and  $\hat{G}_1^{[0]},\ldots,\hat{G}_K^{[0]}$:
+		
+		\begin{itemize}
+			\item $\hat{\mu}_k^{[0]}=\frac{\sum_{i=1}^nY_i}{n}$
+			\item $\hat{G}_k^{[0]}=\mu_k^{-1}(\hat{\mu}_k^{[0]})$
+		\end{itemize}
+		\item[1.3] Initialize $\hat{\phi}_1^{[0]},\ldots, \hat{\phi}_K^{[0]}$ as the sample variance. (Assume that dispersion is independent with covariates.)
+		\item[1.4] 	Set $t=0$.
+	\end{enumerate}
+	
+
+In step 2 of conditional expectation of latent variable, we set  $\hat{z}_{i,k}^{[t]}$ as
 	\begin{equation*}
-		\hat{Z}_{ki}^{[m]}=\frac{\hat{p}_{k}^{[m]}(\bx_i) f_{k}\left(Y_i ; \hat{\mu}_{k}^{[m-1]}(\bx_i), v_i / \varphi_{k}\right)}{\sum_{l=1}^{K} \hat{p}_{k}^{[m]}(\bx_i) f_{k}\left(Y_i ; \hat{\mu}_{k}^{[m-1]}(\bx_i), v_i / \varphi_{k}\right)},
+		\hat{z}_{i,k}^{[t]}=\frac{\hat{p}_{k}^{[t]}(\bx_i) f_{k}\left(y_i ; \hat{\mu}_{k}^{[t]}(\bx_i), \phi_k^{[t]} \right)}{\sum_{l=1}^{K} \hat{p}_{l}^{[t]}(\bx_i) f_{l}\left(y_i ; \hat{\mu}_{l}^{[t]}(\bx_i), \phi_l^{[t]}\right)},~~ k=1:K.
 	\end{equation*}
+
+
+In step 3.1 of gradient boosting mixing probabilities, we implement a  multinomial logistic classification boosting with fractional response: 
+	\begin{enumerate}
+		\item[3.1.1] Initialization. Set $\hat{p}_1^{[t,0]}, \ldots, \hat{p}_K^{[t,0]}$ and $\hat{F}_1^{[t,0]}, \ldots, \hat{F}_{K}^{[t,0]}$ as
+		$$\hat{p}_k^{[t,0]}=\frac{1}{K},
+		~~\hat{F}_k(\bx)^{[t,0]}=\log \hat{p}_k^{[t,0]}-\frac{1}{K}\sum_{l=1}^K\log \hat{p}_l^{[t,0]}$$
+		Set $m=0$.
+		\item[3.1.2] Projection of gradient to learner.
+		Compute the negative gradient sample $u_{1,k}^{[t,m]},\ldots,u_{n,k}^{[t,m]}$,  in which
+		$$u_{i,k}^{[t,m]}=U_k(\hat{z}_{i}^{[t]},\hat{F}^{[t,m]}(\bx_i))=\hat{z}_{i,k}^{[t]}-\hat{p}_{i,k}^{[t,m]}.$$
+		Then the data $(u_{i,k}^{[t,m]},\bx_i)_{i=1:n}$ is used to calibrate a $L$-terminal node regression trees $\hat{f}_k^{[t,m+1]}\left(\bx;R^{[t,m+1]}_{l=1:L},\bar{u}^{[t,m+1]}_{l=1:L}\right)$ with $L_2$ loss,
+		where $R^{[t,m+1]}_{l=1:L}$ is the partition of covariate space and $\bar{u}^{[t,m+1]}_{l=1:L}$ contains the average gradient in each terminal node.
+		
+		
 	
-	\item[Step 3] (projection of gradient to learner). The follwoing two base learners  are fitted independently. 
+		\item[3.1.3]  The one-dimensional optimization for expansion coefficient leads to the following update \citep{friedman2001greedy}:
+		
+		$$\hat{F}_k^{[t,m+1]}(\bx_i)=\hat{F}_k^{[t,m]}(\bx_i)+s\sum_{l=1}^L\gamma^{[t,m+1]}_l\mathbbm{1}(\bx\in R^{[t,m+1]}_l),~ k=1,\ldots,K$$
+		where
+		$$\gamma^{[t,m+1]}_l=\frac{K-1}{K}\frac{\sum_{\bx_i\in R_l^{[t,m+1]}}u_{i,k}^{[t,m]}}{\sum_{\bx_i\in R_l^{[t,m+1]}}|u_{i,k}^{[t,m]}|(1-|u_{i,k}^{[t,m]}|)}$$
+		We then derive the updated mixing probability $\hat{p}^{[t,m+1]}_{k=1:K}$  using \eqref{logistic}.
+		
+		
+	
+		\item[3.1.4] Increase $m$ by 1, and repeat steps 3.1.2-3.1.3  until $m$ reaches to the pre-determined $M_p$.
+		Set $$\hat{F}_k^{[t+1]}=\hat{F}_k^{[t,M_p]},~~\hat{p}_k^{[t+1]}=\hat{p}_k^{[t,M_p]},$$
+	\end{enumerate}
+Note that  $K$ regression trees are fitted independently in step 3.1.2. We can accelerate this step by parallel computing.
+
+In step 3.2 of gradient boosting component models, we implement $K$ weighted boosting:
+	\begin{enumerate}
+		\item[3.2.1] Initialization. Set $\hat{\mu}_1^{[t,0]},\ldots,\hat{\mu}_K^{[t,0]}$ and $\hat{G}_1^{[t,0]},\ldots,\hat{G}_K^{[t,0]}$:
+		$$\hat{\mu}_k^{[t,0]}=\frac{\sum_{i=1}^nY_i}{n}, \hat{G}_k^{[t,0]}=\mu_k^{-1}(\hat{\mu}_k^{[t,0]})$$
+		
+		Set $m=0$.
+		\item[3.2.2] Projection of gradient to learner.
+		Compute the negative gradient samples $v_{1,k}^{[t,m]},\ldots,v_{n,k}^{[t,m]}$, in which
+		$$v_{i,k}^{[t,m]}=V_k(y_i,\hat{z}^{[t]}_{i},\hat{G}^{[t,m]}(\bx_i)),$$
+		Then the data $(v_{i,k}^{[t,m]},\bx_i)_{i=1:n}$ is used to calibrate a $L$-terminal node regression trees $\hat{g}_k^{[t,m+1]}\left(\bx;S^{[t,m+1]}_{l=1:L},\bar{v}^{[t,m+1]}_{l=1:L}\right)$ with $L_2$ loss, where $S^{[t,m+1]}_{l=1:L}$ is the partition of covariate space and $\bar{v}^{[t,m+1]}_{l=1:L}$ contains the average gradient in each terminal node.
+		
+	
+	
+		\item[3.2.3]  Conduct the following $K$ independent one-dimensional optimizations to find the best expansion coefficients.
+		$$\hat{w}_{k}^{[t,m+1]}=\underset{w}{\arg\min}\sum_{i=1}^n C_{k}(y_i,\hat{z}_i^{[t]},\hat{G}_k^{[t,m]}(\bx_i)+w\hat{g}_k^{[t,m+1]}(\bx_i)).$$
+		
+		\item[3.2.4]  Compute the updates
+		$$\hat{G}_k^{[t,m+1]}(\bx_i)=\hat{G}_k^{[t,m]}(\bx_i)+s\hat{w}_{k}^{[t,m+1]}\hat{g}_{k}^{[t,m+1]}(\bx_i),$$
+		$$\hat{\mu}_k^{[t,m+1]}(\bx_i)=\mu_k(\hat{G}_k^{[t,m+1]}(\bx_i)).$$
+		\seti
+
+
+		\item[3.2.5] Increase $m$ by 1, and repeat steps 3.2.2-3.2.4 until $m$ reaches to the pre-determined $M_\mu$. Set
+		$$\hat{G}_k^{[t+1]}=\hat{G}_k^{[t,M_\mu]},~~\hat{\mu}_k^{[t+1]}=\hat{\mu}_k^{[t,M_\mu]}.$$
+	\end{enumerate}
+Note that $K$ independent boosting are implemented in step 3.2, we can accelerate this step by parallel computing.
+	
+In step 4, for parameters not related to covariate $\bx$, compute the MLE $\hat{\phi}_k^{[t+1]}$ given all the other parameters $\hat{p}_k^{[t+1]}, \hat{\mu}_k^{[t+1]}$, then increase $t$ by 1 and repeat steps 2-3 until $t$
+		reaches to the pre-determined $T$.
+		
+In the EB algorithm, we have the following tuning parameters and the corresponding tuning strategies are listed below:
 	\begin{itemize}
-		\item[Tree 1]($K-1$ trees)  Compute the negative gradient vector $(u_{k1}^{[m]},\ldots,u_{kn}^{[m]})^\top, k=1,\ldots,K-1$ in which 
-		$$u_{ki}^{[m]}=U(\hat{Z}_i,\hat{F}_k^{[m]}(\bx_i)).$$
-		Then fit the gradient vector to covariates $(\bx_1,\ldots,\bx_n)^\top$ by a $K$-terminal node regression trees $\hat{f}_k^{[m+1]}\left(\bx;R^{[m]},\bar{u}_k^{[m]}\right)$ with $L_2$ loss 
-		
-		\item[Tree 2]($K$ trees) Compute the negative gradient vector $(v_1^{[m]},\ldots,v_n^{[m]})^\top$ in which 
-		$$v_{ki}^{[m]}=V(Y_i,\hat{Z}_{ki},\hat{G}_k^{[m]}(\bx_i)),~~k=1,\ldots,K$$
-		Then fit the gradient vector to covariates $(\bx_1,\ldots,\bx_n)^\top$ by a $K$-terminal node regression trees $\hat{g}_k^{[m+1]}\left(\bx;S^{[m]},\bar{v}_k^{[m]}\right)$ with $L_2$ loss.
-		
+		\item Number of EB iterations \blue{$T$}. This can be determined by screening the trace plot of loss.
+		\item Number of iterations in boosting \blue{$M_p,M_\mu$}. We can specify a sufficiently large $M_p,M_\mu$ and use  early stop according to validation loss.
+		\item Learning rate \blue{$s$}. Smaller learning rate tends to lead to a better fitting and predictive performance but requiring more iterations.
+		\item Tuning parameters in base learner tree: complexity parameter, maximum depth, number of terminal nodes. Those parameters can be tuned following the routine in typical tree models.
 	\end{itemize}
-	\item[Step 4] (line search) Conduct the following two independent one-dimensional line searches for the best step sizes (expansion coefficents).
-	$$\hat{w}_{1k}^{[m+1]}=\underset{w}{\arg\min}\sum_{i=1}^n C_{Z}(\hat{Z}_i,\hat{F}_k^{[m]}(\bx_i)+w\hat{f}_{k}^{[m+1]}(\bx_i)),~~k=1,\cdots,K-1$$
-	$$\hat{w}_{2k}^{[m+1]}=\underset{w}{\arg\min}\sum_{i=1}^n C_{Y_k^*}(Y_i,\hat{Z}_i,\hat{G}_k^{[m]}(\bx_i)+w\hat{g}_k^{[m+1]}(\bx_i)),~~k=1,\cdots,K$$
-	Compute the proposed updates
-	$$\hat{F}_k^{[m+1]}(\bx_i)=\hat{F}_k^{[m]}(\bx_i)+\hat{w}_{1k}^{[m+1]}\hat{f}_{k}^{[m+1]}(\bx_i),$$
-	$$\hat{G}_k^{[m+1]}(\bx_i)=\hat{G}_k^{[m]}(\bx_i)+\hat{w}_{2k}^{[m+1]}\hat{g}_{k}^{[m+1]}(\bx_i),$$
-	$$\hat{p}_k^{[m+1]}(\bx_i)=\frac{\exp{\hat{F}_k^{[m]}(\bx)}}{1+\sum_{l=1}^{K-1}\exp{\hat{F}_k^{[m]}(\bx)}},~~k=1,\dots,K-1,$$
-	$$\hat{p}_{K}^{[m+1]}(\bx_i)=\frac{1}{1+\sum_{l=1}^{K-1}\exp{\hat{F}_k^{[m]}(\bx)}},$$
-	$$\hat{\mu}_k^{[m+1]}(\bx_i)=h_k(\hat{G}_k^{[m+1]}(\bx_i)).$$ 
-	\item[Step 5] (iteration). Increase $m$ by 1, and repeat steps 2-4.
+
+		
+{\bf Remarks.}
+	In initialization of boosting, we initialize parameters {independently} with the previously boosting estimates $\hat{p}_k^{[t-1]}, \hat{\mu}_k^{[t-1]}$. We call this as independent boosting.
+	In contrast, we might initialize parameters as the previously boosting estimates $$\hat{p}_k^{[t,0]}=\hat{p}_k^{[t-1]}, \hat{\mu}_k^{[t,0]}=\hat{\mu}_k^{[t-1]}.$$
+		This would lead a {smaller} required boosting iterations $M$ (or a {earlier} stop on validation loss). We call this as forward boosting. 
+	However, with forward boosting, it is difficult to predict for new data due to the {iterative initialization}. One solution is to apply an additional boosting with default initialization given the {last expected hidden variables $\hat{z}_i^{[T]}$}. In the following applications, we only implement independent boosting.
+			
+\section{Applications}
+
+We conduct two simulated data analysis and a real data analysis. 
+
+\subsection{First simulated example: mixture of Gaussians}
+
+\red{I want to use three gaussians example in this part, and follows the  structure below.}
+
+The underlying model is specified as follows:
+	$$Y_i =Z_iY_{i,1}+(1-Z_i)Y_{i,2}$$
+	$$Y_{i,1}|\bx_i \sim N(\mu_1(\bx_i), 0.9^2)$$
+	$$Y_{i,2}|\bx_i \sim N(\mu_2(\bx_i), 0.5^2)$$
+	$$Z_i \sim Bernuli(p(\bx_i))$$
+	$$\bx_i=(x_{i,1},x_{i,2},x_{i,3})^{\top}$$
+	$$\mu_1(\bx_i)=2+2\times x_{i,1} + \log x_{i,2}$$
+	$$\mu_2(\bx_i) = 0.5-0.5\times x_{i,1}+x_{i,3}-x_{i,1}\times x_{i,2}$$
+	$$p(\bx_i)=\frac{\exp\eta(\bx_i)}{1+\exp\eta(\bx_i)}$$
+	$$\eta(\bx_i)=1+0.1\times x_1+\log x_2 +x_3\times x_1$$
+The covariate is generated from the following distribution:
+	$$x_{1,i}\sim N(2,1^2)$$
+	$$x_{i,2}\sim Exp(2)$$
+	$$x_{i,3}\sim Bernuli(0.5)$$
+We simulate $n=5,000$ observations, Figure \ref{norm-hist-y} shows the empirical distribution of $ZY,(1-Z)Y,Y$.
+	\begin{figure}[htp!]
+		\centering
+		\includegraphics[width=0.3\linewidth]{../plots/two_gaussians/yone}
+		\includegraphics[width=0.3\linewidth]{../plots/two_gaussians/ytwo}
+		\includegraphics[width=0.3\linewidth]{../plots/two_gaussians/y}
+		\caption{Distribution of $ZY,(1-Z)Y,Y$.}\label{norm-hist-y}
+	\end{figure}
+We fit the following 5 models:
+\begin{itemize}
+	\item 	Mixture of distributions (homo):
+	$$f(y;p,\mu,\sigma)=p_1f_N(y;\mu_1,\sigma_1^2)+(1-p_1)f_N(y;\mu_2,\sigma_2^2)$$
+	\item 	Mixture of linear regressions or mixture of boosting with {constant} mixing probabilities (glm\_cp or boosting\_cp)
+	$$f(y;p,\mu,\sigma)=p_1f_N(y;\mu_1(\bx),\sigma_1^2)+(1-p_1)f_N(y;\mu_2(\bx),\sigma_2^2)$$
+	\item 	Mixture of linear regressions or mixture of boosting with {varying} mixing probabilities (glm\_vp or boosting\_vp)
+	$$f(y;p,\mu,\sigma)=p_1(\bx)f_N(y;\mu_1(\bx),\sigma_1^2)+(1-p_1(\bx))f_N(y;\mu_2(\bx),\sigma_2^2)$$
 \end{itemize}
+We summarize the test losses in Table \ref{gaussian-summary}. Note that we have defined three metrics based on the true parameters: 
+	$$e_{\mu 1}=\frac{\sum_{i=1}^{n}(\mu_{i,1}-\hat{\mu}_{i,1})^2}{n}$$
+	$$e_{\mu 2}=\frac{\sum_{i=1}^{n}(\mu_{i,2}-\hat{\mu}_{i,2})^2}{n}$$
+	$$e_{\eta}=\frac{\sum_{i=1}^{n}(\eta_{i}-\hat{\eta}_{i})^2}{n},$$
+	where $\eta_i=\log\frac{p_i}{1-p_i}$.
+	\begin{table}[htp!]
+		\centering
+		\caption{Summary of test losses for different models.}\label{gaussian-summary}
+		\begin{tabular}{c|rrrr}
+			\hline
+			model        & \multicolumn{1}{c}{neg LL} & \multicolumn{1}{c}{$e_{\mu 1}$} & \multicolumn{1}{c}{$e_{\mu 2}$} & \multicolumn{1}{c}{$e_{\eta}$} \\ \hline
+			homo         & 2.5868                   & 6.2657                         & 2.6688                        & 3.3304                             \\
+			glm\_cp      & 1.8978                   & 0.7775                         & 0.3233                         & 3.2440                             \\
+			glm\_vp      & 1.7698                   & 0.8028                         & 0.3260                         & 1.2667                             \\
+			boosting\_cp & 1.7492                   & 0.2461                         & {\bf 0.1062}                        & 3.2242                             \\
+			boosting\_vp & {\bf 1.6407}                  & {\bf 0.2334}                         & 0.1105                         & {\bf 0.8435}                             \\ \hline
+		\end{tabular}
+	\end{table}
+Hence, we see the mixture of boosting with varying mixing probabilities has the outstanding out-of-sample predictive performance.
 
-\subsection{Special Case: zero-inflated Poisson boosting}
+\red{Accelerating by paralleling computing}
 
-A cyclic algorithm proposed by \cite{mayr:2012} or a non-cyclic algorithm proposed by \cite{thomas:2018} can be implemented to iteratively estimate $\pi_0$ and $\lambda$ based on the log-likelihood function \eqref{ZIP-log}. 
-We propose a new algorithm which embeds expectation of latent variable into a non-cyclic boosting algorithm.
+\subsection{Second simulated example: zero-inflated Poisson model}
 
-Similar to zero-truncated Poisson model, we assume the logit link function for $\pi_0$ and the logarithm link function for $\lambda$,
-$$\log \frac{\pi_0}{1-\pi_0}=F~~\text{and}~~ \log\lambda=G.$$
-The two cost functions are given by 
-\begin{equation*}
+
+\subsection{A real data example: claims severity modelling}
+		
+\begin{frame}{Distribution of average claim amount}
+	Claims amount data {\tt freMTPL2sev} from R package {\bf CASdatasets}. Sample size $n=24,938$. \blue{Three peaks and heavy tail}.
+	\begin{figure}[h!]
+		\centering
+		\includegraphics[width=0.35\linewidth]{../plots/sev/hist.png}
+		\includegraphics[width=0.35\linewidth]{../plots/sev/log-log.png}
+		\caption{Histogram and logged survival function of logged average claims.}\label{tail}
+	\end{figure}
+\end{frame}
+
+\begin{frame}{Mixture of distributions}
+	Three gamma distributions for three peaks. One gamma distribution for resting non-tail part. One Pareto distribution for tail.
+	$$f(y)=\sum_{k=1}^4p_kf_{gamma}(y;\mu_k,\phi_k)+p_5f_{pareto}(y;\alpha,M)$$
+	where $\mu,\phi$ are mean and dispersion parameter, and $\alpha, M$ are tail index and threshold. The threshold is pre-determined as $8158.13$ according to Hill plot.
+\end{frame}
+
+\begin{frame}{Initialization of hidden variable}
+	
+	Figure \ref{tail} indicates a way to initialize the hidden variable:
+	\begin{equation}
+		\begin{aligned}
+			\hat{z}^{[0]}_i&=(\hat{z}^{[0]}_{i,1},\hat{z}^{[0]}_{i,2},\hat{z}^{[0]}_{i,3},\hat{z}^{[0]}_{i,4},\hat{z}^{[0]}_{i,5})^\top\\
+			&=(\mathbbm{1}_{(0,500]}y_i,\mathbbm{1}_{(500, 1000]}y_i,\mathbbm{1}_{(1000,1200]}y_i,\mathbbm{1}_{(1200,8158.13]}y_i,\mathbbm{1}_{(8158.13,\infty)}y_i)^\top
+		\end{aligned}
+	\end{equation}
+	
+	Other parameters can be initialized as the MLE based on the full likelihood function.
+	
+\end{frame}
+
+
+\begin{frame}{EM algorithm}
+	\begin{figure}[h!]
+		\centering
+		\includegraphics[width=0.35\linewidth]{../plots/sev/null_trace}
+		\caption{Learning loss of mixture of distributions.}\label{null_sev}
+	\end{figure}
+\end{frame}
+
+\begin{frame}{Estimated parameters}	\begin{table}[h!]
+		\centering
+		\caption{MLE of four component gamma distributions. Tail index is estimated as $\hat{\alpha}=1.0773$}\label{null-gamma}
+		\begin{tabular}{crrrr}
+			\hline
+			component $k$ & \multicolumn{1}{c}{$\mu_k$} & \multicolumn{1}{c}{shape $(1/\phi_k)$} & \multicolumn{1}{c}{scale} & \multicolumn{1}{c}{rate} \\ \hline
+			1         & 76.8727                & 105.556                   & 0.7283                    & 1.3731                   \\
+			2         & 592.5909               & 653.539                   & 0.9067                    & 1.1029                   \\
+			3         & 1171.3811              & 999.9999                  & 1.1714                    & 0.8537                   \\
+			4         & 1534.5143              & 1.0377                    & 1478.7768                 & 7e-04                    \\ \hline
+		\end{tabular}
+	\end{table}
+	
+	~
+	
+	Those large shape parameters (small dispersion) implies the difficulties with \blue{gamma mean modeling}.
+\end{frame}
+
+\begin{frame}{Boosting mixing probabilities}
+	$$f(y|\bx)=\sum_{k=1}^4p_k(\bx)f_{gamma}(y;\mu_k,\phi_k)+p_5(\bx)f_{pareto}(y;\alpha,M)$$
+	\begin{figure}[htp!]
+		\centering
+		\includegraphics[width=0.35\linewidth]{../plots/sev/glm_p}
+		\caption{Boxplot of estimated mixing probabilities.}\label{glm-p}
+	\end{figure}
+\end{frame}
+
+\begin{frame}{Boosting the forth component  mean}
+	$$
 	\begin{aligned}
-			C_{ZIP1}(Z,F(\bx))&=-Z\log\left(\frac{\exp F(\bx)}{1+\exp F(\bx)}\right)-(1-Z)\log\left(1-\frac{\exp F(\bx)}{1+\exp F(\bx)}\right)\\
-		&=-ZF(\bx)+\log\left(1+\exp F(\bx)\right)
+		f(y|\bx)=&\sum_{k=1}^3p_k(\bx)f_{gamma}(y;\mu_k,\phi_k)+ \\
+		&p_4(\bx)f_{gamma}(y;\mu_4(\bx),\phi_4)+ p_5(\bx)f_{pareto}(y;\alpha,M)
 	\end{aligned}
-\end{equation*}
-and 
-$$C_{ZIP2}(N,Z,G(\bx))=(1-Z)\left(-NG(\bx)+\exp G(\bx)\right).$$
-The negative gradient of the two cost functions w.r.t. $F$ or $G$ are given by
-\begin{equation}
-	U(Z,F(\bx))=-\frac{\partial C_\text{ZIP1}(Z,F(\bx))}{\partial F(\bx)}=
-	Z-\frac{\exp F(\bx)}{1+\exp F(\bx)}
-\end{equation}
-and
-$$V(N,Z,G(\bx))=-\frac{\partial C_\text{ZIP2}(N,Z,G(\bx))}{\partial G(\bx)}=(1-Z)(N-\exp G(\bx)).$$  
-Note that we do a slight abuse of notations $F,G,U,V$.
+	$$
+	Test loss (negative log-likelihood)
+	\begin{enumerate}
+		\item Mixture of distributions:
+		7.5815
+		\item Boosting mixing probabilities:
+		{\bf 7.5588}
+		\item Boosting mixing probabilities and the forth component mean:
+		7.5573.
+	\end{enumerate}
+\end{frame}
 
-\paragraph{Algorithm 2.} Zero-inflated Poisson boosting.
-\begin{itemize}
-	\item[Step 1] (initialization)  Initialize $\hat{\pi}_0^{[0]}, \hat{\lambda}^{[0]}, \hat{F}^{[0]}$ and $\hat{G}^{[0]}$:
-	$$\hat{\pi}_0^{[0]}=\frac{\sum_{i=1}^n\mathbbm{1}_{\{N_i=0\}}}{n},~~ \hat{\lambda}^{[0]}=\frac{\sum_{i=1}^nN_i}{n},~~
-	\hat{F}^{[0]}=\log\frac{\hat{\pi}_0^{[0]}}{1-\hat{\pi}_0^{[0]}},~~
-	\hat{G}^{[0]}=\log\hat{\lambda}^{[0]}.$$
-	Set $m=0$.
-	
-	\item[Step 2] (expectation of latent variable) For $N_i>0$, the latent variable is set as $\hat{Z}_i^{[m]}=0$. For $N_i=0$, set $\hat{Z}_i^{[m]}$ as 
-	$$\hat{Z}_i^{[m]}=\frac{\hat{\pi}_0^{[m]}(\bx_i)}{\hat{\pi}_0^{[m]}(\bx_i)+(1-\hat{\pi}_0^{[m]}(\bx_i))e^{-\hat{\lambda}(\bx_i)}}.$$
-	Update data $(N_i,\hat{Z}_i^{[m]},\bx_i)_{i=1:n}$ 
-	
-	\item[Step 3] (projection of gradient to learner). The follwoing two base learners  are fitted independently. 
+\section{Conclusions}
+\begin{frame}{Our proposal: Expectation-Boosting algorithm}
+	Expectation-Boosting (EB) algorithm:
 	\begin{itemize}
-		\item[Tree 1]  Compute the negative gradient vector $(u_1^{[m]},\ldots,u_n^{[m]})^\top$ in which 
-		$$u_i^{[m]}=U(\hat{Z}_i,\hat{F}^{[m]}(\bx_i)).$$
-		Then fit the gradient vector to covariates $(\bx_1,\ldots,\bx_n)^\top$ by a $K$-terminal node regression tree $\hat{f}^{[m+1]}\left(\bx;R^{[m]},\bar{u}^{[m]}\right)$ with $L_2$ loss 
-		
-		\item[Tree 2] Compute the negative gradient vector $(v_1^{[m]},\ldots,v_n^{[m]})^\top$ in which 
-		$$v_i^{[m]}=V(N_i,\hat{Z}_i,\hat{G}^{[m]}(\bx_i)).$$
-		Then fit the gradient vector to covariates $(\bx_1,\ldots,\bx_n)^\top$ by a $K$-terminal node regression tree $\hat{g}^{[m+1]}\left(\bx;S^{[m]},\bar{v}^{[m]}\right)$ with $L_2$ loss.
-				
-	\end{itemize}
-	\item[Step 4] (line search) Conduct the following two independent one-dimensional line searches for the best step sizes (expansion coefficents).
-		$$\hat{w}_1^{[m+1]}=\underset{w}{\arg\min}\sum_{i=1}^n C_\text{ZIP1}(\hat{Z}_i,\hat{F}^{[m]}(\bx_i)+w\hat{f}_{m+1}(\bx_i)).$$
-		$$\hat{w}_2^{[m+1]}=\underset{w}{\arg\min}\sum_{i=1}^n C_\text{ZIP2}(N_i,\hat{Z}_i,\hat{G}^{[m]}(\bx_i)+w\hat{g}_{m+1}(\bx_i)).$$
-		Compute the proposed updates
-		$$\hat{F}^{*}(\bx_i)=\hat{F}^{[m]}(\bx_i)+\hat{w}^{[m+1]}_1\hat{f}_{m+1}(\bx_i),$$
-		$$\hat{G}^{*}(\bx_i)=\hat{G}^{[m]}(\bx_i)+\hat{w}^{[m+1]}_2\hat{g}_{m+1}(\bx_i),$$
-		$$\hat{\pi}^*(\bx_i)=\frac{\exp \hat{F}^{*}(\bx_i) }{1+\exp \hat{F}^{*}(\bx_i) },$$
-		$$\hat{\lambda}^*(\bx_i)=\exp \hat{G}^*(\bx_i)$$ 
-	\item[Step 5] (selection of base learner) 
-	Calculate the decrease of negative log-likelihood \eqref{ZIP-log} due to either $\hat{F}^{*}(\cdot)$ or $\hat{G}^{*}(\cdot)$:
-	$$\Delta_1=-l(\hat{\pi}^{[m]},\hat{\lambda}^{[m]})+l(\hat{\pi}^*,\hat{\lambda}^{[m]}),$$
-	$$\Delta_2=-l(\hat{\pi}^{[m]},\hat{\lambda}^{[m]})+l(\hat{\pi}^{[m]},\hat{\lambda}^{*}).$$
-	If $\Delta_1>\Delta_2$, accept the proposed $\hat{F}^{*}(\cdot), \hat{\pi}^*(\cdot)$ but reject the proposed $\hat{G}^{*}(\cdot), \hat{\lambda}^*(\cdot)$.
-	Update $\hat{F}^{[m+1]}(\bx_i)=\hat{F}^{*}(\bx_i), \hat{\pi}^{[m+1]}(\bx_i)=\hat{\pi}^*(\bx_i), \hat{G}^{[m+1]}(\bx_i)=\hat{G}^{[m]}(\bx_i), \hat{\lambda}^{[m+1]}(\bx_i)=\hat{\lambda}^{[m]}(\bx_i)$.
-	
-	If $\Delta_1<\Delta_2$, accept the proposed $\hat{G}^{*}(\cdot), \hat{\lambda}^*(\cdot)$ but reject the proposed $\hat{F}^{*}(\cdot), \hat{\pi}^*(\cdot)$.
-	Update $\hat{F}^{[m+1]}(\bx_i)=\hat{F}^{[m]}(\bx_i), \hat{\pi}^{[m+1]}(\bx_i)=\hat{\pi}^{[m]}(\bx_i), \hat{G}^{[m+1]}(\bx_i)=\hat{G}^{*}(\bx_i), \hat{\lambda}^{[m+1]}(\bx_i)=\hat{\lambda}^{*}(\bx_i)$.
-	
-
-	\item[Step 6] (iteration). Increase $m$ by 1, and repeat steps 2-5.
-\end{itemize}
-
-\subsection{Special Case: Gaussian mixture model}
-We assume that $Y_i$ is mixed Gaussian r.v. with pdf $f_{Y}(y_i;\mu_1,\sigma_1^2,\mu_2,\sigma_2^2,p)$ i.e.
-\begin{equation*}
-	Y_i \sim p \left[\frac{1}{\sqrt{2\pi \sigma_1^2}}\exp\left\{-\frac{[y_i-\mu_1(\bx_i)]^2}{2\sigma_1^2}\right\}\right]+(1-p)\left[\frac{1}{\sqrt{2\pi \sigma_2^2}}\exp\left\{-\frac{[y_i-\mu_2(\bx_i)]^2}{2\sigma_2^2}\right\}\right],
-\end{equation*}
-where $\mu_1(\cdot)$ and $\mu_2(\cdot)$ are two regression function. Now we propose a cyclic boosting algorithm for Gaussian mixture model. For the first Gaussian distribution, we use the negative log-likelihood for cost function, that is 
-\begin{equation*}
-	C_{1}(Z,Y,\mu_1(\bx),\sigma_1^2)=Z\left[\frac{1}{2}\log(2\pi \sigma_1^2)+\frac{1}{2\sigma_1^2}(Y-\mu_1(\bx))^2\right].
-\end{equation*}
-The negative gradient of $C_1$ is given by
-\begin{equation*}
-	V_1(Z,Y,\mu_1(\bx),\sigma_1^2)=-\frac{Z}{\sigma_1^2}(Y-\mu_1(\bx)).
-\end{equation*}
-Also, the cost function with respect to the second Gaussian distribution is given by
-\begin{equation*}
-	C_2(Z,Y,\mu_2(\bx),\sigma_2^2)=(1-Z)\left[\frac{1}{2}\log(2\pi \sigma_2^2)+\frac{1}{2\sigma_2^2}(Y-\mu_2(\bx))^2\right].
-\end{equation*}
-The negative gradient of $C_2$ is given by
-\begin{equation*}
-	V_2(Z,Y,\mu_2(\bx),\sigma_2^2)=-\frac{1-Z}{\sigma_2^2}(Y-\mu_2(\bx)).
-\end{equation*}
-
-\paragraph{Algorithm 3.} Mixed Gaussian boosting.
-\begin{itemize}
-	\item[Step 1] (initialization)  Initialize $\hat{p}^{[0]}, \hat{\mu}_1^{[0]}, \hat{\mu}_2^{[0]}, (\hat{\sigma}_1^2)^{[0]},(\hat{\sigma}_2^2)^{[0]}$:
-	$$\hat{p}^{[0]}=\frac{1}{2},~~ \hat{\mu}_1^{[0]}=\hat{\mu}_2^{[0]}=\bar{Y}=\frac{\sum_{i=1}^nY_i}{n},~~
-	(\hat{\sigma}_1^2)^{[0]}=(\hat{\sigma}_2^2)^{[0]}=\frac{1}{n}\sum_{i=1}^n (Y_i-\bar{Y})^2.$$
-	Set $m=0$.
-	
-	\item[Step 2] (expectation of latent variable) Set $\hat{Z}_i^{[m]}$ as 
-	$$\hat{Z}_i^{[m]}=\frac{\frac{\hat{p}^{[m]}}{\sqrt{2\pi (\hat{\sigma}_1^2)^{[m]}}}\exp\left\{-\frac{1}{2(\hat{\sigma}_1^2)^{[m]}}[Y_i-\hat{\mu}_1^{[m]}(\bx_i)]^2\right\}}{\frac{\hat{p}^{[m]}}{\sqrt{2\pi (\hat{\sigma}_1^2)^{[m]}}}\exp\left\{-\frac{1}{2(\hat{\sigma}_1^2)^{[m]}}[Y_i-\hat{\mu}_1^{[m]}(\bx_i)]^2\right\}+\frac{1-\hat{p}^{[m]}}{\sqrt{2\pi (\hat{\sigma}_2^2)^{[m]}}}\exp\left\{-\frac{1}{2(\hat{\sigma}_2^2)^{[m]}}[Y_i-\hat{\mu}_2^{[m]}(\bx_i)]^2\right\}}.$$
-	Update data $(Y_i,\hat{Z}_i^{[m]},\bx_i)_{i=1:n}$ 
-	
-	\item[Step 3] (projection of gradient to learner). The follwoing two base learners  are fitted independently. 
-	\begin{itemize}
-		\item[Tree 1] Compute the negative gradient vector $(v_{11}^{[m]},\ldots,v_{1n}^{[m]})^\top$ in which 
-		$$v_{1i}^{[m]}=V_1(Y_i,\hat{Z}_i^{[m]},\hat{\mu}_1^{[m]}(\bx_i),(\hat{\sigma}_1^2)^{[m]}).$$
-		Then fit the gradient vector to covariates $(\bx_1,\ldots,\bx_n)^\top$ by a $K$-terminal node regression tree $\hat{g}_1^{[m+1]}\left(\bx;S_1^{[m]},\bar{v}_1^{[m]}\right)$ with $L_2$ loss.
-		
-		\item[Tree 2] Compute the negative gradient vector $(v_{21}^{[m]},\ldots,v_{2n}^{[m]})^\top$ in which 
-		$$v_{2i}^{[m]}=V_1(Y_i,\hat{Z}_i^{[m]},\hat{\mu}_2^{[m]}(\bx_i),(\hat{\sigma}_2^2)^{[m]}).$$
-		Then fit the gradient vector to covariates $(\bx_1,\ldots,\bx_n)^\top$ by a $K$-terminal node regression tree $\hat{g}_2^{[m+1]}\left(\bx;S_2^{[m]},\bar{v}_2^{[m]}\right)$ with $L_2$ loss.
+		\item Replaces the maximization step by an \blue{overfitting-sensitive} boosting step.
+		\item The boosting step follows a \blue{generic functional gradient descent algorithm}.
 		
 	\end{itemize}
-	\item[Step 4] (line search) Conduct the following two independent one-dimensional line searches for the best step sizes (expansion coefficents).
-	$$\hat{w}_{1}^{[m+1]}=\underset{w}{\arg\min}\sum_{i=1}^n C_{1}(Y_i,\hat{Z}_i,\hat{\mu}_1^{[m]}(\bx_i)+w\hat{g}_1^{[m+1]}(\bx_i),(\sigma_1^2)^{[m]})$$
-	$$\hat{w}_{2}^{[m+1]}=\underset{w}{\arg\min}\sum_{i=1}^n C_{2}(Y_i,\hat{Z}_i,\hat{\mu}_2^{[m]}(\bx_i)+w\hat{g}_2^{[m+1]}(\bx_i),(\sigma_2^2)^{[m]})$$
-	Compute the proposed updates
-	$$\hat{\mu}_1^{[m+1]}(\bx_i)=\hat{\mu}_1^{[m]}(\bx_i)+\hat{w}_{1}^{[m+1]}\hat{g}_{1}^{[m+1]}(\bx_i),$$
-	$$\hat{\mu}_2^{[m+1]}(\bx_i)=\hat{\mu}_2^{[m]}(\bx_i)+\hat{w}_{2}^{[m+1]}\hat{g}_{2}^{[m+1]}(\bx_i),$$
-	$$\hat{p}^{[m+1]}(\bx_i)=\frac{\sum_{i=1}^n \hat{Z}_i^{[m]}}{n},$$
-	$$(\hat{\sigma}_1^2)^{[m+1]}=\frac{\sum_{i=1}^n Z_i^{[m]}[Y_i-\hat{\mu}_1^{[m+1]}(\bx_i)]^2}{\sum_{i=1}^n Z_i^{[m]}},$$
-	$$(\hat{\sigma}_2^2)^{[m+1]}=\frac{\sum_{i=1}^n(1-Z_i^{[m]})[Y_i-\hat{\mu}_2^{[m+1]}(\bx_i)]^2}{\sum_{i=1}^n(1-Z_i^{[m]})}.$$
-	\item[Step 5] (iteration). Increase $m$ by 1, and repeat steps 2-4.
-\end{itemize}
+\end{frame}
+
+\begin{frame}{Advantages}
+	Several advantages of EB algorithm over the EM algorithm.
+	\begin{itemize}
+		\item No need for specifying the form of component regression functions and performing covariate transformation.
+		\item Only need for component \blue{loss functions}.
+		\item Boosting algorithm is a flexible non-parametric regression facilitating both \blue{non-linear effects and interaction}.
+		\item  Boosting algorithm is \blue{overfitting-sensitive}, we can perform \blue{variable selection} simultaneously during the EB algorithm.
+	\end{itemize}
+\end{frame}
+
 \bibliography{boosting}
 \bibliographystyle{boosting}
 

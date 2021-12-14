@@ -23,6 +23,7 @@ boxplot(dat_test[,c("P1","P2","P3")])
 ```
 
 # null model
+
 ```{r}
 dat_test$P1_Null<-mean(dat$Y1)
 dat_test$P2_Null<-mean(dat$Y2)

@@ -1,21 +1,5 @@
 \begin{thebibliography}{xx}
 
-\harvarditem{B{\"u}hlmann \harvardand\ Hothorn}{2007}{buhlmann2007boosting}
-B{\"u}hlmann, P. \harvardand\ Hothorn, T.  \harvardyearleft
-  2007\harvardyearright .
-\newblock Boosting algorithms: Regularization, prediction and model fitting,
-  {\em Statistical science} {\bf 22}(4):~477--505.
-
-\harvarditem{B{\"u}hlmann \harvardand\ Yu}{2003}{buehlmann:2003}
-B{\"u}hlmann, P. \harvardand\ Yu, B.  \harvardyearleft 2003\harvardyearright .
-\newblock Boosting with the l 2 loss: regression and classification, {\em
-  Journal of the American Statistical Association} {\bf 98}(462):~324--339.
-
-\harvarditem{Friedman}{2001}{friedman2001greedy}
-Friedman, J.~H.  \harvardyearleft 2001\harvardyearright .
-\newblock Greedy function approximation: a gradient boosting machine, {\em
-  Annals of statistics} pp.~1189--1232.
-
 \harvarditem[Mayr et~al.]{Mayr, Fenske, Hofner, Kneib \harvardand\
   Schmid}{2012}{mayr:2012}
 Mayr, A., Fenske, N., Hofner, B., Kneib, T. \harvardand\ Schmid, M.
