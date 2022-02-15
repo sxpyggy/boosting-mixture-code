@@ -379,13 +379,14 @@ In the EB algorithm, we have the following tuning parameters and the correspondi
 \section{Applications}
 
 We conduct two simulated data analysis and a real data analysis. 
-The first simulated data follows a zero-inflated Poisson model, which mimics claims counts data with excess of zero.
-The second simulated data follows a mixture of Gaussian models. We use this example to illustrate the advantages of the EB algorithm over the EM algorithm.
+The first simulated data follows a mixture of Gaussian models. 
+We use this example to illustrate the advantages of the EB algorithm over the EM algorithm.
+The second simulated data follows a zero-inflated Poisson model, which mimics claims counts data with excess of zero.
 The real data contains the claims severity of an insurance company. This example demonstrates how we choose component models and mixing structure in practice.
 
-\subsection{First simulated example: zero-inflated Poisson model}
 
-\subsection{Second simulated example: mixture of Gaussians}
+
+\subsection{First simulated example: mixture of Gaussians}
 
 \red{I want to use three gaussians example in this part, and follows the  structure below.}
 
@@ -442,6 +443,35 @@ Hence, we see the mixture of boosting with varying mixing probabilities has the 
 
 \red{Accelerating by paralleling computing}
 
+
+\subsection{Second simulated example: zero-inflated Poisson model}
+
+We consider another simulated data which is generated from a zero-inflated Poisson (ZIP) model. This simulated example mimics number of claims which usually involves excess of zero claims compared with a fitted Poisson distribution.
+The underlying  model is given as follows:
+ \begin{equation}
+	f_{\text{ZIP}}(N;\lambda,\pi_0) = \left\{ 
+	\begin{array}{ccl}
+		\pi_0+(1-\pi_0)e^{-\lambda} & \mbox{for}
+		& N=0 \\
+		(1-\pi_0)\frac{e^{-\lambda}\lambda^N}{N!} & \mbox{for} &N\in\N_+.
+	\end{array}\right.
+\end{equation}
+The ZIP model is a mixture of a probability mass of 1 at 0 and a Poisson distribution. The mixing probability is $\pi_0$ and $1-\pi_0$.
+The probability density function can be written as
+$$f_\text{ZIP}(N;\lambda,\pi_0)= \pi_0\mathbbm{1}_{\{N=0\}} + 
+(1-\pi_0)\frac{e^{-\lambda}\lambda^N}{N!}.$$
+Five covariates $\bx=(x_1,\ldots,x_5)^\top$ have systematic effects on both $\pi_0$ and $\lambda$ as follows:
+\begin{equation}
+	\pi_0(\bx)=\frac{\exp F(\bx)}{1+\exp F(\bx)}, ~~
+	\lambda(\bx)=\exp G(\bx), 
+\end{equation}
+where
+\begin{equation}
+	 F(\bx)=0.3-2x_2^2+x_2+0.2x_5, ~~G(\bx)=\log 0.5+x_1^2 + 0.2\log x_3 - 0.2x_1 x_4.
+\end{equation}
+The covariates are generated from the following distributions:
+$$	x_1~\sim~N(0,0.5^2), ~~ x_2~\sim~U(0,1), ~~ x_3~\sim~\Gamma(2,0.5),$$ $$x_4~\sim~Bernulli(0.5),~~ x_5~\sim~Bernulli(0.2).$$
+Note that we use shape-rate parameters for gamma distribution.
 
 
 
