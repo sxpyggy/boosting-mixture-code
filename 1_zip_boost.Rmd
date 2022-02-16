@@ -90,7 +90,7 @@ dat1<-dat0[dat0$ind<5,]
 # estimated prob of zero claims from poisson
 exp(-mean(dat1$y))
 # empirical proportion of zero claims 
-zero_true<-sum(dat_test$y==0)/length(dat_test$y)
+(zero_true<-sum(dat_test$y==0)/length(dat_test$y))
 
 # true loss
 (loss_true<-mean(neg_ll(dat_test$y,dat_test$pi0,dat_test$lambda)))
@@ -116,7 +116,7 @@ mean(lambda);null_mle[[2]]
 (eNULL_pif<-mean((dat_test$pi_f-p_linear(dat_test$pi_null))^2))
 
 # estimated proportion of zero claims
-zero_NULL<-mean(dat_test$pi_null)+(1-mean(dat_test$pi_null))*exp(-mean(dat_test$lambda_null))
+(zero_NULL<-sum(dat_test$pi_null+(1-dat_test$pi_null)*exp(-dat_test$lambda_null))/length(dat_test$y))
 ```
 
 # zip glm
@@ -167,10 +167,60 @@ loss_null
 # estimated proportion of zero claims
 exp(-mean(dat_test$y))
 sum(dat_test$y==0)/length(dat_test$y)
-zero_glm_cp<-mean(dat_test$pi_glm)+(1-mean(dat_test$pi_glm))*exp(-mean(dat_test$lambda_glm))
+(zero_glm_cp<-mean(dat_test$pi_glm+(1-(dat_test$pi_glm))*exp(-(dat_test$lambda_glm))))
 ```
 
-## varying p
+## constant lambda
+
+```{r}
+# initialization of lambda and pi
+dat1$pi_glm<-null_mle[[1]]
+dat1$lambda_glm<-null_mle[[2]]
+
+lambda_glm_vec<-NULL
+pi0_glm_vec<-NULL
+loss_glm_vec<-NULL
+K<-50
+
+for (k in 1:K){
+  # expectation of z
+    dat1$z_glm<-ifelse(dat1$y==0,1,0)*dat1$pi_glm/(dat1$pi_glm+(1-dat1$pi_glm)*exp(-dat1$lambda_glm))
+  
+  # maximization of pi
+  glm1<-glm(z_glm ~ x1 + x2 + x3 + x4 + x5, family = binomial(link = "logit"), data=dat1)
+  dat1$pi_glm<-fitted(glm1)
+  
+    # maximization of lambda
+  glm2<-glm(y ~ 1, weights = 1-z_glm, family=poisson(link = "log"),data=dat1)
+  dat1$lambda_glm<-fitted(glm2)
+  
+  lambda_glm_vec[k]<-mean(dat1$lambda_glm)
+  pi0_glm_vec[k]<-mean(dat1$pi_glm)
+  loss_glm_vec[k]<-mean(neg_ll(dat1$y,dat1$pi_glm,dat1$lambda_glm))
+}
+
+plot(loss_glm_vec,type="l")
+
+dat_test$pi_glm<-predict(glm1,newdata = dat_test,type = "response")
+dat_test$lambda_glm<-predict(glm2,newdata = dat_test,type ="response")
+
+(eGLM_cl_eta<-mean((dat_test$eta-log(dat_test$lambda_glm))^2))
+(eGLM_cl_pif<-mean((dat_test$pi_f-p_linear(dat_test$pi_glm))^2))
+plot(dat_test$eta,log(dat_test$lambda_glm))
+plot(dat_test$pi_f,p_linear(dat_test$pi_glm))
+
+(loss_glm_cl<-mean(neg_ll(dat_test$y,dat_test$pi_glm,dat_test$lambda_glm)))
+loss_glm_cp
+loss_true
+loss_null
+
+# estimated proportion of zero claims
+exp(-mean(dat_test$y))
+sum(dat_test$y==0)/length(dat_test$y)
+(zero_glm_cl<-mean(dat_test$pi_glm+(1-(dat_test$pi_glm))*exp(-(dat_test$lambda_glm))))
+```
+
+## varying both
 
 ```{r}
 # initialization of lambda and pi
@@ -211,15 +261,18 @@ plot(dat_test$pi_f,p_linear(dat_test$pi_glm))
 (eGLM_vp_pif<-mean((dat_test$pi_f-p_linear(dat_test$pi_glm))^2))
 eGLM_cp_eta
 eGLM_cp_pif
+eGLM_cl_eta
+eGLM_cl_pif
 (loss_glm_vp<-mean(neg_ll(dat_test$y,dat_test$pi_glm,dat_test$lambda_glm)))
 loss_glm_cp
+loss_glm_cl
 loss_true
 loss_null
 
 # estimated proportion of zero claims
 exp(-mean(dat_test$y))
 sum(dat_test$y==0)/length(dat_test$y)
-zero_glm_vp<-mean(dat_test$pi_glm)+(1-mean(dat_test$pi_glm))*exp(-mean(dat_test$lambda_glm))
+(zero_glm_vp<-mean(dat_test$pi_glm+(1-(dat_test$pi_glm))*exp(-(dat_test$lambda_glm))))
 ```
 
 # zip boost
@@ -299,7 +352,88 @@ loss_null
 # estimated proportion of zero claims
 exp(-mean(dat_test$y))
 sum(dat_test$y==0)/length(dat_test$y)
-zero_bst_cp<-mean(dat_test$pi_boost)+(1-mean(dat_test$pi_boost))*exp(-mean(dat_test$lambda_boost))
+(zero_bst_cp<-mean(dat_test$pi_boost)+(1-mean(dat_test$pi_boost))*exp(-mean(dat_test$lambda_boost)))
+```
+
+## constant lambda
+
+```{r}
+library("mboost")
+library("rpart")
+library("rpart.plot")
+
+# initialization
+dat1$lambda_boost<-dat1$lambda_glm
+dat1$pi_boost<-dat1$pi_glm
+
+lambda_boost_vec<-NULL
+pi0_boost_vec<-NULL
+loss_boost_vec<-NULL
+loss_boost_vali<-NULL
+loss_boost_test<-NULL
+Mstop_lambda<-300
+Mstop_p<-100
+
+nu<-0.1
+K<-2
+
+for (k in 1:K){
+  
+  # expectation of z
+  dat1$z_boost <-
+    ifelse(dat1$y == 0, 1, 0) * dat1$pi_boost / (dat1$pi_boost + (1 - dat1$pi_boost) * exp(-dat1$lambda_boost))
+  
+  # maximization of p
+  boost1 <-
+    blackboost(
+      z_boost ~ x1 + x2 + x3 + x4 + x5,
+      family = binomial_p(),
+      data = dat1,
+      control = boost_control(mstop = Mstop_p, nu = nu))
+  
+  dat1$pi_boost<-fitted(boost1,type="response")
+  dat_vali$pi_boost<-predict(boost1,newdata=dat_vali,type="response")
+  dat_test$pi_boost<-predict(boost1,newdata=dat_test,type="response")
+  
+  # maximization of lambda
+  boost2 <-glm(y ~ 1, weights = 1-z_glm, family=poisson(link = "log"),data=dat1)
+  dat1$lambda_boost <- fitted(boost2,type="response")
+  dat_vali$lambda_boost <- predict(boost2,type="response", newdata = dat_vali)
+  dat_test$lambda_boost <- predict(boost2,type="response", newdata = dat_test)
+
+  lambda_boost_vec[k] <- mean(dat1$lambda_boost)
+  pi0_boost_vec[k] <- mean(dat1$pi_boost)
+  loss_boost_vec[k] <-
+    mean(neg_ll(dat1$y, dat1$pi_boost, dat1$lambda_boost))
+  loss_boost_test[k]<-
+    mean(neg_ll(dat_test$y, dat_test$pi_boost, dat_test$lambda_boost))
+  loss_boost_vali[k]<-
+    mean(neg_ll(dat_vali$y, dat_vali$pi_boost, dat_vali$lambda_boost))
+}
+
+matplot(cbind(loss_boost_vec,loss_boost_vali,loss_boost_test),lty=c(1,1,1),col=c("red","gray","blue"),type="l")
+plot(dat_test$eta,log(dat_test$lambda_boost))
+plot(dat_test$pi_f,p_linear(dat_test$pi_boost))
+
+(eBST_cl_eta<-mean((dat_test$eta-log(dat_test$lambda_boost))^2))
+(eBST_cl_pif<-mean((dat_test$pi_f-p_linear(dat_test$pi_boost))^2))
+eBST_cp_eta
+eBST_cp_pif
+eGLM_vp_eta
+eGLM_vp_pif
+eGLM_cp_eta
+eGLM_cp_pif
+(loss_BST_cl<-mean(neg_ll(dat_test$y,dat_test$pi_boost,dat_test$lambda_boost)))
+loss_BST_cp
+loss_glm_vp
+loss_glm_cp
+loss_true
+loss_null
+
+# estimated proportion of zero claims
+exp(-mean(dat_test$y))
+sum(dat_test$y==0)/length(dat_test$y)
+(zero_bst_cl<-mean(dat_test$pi_boost+(1-dat_test$pi_boost)*exp(-dat_test$lambda_boost)))
 ```
 
 ## varying p
@@ -387,16 +521,17 @@ loss_null
 # estimated proportion of zero claims
 exp(-mean(dat_test$y))
 sum(dat_test$y==0)/length(dat_test$y)
-zero_bst_vp<-mean(dat_test$pi_boost)+(1-mean(dat_test$pi_boost))*exp(-mean(dat_test$lambda_boost))
+(zero_bst_vp<-mean(dat_test$pi_boost+(1-dat_test$pi_boost)*exp(-dat_test$lambda_boost)))
 ```
 
 # comparison
 
 ```{r}
-loss_mat<-data.frame(model=c("null","glm_cp","glm_vp","bst_cp","bst_vp","true"),negL=c(loss_null,loss_glm_cp,loss_glm_vp,loss_BST_cp,loss_BST_vp,loss_true),error_eta=NA, error_pif=NA)
-loss_mat$error_eta<-c(eNULL_eta, eGLM_cp_eta,eGLM_vp_eta,eBST_cp_eta,eBST_vp_eta,NA)
-loss_mat$error_pif<-c(eNULL_pif,eGLM_cp_pif,eGLM_vp_pif,eBST_cp_pif,eBST_vp_pif,NA)
-loss_mat$proportion_0<-c(zero_NULL,zero_glm_cp,zero_glm_vp,zero_bst_cp,zero_bst_vp,zero_true)
+loss_mat<-data.frame(model=c("null","glm_cp","glm_cl","glm_v","bst_cp","bst_cl","bst_v","true"),negL=c(loss_null,loss_glm_cp,loss_glm_cl,loss_glm_vp,loss_BST_cp,loss_BST_cl,loss_BST_vp,loss_true),error_pif=NA,error_eta=NA)
+loss_mat$error_pif<-c(eNULL_pif,eGLM_cp_pif,eGLM_cl_pif,eGLM_vp_pif,eBST_cp_pif,eBST_cl_pif,eBST_vp_pif,NA)
+loss_mat$error_eta<-c(eNULL_eta, eGLM_cp_eta,eGLM_cl_eta,eGLM_vp_eta,eBST_cp_eta,eBST_cl_eta,eBST_vp_eta,NA)
+loss_mat$proportion_0<-c(zero_NULL,zero_glm_cp,zero_glm_cl,zero_glm_vp,zero_bst_cp,zero_bst_cl,zero_bst_vp,zero_true)
+loss_mat[,2:5]<-round(loss_mat[,2:5],4)
 loss_mat
 # write.csv(loss_mat,"./plots/zip/zip_loss_mat.csv")
 ```

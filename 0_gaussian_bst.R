@@ -358,6 +358,8 @@ EB_gaussian <-
         }
       }
 
+      # predictions
+
       if (structure == "mu"| structure == "both") {
       par_mat$mu1 <- predict(mu1_bst, newdata = X, n.trees = mu_iter[1])
       par_mat$mu2 <- predict(mu2_bst, newdata = X, n.trees = mu_iter[2])
@@ -379,6 +381,8 @@ EB_gaussian <-
         }
       }
 
+      # sigma
+
       par_mat$sigma1 <-
         sqrt(sum(par_mat$z1 * (Y - par_mat$mu1) ^ 2) / sum(par_mat$z1))
       par_mat$sigma2 <-
@@ -391,6 +395,8 @@ EB_gaussian <-
       par_mat_val$sigma2 <- unique(par_mat$sigma2)
       par_mat_val$sigma3 <- unique(par_mat$sigma3)
       }
+
+      # outer train loss and validation loss
 
       train_loss[m] <-
         neg_ll3(Y, par_mat[, c("mu1", "mu2", "mu3")], par_mat[, c("sigma1", "sigma2", "sigma3")], par_mat[, c("p1", "p2", "p3")])
@@ -421,6 +427,7 @@ EB_gaussian <-
         ))
       }
       if (m>patience){
+        # minimize the training loss rather than early stop
         if (sum(train_impT[(m-patience+1):m])==0){
           break
         }

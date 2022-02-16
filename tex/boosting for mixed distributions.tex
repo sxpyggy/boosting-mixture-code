@@ -374,13 +374,14 @@ In the EB algorithm, we have the following tuning parameters and the correspondi
 	In contrast, we might initialize parameters as the previously boosted estimates $$\hat{p}_k^{[t,0]}=\hat{p}_k^{[t-1]}, \hat{\mu}_k^{[t,0]}=\hat{\mu}_k^{[t-1]}.$$
 		This would lead a {smaller} required inner boosting iterations $M$ (or a {earlier} stop on validation loss). 
 	We call this as forward boosting. 
-	However, with forward boosting, it is difficult to predict for new data due to the {iterative initialization}. One solution is to apply an additional boosting with default initialization \eqref{ini-1} and \eqref{ini-2} given the {last expected hidden variables $\hat{\bz}_i^{[T]}$}. In the following applications, we only implement independent boosting.
+	However, with forward boosting, it is difficult to predict for new data due to the {iterative initialization}. One solution is to apply an additional boosting with default initialization \eqref{ini-1} and \eqref{ini-2} given the {last expected hidden variables $\hat{\bz}_i^{[T]}$}. In the following applications, we only implement the independent boosting.
 			
 \section{Applications}
 
 We conduct two simulated data analysis and a real data analysis. 
 The first simulated data follows a mixture of Gaussian models. 
 We use this example to illustrate the advantages of the EB algorithm over the EM algorithm.
+We also discuss paralleling computing in this example.
 The second simulated data follows a zero-inflated Poisson model, which mimics claims counts data with excess of zero.
 The real data contains the claims severity of an insurance company. This example demonstrates how we choose component models and mixing structure in practice.
 
@@ -472,8 +473,81 @@ where
 The covariates are generated from the following distributions:
 $$	x_1~\sim~N(0,0.5^2), ~~ x_2~\sim~U(0,1), ~~ x_3~\sim~\Gamma(2,0.5),$$ $$x_4~\sim~Bernulli(0.5),~~ x_5~\sim~Bernulli(0.2).$$
 Note that we use shape-rate parameters for gamma distribution.
+We generate for $n=10,000$ samples $(N_i,\bx_i)_{i=1:n}$, which are partitioned into a learning data $i\in\mathcal{I}_{L}$ and a test data $i\in\mathcal{I}_{T}$. 
+The empirical proportion of zero claims in the test data is $83.10\%$. If a Poisson distribution is fitted to the learning data, the MLE of Poisson mean is $1/|\mathcal{I}_L|\sum_{i\in\mathcal{I}_L}N_i=0.2136$ implying the estimated proportion of zero claims is $\exp(-0.2136)=80.77\%$ less than the empirical proportion. 
+We compare different models in terms of test loss defined as the average negative log-likelihood on the test data:
+\begin{equation}
+-\frac{1}{|\mathcal{I}_\text{test}|}\sum_{i\in\mathcal{I}_\text{test}}\log \left(\hat{\pi}_0(\bx_i)\mathbbm{1}_{\{N_i=0\}} + 
+(1-\hat{\pi}_0(\bx_i))\frac{e^{-\hat{\lambda}(\bx_i)}\hat{\lambda}(\bx_i)^{N_i}}{N_i!}\right),
+\end{equation} 
+where $\hat{\pi}_0$ and $\hat{\lambda}$ are estimated on the learning data. 
+Since we know the underlying $\pi_0(\bx)$ and $\lambda(\bx)$, we define another two test metrics based on $F$ and $G$:
+\begin{equation}\label{t1}
+e_\pi=\frac{1}{|\mathcal{I}_\text{test}|}\sum_{i\in\mathcal{I}_\text{test}}(\hat{F}(\bx_i)-F(\bx_i))^2,
+\end{equation}
+\begin{equation}\label{t2}
+e_\lambda=\frac{1}{|\mathcal{I}_\text{test}|}\sum_{i\in\mathcal{I}_\text{test}}(\hat{G}(\bx_i)-G(\bx_i))^2.
+\end{equation}
 
 
+We start with a null ZIP model without any covariates:
+\begin{equation}\label{zip-null}
+F(\bx)=\alpha_0, ~~G(\bx)=\beta_0 
+\end{equation}
+The MLE can be obtained as $\hat{\pi}_0=0.5604, \hat{\lambda}=0.4860$ via the EM algorithm on the learning data.
+The test loss is calculated as $0.5299$. 
+The estimated proportion of zero claims is calculated as 
+$$\frac{1}{|\mathcal{I}_T|}\sum_{i\in\mathcal{I}_T}\left(\bar{\pi}_0+(1-\bar{\pi}_0)e^{-\bar{\lambda}}\right)=\bar{\pi}_0+(1-\bar{\pi}_0)e^{-\bar{\lambda}}=0.8308,$$
+which is quite close the empirical proportion of 83.10\%.
+Since we know the underlying $\pi_0(\bx)$ and $\lambda(\bx)$, we can calculate the true test loss as 
+\begin{equation}
+	-\frac{1}{|\mathcal{I}_\text{test}|}\sum_{i\in\mathcal{I}_\text{test}}\log \left({\pi}_0(\bx_i)\mathbbm{1}_{\{N_i=0\}} + 
+	(1-{\pi}_0(\bx_i))\frac{e^{-{\lambda}(\bx_i)}{\lambda}(\bx_i)^{N_i}}{N_i!}\right)=0.5150,
+\end{equation}   
+which is (surely) smaller than 0.5299 from the null model.
+The test metrics \eqref{t1} and \eqref{t2} are calculated as $e_\pi=0.1151, e_\lambda=0.1795$.
+
+
+Next we regress $N$ on the covariate space via the linear predictors $F(x)$ and $G(x)$.
+Note that one component model is degenerated into a probability mass 1 at $N=0$, so there is no coefficient in this component model. The MLE of regression coefficients $\alpha$ and $\beta$ can be obtained by the EM algorithm.
+We consider three different mixture structure, homogeneous mixing probability \eqref{zip-cp}, homogeneous Poisson parameter \eqref{zip-cl} and both  mixing probability and Poisson parameter are related to covariates \eqref{zip-v}:
+\begin{align}
+F(\bx)&=\alpha_0, ~~G(\bx)=\langle \bx,\beta\rangle, \label{zip-cp} \\
+F(\bx)&=\langle \bx,\alpha\rangle, ~~G(\bx)=\beta_0, \label{zip-cl} \\
+F(\bx)&=\langle \bx,\alpha\rangle, ~~G(\bx)=\langle \bx,\beta\rangle. \label{zip-v}
+\end{align}  
+We have summarized the results in Table \ref{zip}.
+Model \eqref{zip-v} has the best out-of-sample performance followed by Model \eqref{zip-cp}, while Model \eqref{zip-cl} has the worst out-of-sample performance.
+All the three models are better than the null model \eqref{zip-null}.
+Note that those models ignore the potential non-linear effects of covariates.
+
+Finally we estimate $F$ and $G$ non-parametrically via the proposed EB algorithm. Similarly we consider three different mixture structure, homogeneous mixing probability \eqref{zip-bst-cp}, homogeneous Poisson parameter \eqref{zip-bst-cl} and both  mixing probability and Poisson parameter are related to covariates \eqref{zip-bst-v}: 
+\begin{align}
+	F(\bx)&=\alpha_0, ~~G(\bx)=\sum_{m=0}^{M_\lambda} s\omega^{[m]} g^{[m]}(\bx), \label{zip-bst-cp} \\
+	F(\bx)&=\sum_{m=0}^{M_\pi} s\omega^{[m]} f^{[m]}(\bx), ~~G(\bx)=\beta_0, \label{zip-bst-cl} \\
+	F(\bx)&=\sum_{m=0}^{M_\pi} s\omega^{[m]} f^{[m]}(\bx),  ~~G(\bx)=\sum_{m=0}^{M_\lambda} s\omega^{[m]} g^{[m]}(\bx). \label{zip-bst-v}
+\end{align}  
+The results are listed in Table \ref{zip}.
+Although the test loss (negL) changes slightly, we can clearly distinguish the considered models according to the two metrics $e_\pi$ and $e_\lambda$.
+We observe that Model \eqref{zip-bst-v} has the best out-of-sample performance in terms of all the metrics considered.
+Furthermore, all the models can address the excess of zero claims since they are all based on the ZIP distribution.
+\begin{table}[htp!]
+			\caption{Comparison of different ZIP models on the test data. Note that Models \eqref{zip-null}, \eqref{zip-cp}, \eqref{zip-cl} and \eqref{zip-v} are estimated via the EM algorithm, while Models \eqref{zip-bst-cp}, \eqref{zip-bst-cl} and \eqref{zip-bst-v} are estimated via the EB algorithm.} \label{zip}
+			\centering
+	\begin{tabular}{ccccc}
+
+		\hline
+		model   & negL   & $e_\pi$ & $e_\lambda$ & proportion of zero claims \\ \hline
+		Null \eqref{zip-null}    & 0.5299 & 0.1151     & 0.1795     & 0.8308        \\
+		Constant $\pi$ \eqref{zip-cp} & 0.5258 & 0.1112     & 0.1654     & 0.8305        \\
+		Constant $\lambda$ \eqref{zip-cl} & 0.5265 & 0.0959     & 0.182      & 0.8304        \\
+		Varying $\pi$ and $\lambda$  \eqref{zip-v} & 0.5257 & 0.1159     & 0.1776     & 0.8304        \\
+		Constant $\pi$  \eqref{zip-bst-cp} & 0.5234 & 0.1114     & 0.0928     & 0.8316        \\
+		Constant $\lambda$   \eqref{zip-bst-cl} & 0.5256 & 0.0579     & 0.1738     & 0.8293        \\
+		Varying $\pi$ and $\lambda$  \eqref{zip-bst-v}  & 0.5199 & 0.0687     & 0.0588     & 0.8336        \\
+		True    & 0.5150  & 0.0000         & 0.0000         & 0.8310         \\ \hline
+	\end{tabular}
+\end{table}
 
 \subsection{A real data example: claims severity modelling}
 		

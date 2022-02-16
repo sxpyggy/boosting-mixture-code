@@ -184,7 +184,10 @@ M0<-50
 structure<-"mu"
 trace<-T
 
+time_temp<-Sys.time()
 model_bst_mu<-EB_gaussian(X=X, Y=Y, Xval=Xval, Yval=Yval, M0=M0,  structure=structure, trace=trace , patience = 2)
+time_m<-difftime(Sys.time(),time_temp)
+
 
 # png("./plots/three_gaussians/loss-bst-mu.png")
 matplot(cbind(model_bst_mu$train_loss,model_bst_mu$valid_loss), lty = c(1,1) ,col=c('red',"lightblue"),ylim=ylim0,xlab = "iterations of EM",ylab="neg LL",type="l", main="EM algorithm for boosting of mu")
@@ -219,7 +222,9 @@ M0<-50
 structure<-"p"
 trace<-T
 
+time_temp<-Sys.time()
 model_bst_p<-EB_gaussian(X=X, Y=Y, Xval=Xval, Yval=Yval, M0=M0,  structure="p", trace=trace, patience = 2)
+time_p<-difftime(Sys.time(),time_temp)
 
 # png("./plots/three_gaussians/loss-bst-p.png")
 matplot(cbind(model_bst_p$train_loss,model_bst_p$valid_loss), lty = c(1,1) ,col=c('red',"lightblue"),ylim=ylim0,xlab = "iterations of EM",ylab="neg LL",type="l", main="EM algorithm for boosting of p")
@@ -253,7 +258,10 @@ M0<-50
 structure<-"both"
 trace<-T
 
+time_temp<-Sys.time()
 model_bst_both<-EB_gaussian(X=X, Y=Y, Xval=Xval, Yval=Yval, M0=M0,  structure="both", trace=trace, patience = 2)
+time_b<-difftime(Sys.time(),time_temp)
+
 
 # png("./plots/three_gaussians/loss-bst-both.png")
 matplot(cbind(model_bst_both$train_loss,model_bst_both$valid_loss), lty = c(1,1) ,col=c('red',"lightblue"),ylim=ylim0,xlab = "iterations of EM",ylab="neg LL",type="l", main="EM algorithm for boosting of both mu and p")
