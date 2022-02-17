@@ -209,7 +209,7 @@ EM_gaussian <-
 
 EB_gaussian <-
 
-  function(X, Y, Xval, Yval, M0, structure, trace, patience) {
+  function(X, Y, Xval, Yval, M0, structure, trace, patience, parallel) {
 
     par_mat <- dat_Norm(K = 3, n = nrow(X))
     par_mat_val <- NULL
@@ -237,6 +237,8 @@ EB_gaussian <-
       par_mat_val$sigma2 <- 0.5
       par_mat_val$sigma3 <- 0.5
     }
+
+    if (parallel==1){BST<-BST_parallel}
 
     train_loss <- NULL
     valid_loss <- NULL
@@ -455,6 +457,7 @@ EB_gaussian <-
       )
     )
   }
+
 
 
 

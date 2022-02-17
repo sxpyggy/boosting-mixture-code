@@ -78,7 +78,7 @@ sim_data<-function(n,size,seed){
   F1 = X1+log(X2)
   F2 = 1-0.5*X1+2*X3-X1*X2
   F3 = log(X2)+X3*X1+2*sin(X1)
-  
+
   P<-FtoP(FF=cbind(F1,F2,F3))
   dat<-data.frame(X1,X2,X3,X4,F1,F2,F3,P1=P[,1],P2=P[,2],P3=P[,3],Y1=NA,Y2=NA,Y3=NA)
   for (i in 1:nrow(dat)){
@@ -146,7 +146,7 @@ BST <- function(X, Y, Pinit, Xval, Yval, Pvalinit,
   Ind_y <- which(grepl("y", names(dat_bst)) == T)
   Ind_f <- which(grepl("f", names(dat_bst)) == T)
   Ind_p <- which(grepl("p", names(dat_bst)) == T)
-  
+
   # initialization
   dat_bst[, Ind_p]<- ifelse(is.null(Pinit),1/K ,Pinit)
   dat_bst[, Ind_f] <- PtoF(dat_bst[, Ind_p])
@@ -162,10 +162,7 @@ BST <- function(X, Y, Pinit, Xval, Yval, Pvalinit,
   Valid_impT<-NULL
   Valid_impT[1]<-T
   Tree_save <- list()
-  
-  
 
-  
   # boosting
   for (m in 1:M) {
     dat_bst[, Ind_y] <- Y - dat_bst[, Ind_p]
@@ -202,7 +199,7 @@ BST <- function(X, Y, Pinit, Xval, Yval, Pvalinit,
       Valid_impT[m]<- Valid_imp[m]>10^-4
     }
     Tree_save[[m]]<- tree_save
-    
+
     if(is.null(Yval)!=TRUE&trace==T){
       print(paste("iteration:",round(m,0),"; ","train loss:",
                   round(Train_loss[m],4),"; ","validation loss:",
@@ -213,7 +210,7 @@ BST <- function(X, Y, Pinit, Xval, Yval, Pvalinit,
     if(is.null(Yval)==TRUE&trace==T){
       print(paste("iteration:",round(m,0),"; ","train loss:",
                   round(Train_loss[m],4),"; ","validation loss: NULL",sep=""))
-      
+
     }
     if(is.null(Yval)!=TRUE&m>patience){
       if (sum(Valid_impT[(m-patience+1):m])==0){
@@ -244,7 +241,7 @@ predict_BST <- function(X, bst, Pinit, M_best,type) {
   test_bst[,Ind_p]<-ifelse(is.null(Pinit), 1/K ,Pinit)
   test_bst[,Ind_f]<-PtoF(test_bst[,Ind_p])
   Test_loss<-NULL
-  
+
   for (m in 1:M_best) {
     for (k in 1:K) {
       fit_party <- BST_model[[m]][[k]]

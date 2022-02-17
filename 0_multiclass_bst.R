@@ -4,6 +4,12 @@ library(rpart)
 library(partykit)
 library(mboost)
 
+
+cores <- detectCores(logical = FALSE)#查看内核个数
+c1 <- makeCluster(cores)#根据内核个数创建空集群
+clusterEvalQ(c1,library(rpart))#往空集群中导入包
+clusterEvalQ(c1,library(partykit))
+
 negLL<-function(y,p){
   # y and p are of dimension of K, i.e., a data point
   if (is.vector(y)==T){
@@ -80,6 +86,50 @@ sim_data<-function(n,size,seed){
   }
   dat[,c("F1","F2","F3")]<-PtoF(dat[,c("P1","P2","P3")])
   dat
+}
+
+fit_tree <- function(k){
+  tree <-
+    rpart(
+      dat_bst[, Ind_y[k]] ~ .,
+      control = rpart.control(
+        #minsplit = 20,
+        #minbucket = round(20 / 3),
+        cp = cp,
+        maxcompete = 4,
+        maxsurrogate = 0,
+        usesurrogate = 2,
+        xval = 0,
+        surrogatestyle = 0,
+        maxdepth = maxdepth
+      ),
+      method = "anova",
+      data = X
+    )
+  fit_party <- as.party(tree)
+  tree_save[[k]] <- fit_party
+  fitted_node <-
+    fitted(fit_party) # node and responses in the node
+  names(fitted_node) = c("node", "response")
+  if (is.null(Yval)!=TRUE){
+    valid_node <-
+      predict(fit_party, newdata = Xval, type = "node")
+  }
+  f_pred <-
+    tapply(fitted_node$response, fitted_node$node, node_pre, K = K)
+  f_pred <-
+    data.frame(f = as.vector(f_pred), node = as.numeric(names(f_pred))) # best updates to F, i.e., f
+  for (i in 1:nrow(dat_bst)) {
+    dat_bst[i, Ind_f[k]] <-
+      dat_bst[i, Ind_f[k]] + lr * f_pred$f[f_pred$node == fitted_node$node[i]]
+    if (is.null(Yval)!=TRUE) {
+      if (i <= nrow(val_bst)){
+        val_bst[i, Ind_f[k]] <-
+          val_bst[i, Ind_f[k]] + lr * f_pred$f[f_pred$node == valid_node[i]]
+      }
+    }
+  }
+  return(list(dat_bst=dat_bst,val_bst=val_bst,tree_save=tree_save))
 }
 
 BST <- function(X, Y, Pinit, Xval, Yval, Pvalinit,
@@ -194,6 +244,99 @@ BST <- function(X, Y, Pinit, Xval, Yval, Pvalinit,
        fitted=dat_bst,
        valid=val_bst,
        Tree_save=Tree_save, lr=lr)
+}
+
+
+
+BST_parallel <- function(X, Y, Pinit, Xval, Yval, Pvalinit,
+                M, cp, maxdepth, lr, trace, patience) {
+  K <- ncol(Y)
+  n <- nrow(Y)
+  n_val <- nrow(Yval)
+  val_bst <- NULL
+  if (is.null(Yval)!=TRUE){
+    val_bst <- dat_BST(K, n_val)
+  }
+  dat_bst <- dat_BST(K, n)
+  Ind_y <- which(grepl("y", names(dat_bst)) == T)
+  Ind_f <- which(grepl("f", names(dat_bst)) == T)
+  Ind_p <- which(grepl("p", names(dat_bst)) == T)
+
+  # initialization
+  dat_bst[, Ind_p]<- ifelse(is.null(Pinit),1/K ,Pinit)
+  dat_bst[, Ind_f] <- PtoF(dat_bst[, Ind_p])
+  dat_bst[, Ind_y] <- Y - dat_bst[, Ind_p]
+  if (is.null(Yval)!=TRUE){
+    val_bst[, Ind_p] <- ifelse(is.null(Pvalinit),1/K ,Pvalinit)
+    val_bst[, Ind_f] <- PtoF(val_bst[, Ind_p])
+  }
+  Train_loss <- NULL
+  Valid_loss <- NULL
+  Valid_imp<- NULL
+  Valid_imp[1] <- 0
+  Valid_impT<-NULL
+  Valid_impT[1]<-T
+  Tree_save <- list()
+
+  # boosting
+  for (m in 1:M) {
+    dat_bst[, Ind_y] <- Y - dat_bst[, Ind_p]
+    tree_save<-list()
+    #载入变量
+    clusterExport(c1, varlist=c("X","maxdepth","cp","lr","M","patience","Pinit","Xval",
+                                "Yval","node_pre","dat_bst","val_bst","Ind_y","Ind_f",
+                                "tree_save","K"),envir=environment())
+    #启动并行
+    res <- clusterApply(c1,1:K,fit_tree)
+    #res_mat <- as.matrix(do.call('rbind',res))
+    #把并行结果输出
+    tree_save[[1]]=res[[1]][["tree_save"]][[1]]
+    tree_save[[2]]=res[[2]][["tree_save"]][[2]]
+    tree_save[[3]]=res[[3]][["tree_save"]][[3]]
+    dat_bst[,-Ind_f] <- res[[1]][["dat_bst"]][,-Ind_f]
+    dat_bst[,Ind_f[1]]<- res[[1]][["dat_bst"]][,Ind_f[1]]
+    dat_bst[,Ind_f[2]]<- res[[2]][["dat_bst"]][,Ind_f[2]]
+    dat_bst[,Ind_f[3]]<- res[[3]][["dat_bst"]][,Ind_f[3]]
+    val_bst <- res[[3]][["val_bst"]]
+    # dat_bst <- parallel_trees$dat_bst
+    # val_bst <- parallel_trees$val_bst
+    # tree_save <- parallel_trees$tree_save
+    dat_bst[, Ind_p] <- FtoP(dat_bst[, Ind_f])
+    if(is.null(Yval)!=TRUE){
+      val_bst[, Ind_p] <- FtoP(val_bst[, Ind_f])
+    }
+    Train_loss[m] <- negLL(Y, dat_bst[, Ind_p])
+    if(is.null(Yval)!=TRUE){
+      Valid_loss[m] <- negLL(Yval, val_bst[, Ind_p])
+    }
+    if(is.null(Yval)!=TRUE&m>1){
+      Valid_imp[m] <- Valid_loss[m-1]-Valid_loss[m]
+      Valid_impT[m]<- Valid_imp[m]>10^-4
+    }
+    Tree_save[[m]]<- tree_save
+
+    if(is.null(Yval)!=TRUE&trace==T){
+      print(paste("iteration:",round(m,0),"; ","train loss:",
+                  round(Train_loss[m],4),"; ","validation loss:",
+                  round(Valid_loss[m],4),"; ","validation improve:",
+                  round(Valid_imp[m],4),"; ", Valid_impT[m],sep=""
+      ))
+    }
+    if(is.null(Yval)==TRUE&trace==T){
+      print(paste("iteration:",round(m,0),"; ","train loss:",
+                  round(Train_loss[m],4),"; ","validation loss: NULL",sep=""))
+
+    }
+    if(is.null(Yval)!=TRUE&m>patience){
+      if (sum(Valid_impT[(m-patience+1):m])==0){
+        break
+      }
+    }
+  }
+  list(Train_loss=Train_loss, Valid_loss=Valid_loss,
+       fitted=dat_bst,
+       valid=val_bst,
+       Tree_save=Tree_save, lr=lr,res=res)
 }
 
 predict_BST <- function(X, bst, Pinit, M_best,type) {

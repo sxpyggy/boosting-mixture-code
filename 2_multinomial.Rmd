@@ -110,7 +110,5 @@ negLL_Null
 negLL_T
 ```
 
-```{r}
 
-```
 
