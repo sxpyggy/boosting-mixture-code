@@ -293,14 +293,13 @@ BST_parallel <- function(X, Y, Pinit, Xval, Yval, Pvalinit,
     tree_save[[1]]=res[[1]][["tree_save"]][[1]]
     tree_save[[2]]=res[[2]][["tree_save"]][[2]]
     tree_save[[3]]=res[[3]][["tree_save"]][[3]]
-    dat_bst[,-Ind_f] <- res[[1]][["dat_bst"]][,-Ind_f]
     dat_bst[,Ind_f[1]]<- res[[1]][["dat_bst"]][,Ind_f[1]]
     dat_bst[,Ind_f[2]]<- res[[2]][["dat_bst"]][,Ind_f[2]]
     dat_bst[,Ind_f[3]]<- res[[3]][["dat_bst"]][,Ind_f[3]]
-    val_bst <- res[[3]][["val_bst"]]
-    # dat_bst <- parallel_trees$dat_bst
-    # val_bst <- parallel_trees$val_bst
-    # tree_save <- parallel_trees$tree_save
+    val_bst[,Ind_f[1]]<- res[[1]][["val_bst"]][,Ind_f[1]]
+    val_bst[,Ind_f[2]]<- res[[2]][["val_bst"]][,Ind_f[2]]
+    val_bst[,Ind_f[3]]<- res[[3]][["val_bst"]][,Ind_f[3]]
+
     dat_bst[, Ind_p] <- FtoP(dat_bst[, Ind_f])
     if(is.null(Yval)!=TRUE){
       val_bst[, Ind_p] <- FtoP(val_bst[, Ind_f])
@@ -336,7 +335,7 @@ BST_parallel <- function(X, Y, Pinit, Xval, Yval, Pvalinit,
   list(Train_loss=Train_loss, Valid_loss=Valid_loss,
        fitted=dat_bst,
        valid=val_bst,
-       Tree_save=Tree_save, lr=lr,res=res)
+       Tree_save=Tree_save, lr=lr)
 }
 
 predict_BST <- function(X, bst, Pinit, M_best,type) {

@@ -389,7 +389,31 @@ The real data contains the claims severity of an insurance company. This example
 
 \subsection{First simulated example: mixture of Gaussians}
 
-\red{I want to use three gaussians example in this part, and follows the  structure below.}
+The underlying model is a mixture of three Gaussians. The mixing probabilities are related to covariates, while the parameters of Gaussians are homogeneous among all samples.
+The probability density function is given by
+\begin{equation}
+f(Y|\bx; \mu,\sigma,p)=p_1(\bx)f_N(Y;\mu_1,\sigma_1)+p_2(\bx)f_N(Y;\mu_2,\sigma_2)+p_3(\bx)f_N(Y;\mu_3,\sigma_3),
+\end{equation}
+where $f_N(;\mu,\sigma)$ is the probability density function of a Gaussian distribution with mean $\mu$ and standard deviation $\sigma$.
+We assume that the mixing probabilities depend on the covariates $\bx=(x_1,x_2,x_3,x_4)^\top$ via the following equations
+\begin{equation}\label{logistic}
+	p_k(\bx)=\frac{\exp{F_k(\bx)}}{\sum_{l=1}^{3}\exp{F_l(\bx)}}, \text{ for } k=1,2,3.
+\end{equation}
+and 
+\begin{align*}
+F_1(\bx)&=x_1+\log x_2,\\
+ F_2(\bx)&=1-0.5x_1-x_1x_2+2x_3, \\
+  F_3(\bx)&=2\sin x_1+\log x_2 + x_1x_3.
+	\end{align*}
+Note that $x_4$ is a redundant variable. We specify $\mu_1=-5,\mu_2=0,\mu_3=5, \sigma_1=\sigma_2=\sigma_3=1$. We generate the four covariates from the following distribution independently:
+   \begin{align*}
+   	x_1~&\sim~ N(2,1),\\
+   	x_2~&\sim~ Exp(2), \\
+   	x_3~&\sim~ Bernulli(0.5), \\
+   	x_4~&\sim~ \Gamma(0.5,0.5).
+   \end{align*}
+Note that we use shape-rate parameters for gamma distribution.
+We generate for 
 
 The underlying model is specified as follows:
 	$$Y_i =Z_iY_{i,1}+(1-Z_i)Y_{i,2}$$
