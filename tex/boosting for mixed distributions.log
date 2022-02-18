@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.23 (TeX Live 2021/W32TeX) (preloaded format=pdflatex 2021.9.15)  17 FEB 2022 17:54
+This is pdfTeX, Version 3.141592653-2.6-1.40.23 (TeX Live 2021/W32TeX) (preloaded format=pdflatex 2021.9.15)  18 FEB 2022 16:42
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -291,66 +291,63 @@ LaTeX Font Info:    Trying to load font information for U+bbm on input line 126
  (f:/texlive/2021/texmf-dist/tex/latex/bbm-macros/ubbm.fd
 File: ubbm.fd 1999/03/15 V 1.2 Font definition for bbm font - TH
 ) [3] [4] [5]
-[6] [7] [8] [9]
-<../plots/two_gaussians/yone.png, id=51, 481.8pt x 481.8pt>
-File: ../plots/two_gaussians/yone.png Graphic file (type png)
-<use ../plots/two_gaussians/yone.png>
-Package pdftex.def Info: ../plots/two_gaussians/yone.png  used on input line 43
-5.
-(pdftex.def)             Requested size: 136.5746pt x 136.5719pt.
-<../plots/two_gaussians/ytwo.png, id=52, 481.8pt x 481.8pt>
-File: ../plots/two_gaussians/ytwo.png Graphic file (type png)
-<use ../plots/two_gaussians/ytwo.png>
-Package pdftex.def Info: ../plots/two_gaussians/ytwo.png  used on input line 43
-6.
-(pdftex.def)             Requested size: 136.5746pt x 136.5719pt.
-<../plots/two_gaussians/y.png, id=53, 481.8pt x 481.8pt>
-File: ../plots/two_gaussians/y.png Graphic file (type png)
-<use ../plots/two_gaussians/y.png>
-Package pdftex.def Info: ../plots/two_gaussians/y.png  used on input line 437.
-(pdftex.def)             Requested size: 136.5746pt x 136.5719pt.
- [10] [11 <../plots/two_gaussians/yone.png> <../plots/two_gaussians/ytwo.png> <
-../plots/two_gaussians/y.png>] [12]
-<../plots/sev/hist.png, id=67, 481.8pt x 481.8pt>
+[6] [7] [8] [9] [10]
+
+LaTeX Warning: Reference `gaussian-summary' on page 11 undefined on input line 
+478.
+
+[11] [12]
+<../plots/sev/hist.png, id=61, 481.8pt x 481.8pt>
 File: ../plots/sev/hist.png Graphic file (type png)
 <use ../plots/sev/hist.png>
-Package pdftex.def Info: ../plots/sev/hist.png  used on input line 582.
+Package pdftex.def Info: ../plots/sev/hist.png  used on input line 601.
 (pdftex.def)             Requested size: 159.3382pt x 159.33266pt.
-<../plots/sev/log-log.png, id=68, 481.8pt x 481.8pt>
+<../plots/sev/log-log.png, id=62, 481.8pt x 481.8pt>
 File: ../plots/sev/log-log.png Graphic file (type png)
 <use ../plots/sev/log-log.png>
-Package pdftex.def Info: ../plots/sev/log-log.png  used on input line 583.
-(pdftex.def)             Requested size: 159.3382pt x 159.33266pt.
- [13]
-<../plots/sev/null_trace.png, id=73, 481.8pt x 481.8pt>
-File: ../plots/sev/null_trace.png Graphic file (type png)
-<use ../plots/sev/null_trace.png>
-Package pdftex.def Info: ../plots/sev/null_trace.png  used on input line 612.
+Package pdftex.def Info: ../plots/sev/log-log.png  used on input line 602.
 (pdftex.def)             Requested size: 159.3382pt x 159.33266pt.
 
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
+[13]
+<../plots/sev/null_trace.png, id=68, 481.8pt x 481.8pt>
+File: ../plots/sev/null_trace.png Graphic file (type png)
+<use ../plots/sev/null_trace.png>
+Package pdftex.def Info: ../plots/sev/null_trace.png  used on input line 631.
+(pdftex.def)             Requested size: 159.3382pt x 159.33266pt.
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
 [14 <../plots/sev/hist.png> <../plots/sev/log-log.png>]
-<../plots/sev/glm_p.png, id=80, 481.8pt x 481.8pt>
+<../plots/sev/glm_p.png, id=74, 481.8pt x 481.8pt>
 File: ../plots/sev/glm_p.png Graphic file (type png)
 <use ../plots/sev/glm_p.png>
-Package pdftex.def Info: ../plots/sev/glm_p.png  used on input line 639.
+Package pdftex.def Info: ../plots/sev/glm_p.png  used on input line 658.
 (pdftex.def)             Requested size: 159.3382pt x 159.33266pt.
- [15 <../plots/sev/null_trace.png>] (./boosting for mixed distributions.bbl [16
- <../plots/sev/glm_p.png>]) [17] (./boosting for mixed distributions.aux)
+ [15 <../plots/sev/null_trace.png> <../plots/sev/glm_p.png>] (./boosting for mi
+xed distributions.bbl)
+[16] (./boosting for mixed distributions.aux)
+
+LaTeX Warning: There were undefined references.
+
 
 LaTeX Warning: There were multiply-defined labels.
 
  ) 
 Here is how much of TeX's memory you used:
- 4638 strings out of 480050
- 64725 string characters out of 5890936
- 553902 words of memory out of 5000000
- 22232 multiletter control sequences out of 15000+600000
+ 4608 strings out of 480050
+ 63666 string characters out of 5890936
+ 552902 words of memory out of 5000000
+ 22206 multiletter control sequences out of 15000+600000
  415163 words of font info for 71 fonts, out of 8000000 for 9000
  319 hyphenation exceptions out of 8191
- 57i,14n,66p,1036b,264s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 57i,14n,66p,1037b,264s stack positions out of 5000i,500n,10000p,200000b,80000s
  <c:/Users/Guangyuan/.texlive2021/texmf-var/fonts/pk/ljfour/public/bbm/bbm10.
 657pk>{f:/texlive/2021/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc}<f:
 /texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb><f:/texlive/
@@ -372,11 +369,11 @@ sfonts/cm/cmsy10.pfb><f:/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm
 ive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb><f:/texlive/2021/
 texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb><f:/texlive/2021/texm
 f-dist/fonts/type1/public/cm-super/sfrm1095.pfb>
-Output written on "boosting for mixed distributions.pdf" (17 pages, 340288 byte
+Output written on "boosting for mixed distributions.pdf" (16 pages, 326467 byte
 s).
 PDF statistics:
- 185 PDF objects out of 1000 (max. 8388607)
- 107 compressed objects within 2 object streams
+ 176 PDF objects out of 1000 (max. 8388607)
+ 105 compressed objects within 2 object streams
  0 named destinations out of 1000 (max. 500000)
- 36 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 21 words of extra memory for PDF output out of 10000 (max. 10000000)
 

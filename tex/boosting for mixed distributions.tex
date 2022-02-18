@@ -413,58 +413,77 @@ Note that $x_4$ is a redundant variable. We specify $\mu_1=-5,\mu_2=0,\mu_3=5, \
    	x_4~&\sim~ \Gamma(0.5,0.5).
    \end{align*}
 Note that we use shape-rate parameters for gamma distribution.
-We generate for 
-
-The underlying model is specified as follows:
-	$$Y_i =Z_iY_{i,1}+(1-Z_i)Y_{i,2}$$
-	$$Y_{i,1}|\bx_i \sim N(\mu_1(\bx_i), 0.9^2)$$
-	$$Y_{i,2}|\bx_i \sim N(\mu_2(\bx_i), 0.5^2)$$
-	$$Z_i \sim Bernuli(p(\bx_i))$$
-	$$\bx_i=(x_{i,1},x_{i,2},x_{i,3})^{\top}$$
-	$$\mu_1(\bx_i)=2+2\times x_{i,1} + \log x_{i,2}$$
-	$$\mu_2(\bx_i) = 0.5-0.5\times x_{i,1}+x_{i,3}-x_{i,1}\times x_{i,2}$$
-	$$p(\bx_i)=\frac{\exp\eta(\bx_i)}{1+\exp\eta(\bx_i)}$$
-	$$\eta(\bx_i)=1+0.1\times x_1+\log x_2 +x_3\times x_1$$
-The covariate is generated from the following distribution:
-	$$x_{1,i}\sim N(2,1^2)$$
-	$$x_{i,2}\sim Exp(2)$$
-	$$x_{i,3}\sim Bernuli(0.5)$$
-We simulate $n=5,000$ observations, Figure \ref{norm-hist-y} shows the empirical distribution of $ZY,(1-Z)Y,Y$.
-	\begin{figure}[htp!]
-		\centering
-		\includegraphics[width=0.3\linewidth]{../plots/two_gaussians/yone}
-		\includegraphics[width=0.3\linewidth]{../plots/two_gaussians/ytwo}
-		\includegraphics[width=0.3\linewidth]{../plots/two_gaussians/y}
-		\caption{Distribution of $ZY,(1-Z)Y,Y$.}\label{norm-hist-y}
-	\end{figure}
-We fit the following 5 models:
+We generate $n=12000$ samples, among which $10,000$ samples are learning data and $2,000$ samples are test data.
+We fit the following 7 models:
 \begin{itemize}
-	\item 	Mixture of distributions (homo):
-	$$f(y;p,\mu,\sigma)=p_1f_N(y;\mu_1,\sigma_1^2)+(1-p_1)f_N(y;\mu_2,\sigma_2^2)$$
-	\item 	Mixture of linear regressions or mixture of boosting with {constant} mixing probabilities (glm\_cp or boosting\_cp)
-	$$f(y;p,\mu,\sigma)=p_1f_N(y;\mu_1(\bx),\sigma_1^2)+(1-p_1)f_N(y;\mu_2(\bx),\sigma_2^2)$$
-	\item 	Mixture of linear regressions or mixture of boosting with {varying} mixing probabilities (glm\_vp or boosting\_vp)
-	$$f(y;p,\mu,\sigma)=p_1(\bx)f_N(y;\mu_1(\bx),\sigma_1^2)+(1-p_1(\bx))f_N(y;\mu_2(\bx),\sigma_2^2)$$
+	\item 	Mixture of distributions (homogeneous model without any covariates):
+	\begin{equation}
+		f(Y|\bx;\mu,\sigma,p)=p_1f_N(Y;\mu_1,\sigma_1)+p_2f_N(Y;\mu_2,\sigma_2)+p_3f_N(Y;\mu_3,\sigma_3).
+	\end{equation}
+
+\item 	Mixture of distributions with heterogeneous mixing probabilities modeled by multiclass logistic regression:
+\begin{equation}
+	f(Y|\bx;p,\mu,\sigma)=p_1(\bx)f_N(Y;\mu_1,\sigma_1)+p_2(\bx)f_N(y;\mu_2,\sigma_2)+p_3(\bx)f_N(Y;\mu_3,\sigma_3)
+\end{equation}
+where
+\begin{equation}\label{linear-p}
+	p_k(\bx)=\frac{\exp{F_k(\bx)}}{\sum_{l=1}^{3}\exp{F_l(\bx)}}, \text{ for } k=1,2,3,
+\end{equation}
+and 
+\begin{equation}\label{linear-p2}
+	F_1(\bx)=\langle \boldsymbol{a},\bx\rangle, F_2(\bx)=\langle \boldsymbol{b},\bx\rangle,F_3(\bx)=\langle \boldsymbol{c},\bx\rangle.
+\end{equation}
+Note that this model follows the underlying mixture structure. However, this model cannot address non-linear effects of covariates on the mixing probabilities.
+
+	\item 	Mixture of linear regressions with heterogeneous mean and homogeneous mixing probabilities:
+	\begin{equation}
+		f(Y|\bx;p,\mu,\sigma)=p_1f_N(Y;\mu_1(\bx),\sigma_1)+p_2f_N(y;\mu_2(\bx),\sigma_2)+p_3f_N(Y;\mu_3(\bx),\sigma_3),
+	\end{equation}
+where
+\begin{equation}\label{linear-mu}
+\mu_1(\bx)=\langle\alpha,\bx\rangle, \mu_2(\bx)=\langle\beta,\bx\rangle,\mu_3(\bx)=\langle\gamma,\bx\rangle.
+\end{equation}
+
+
+
+	\item 	Mixture of linear regressions with both heterogeneous mean and mixing probabilities:
+	\begin{equation}
+		f(Y|\bx;p,\mu,\sigma)=p_1(\bx)f_N(Y;\mu_1(\bx),\sigma_1)+p_2(\bx)f_N(y;\mu_2(\bx),\sigma_2)+p_3(\bx)f_N(Y;\mu_3(\bx),\sigma_3)
+	\end{equation}
+where the mean and mixing probabilities follow equations \eqref{linear-p}, \eqref{linear-p2} and \eqref{linear-mu}.
+
+\item Mixture of distributions with heterogeneous mixing probabilities modeled by boosting:
+\begin{equation}
+	f(Y|\bx;p,\mu,\sigma)=p_1(\bx)f_N(Y;\mu_1,\sigma_1)+p_2(\bx)f_N(y;\mu_2,\sigma_2)+p_3(\bx)f_N(Y;\mu_3,\sigma_3)
+\end{equation}
+where
+\begin{equation}\label{bst-p}
+	p_k(\bx)=\frac{\exp{F_k(\bx)}}{\sum_{l=1}^{3}\exp{F_l(\bx)}}, \text{ for } k=1,2,3.
+\end{equation}
+Here $F_1,F_2,F_3$ are estimated non-parametrically via boosting algorithm.
+
+\item Mixture of boosting with heterogeneous mean and homogeneous mixing probabilities:
+\begin{equation}\label{bst-mu}
+	f(Y|\bx;p,\mu,\sigma)=p_1f_N(Y;\mu_1(\bx),\sigma_1)+p_2f_N(y;\mu_2(\bx),\sigma_2)+p_3f_N(Y;\mu_3(\bx),\sigma_3),
+\end{equation}
+where $\mu_1,\mu_2,\mu_3$ are estimated non-parametrically via boosting algorithm.
+
+\item Mixture of boosting with both heterogeneous mean and mixing probabilities:
+\begin{equation}\label{bst-both}
+	f(Y|\bx;p,\mu,\sigma)=p_1(\bx)f_N(Y;\mu_1(\bx),\sigma_1)+p_2(\bx)f_N(y;\mu_2(\bx),\sigma_2)+p_3(\bx)f_N(Y;\mu_3(\bx),\sigma_3)
+\end{equation}
+where the mean and mixing probabilities are estimated non-parametrically via boosting algorithm.
+
 \end{itemize}
-We summarize the test losses in Table \ref{gaussian-summary}. Note that we have defined three metrics based on the true parameters: 
-	$$e_{\mu 1}=\frac{\sum_{i=1}^{n}(\mu_{i,1}-\hat{\mu}_{i,1})^2}{n}$$
-	$$e_{\mu 2}=\frac{\sum_{i=1}^{n}(\mu_{i,2}-\hat{\mu}_{i,2})^2}{n}$$
-	$$e_{\eta}=\frac{\sum_{i=1}^{n}(\eta_{i}-\hat{\eta}_{i})^2}{n},$$
-	where $\eta_i=\log\frac{p_i}{1-p_i}$.
-	\begin{table}[htp!]
-		\centering
-		\caption{Summary of test losses for different models.}\label{gaussian-summary}
-		\begin{tabular}{c|rrrr}
-			\hline
-			model        & \multicolumn{1}{c}{neg LL} & \multicolumn{1}{c}{$e_{\mu 1}$} & \multicolumn{1}{c}{$e_{\mu 2}$} & \multicolumn{1}{c}{$e_{\eta}$} \\ \hline
-			homo         & 2.5868                   & 6.2657                         & 2.6688                        & 3.3304                             \\
-			glm\_cp      & 1.8978                   & 0.7775                         & 0.3233                         & 3.2440                             \\
-			glm\_vp      & 1.7698                   & 0.8028                         & 0.3260                         & 1.2667                             \\
-			boosting\_cp & 1.7492                   & 0.2461                         & {\bf 0.1062}                        & 3.2242                             \\
-			boosting\_vp & {\bf 1.6407}                  & {\bf 0.2334}                         & 0.1105                         & {\bf 0.8435}                             \\ \hline
-		\end{tabular}
-	\end{table}
+We summarize the test losses in Table \ref{gaussian-summary}. 
+Models with linear predictor have large test loss since they cannot capture non-linear effects of covariates.
+Models with heterogeneous mean have no obvious better out-of-sample performance compared with the counterpart models with homogeneous mean.
+Models with heterogeneous mixing probabilities have a better out-of-sample performance compared with the counterpart models with homogeneous mixing probabilities.
+Hence, an appropriate mixture structure is heterogeneous mixing probabilities with homogeneous mean. 
+
 Hence, we see the mixture of boosting with varying mixing probabilities has the outstanding out-of-sample predictive performance.
+
+{\bf Remarks.} early stop for boosting and EB outer iteration.
 
 \red{Accelerating by paralleling computing}
 
