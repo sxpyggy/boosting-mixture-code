@@ -16,21 +16,4 @@ Friedman, J.~H.  \harvardyearleft 2001\harvardyearright .
 \newblock Greedy function approximation: a gradient boosting machine, {\em
   Annals of statistics} pp.~1189--1232.
 
-\harvarditem[Mayr et~al.]{Mayr, Fenske, Hofner, Kneib \harvardand\
-  Schmid}{2012}{mayr:2012}
-Mayr, A., Fenske, N., Hofner, B., Kneib, T. \harvardand\ Schmid, M.
-  \harvardyearleft 2012\harvardyearright .
-\newblock Generalized additive models for location, scale and shape for high
-  dimensional data—a flexible approach based on boosting, {\em Journal of the
-  Royal Statistical Society: Series C (Applied Statistics)} {\bf
-  61}(3):~403--427.
-
-\harvarditem[Thomas et~al.]{Thomas, Mayr, Bischl, Schmid, Smith \harvardand\
-  Hofner}{2018}{thomas:2018}
-Thomas, J., Mayr, A., Bischl, B., Schmid, M., Smith, A. \harvardand\ Hofner, B.
-   \harvardyearleft 2018\harvardyearright .
-\newblock Gradient boosting for distributional regression: faster tuning and
-  improved variable selection via noncyclical updates, {\em Statistics and
-  Computing} {\bf 28}(3):~673--687.
-
 \end{thebibliography}

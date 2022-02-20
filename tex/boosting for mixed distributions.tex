@@ -417,12 +417,21 @@ We generate $n=12000$ samples, among which $10,000$ samples are learning data an
 We fit the following 7 models:
 \begin{itemize}
 	\item 	Mixture of distributions (homogeneous model without any covariates):
-	\begin{equation}
+	\begin{equation}\label{gaussian-0}
 		f(Y|\bx;\mu,\sigma,p)=p_1f_N(Y;\mu_1,\sigma_1)+p_2f_N(Y;\mu_2,\sigma_2)+p_3f_N(Y;\mu_3,\sigma_3).
 	\end{equation}
 
+	\item 	Mixture of linear regressions with heterogeneous mean and homogeneous mixing probabilities:
+\begin{equation}\label{gaussian-glm-mu}
+	f(Y|\bx;p,\mu,\sigma)=p_1f_N(Y;\mu_1(\bx),\sigma_1)+p_2f_N(y;\mu_2(\bx),\sigma_2)+p_3f_N(Y;\mu_3(\bx),\sigma_3),
+\end{equation}
+where
+\begin{equation}\label{linear-mu}
+	\mu_1(\bx)=\langle\alpha,\bx\rangle, \mu_2(\bx)=\langle\beta,\bx\rangle,\mu_3(\bx)=\langle\gamma,\bx\rangle.
+\end{equation}
+
 \item 	Mixture of distributions with heterogeneous mixing probabilities modeled by multiclass logistic regression:
-\begin{equation}
+\begin{equation}\label{gaussian-glm-p}
 	f(Y|\bx;p,\mu,\sigma)=p_1(\bx)f_N(Y;\mu_1,\sigma_1)+p_2(\bx)f_N(y;\mu_2,\sigma_2)+p_3(\bx)f_N(Y;\mu_3,\sigma_3)
 \end{equation}
 where
@@ -435,25 +444,22 @@ and
 \end{equation}
 Note that this model follows the underlying mixture structure. However, this model cannot address non-linear effects of covariates on the mixing probabilities.
 
-	\item 	Mixture of linear regressions with heterogeneous mean and homogeneous mixing probabilities:
-	\begin{equation}
-		f(Y|\bx;p,\mu,\sigma)=p_1f_N(Y;\mu_1(\bx),\sigma_1)+p_2f_N(y;\mu_2(\bx),\sigma_2)+p_3f_N(Y;\mu_3(\bx),\sigma_3),
-	\end{equation}
-where
-\begin{equation}\label{linear-mu}
-\mu_1(\bx)=\langle\alpha,\bx\rangle, \mu_2(\bx)=\langle\beta,\bx\rangle,\mu_3(\bx)=\langle\gamma,\bx\rangle.
-\end{equation}
-
-
-
 	\item 	Mixture of linear regressions with both heterogeneous mean and mixing probabilities:
-	\begin{equation}
+	\begin{equation}\label{gaussian-glm-b}
 		f(Y|\bx;p,\mu,\sigma)=p_1(\bx)f_N(Y;\mu_1(\bx),\sigma_1)+p_2(\bx)f_N(y;\mu_2(\bx),\sigma_2)+p_3(\bx)f_N(Y;\mu_3(\bx),\sigma_3)
 	\end{equation}
 where the mean and mixing probabilities follow equations \eqref{linear-p}, \eqref{linear-p2} and \eqref{linear-mu}.
 
+
+
+\item Mixture of boosting with heterogeneous mean and homogeneous mixing probabilities:
+\begin{equation}\label{gaussian-bst-mu}
+	f(Y|\bx;p,\mu,\sigma)=p_1f_N(Y;\mu_1(\bx),\sigma_1)+p_2f_N(y;\mu_2(\bx),\sigma_2)+p_3f_N(Y;\mu_3(\bx),\sigma_3),
+\end{equation}
+where $\mu_1,\mu_2,\mu_3$ are estimated non-parametrically via boosting algorithm.
+
 \item Mixture of distributions with heterogeneous mixing probabilities modeled by boosting:
-\begin{equation}
+\begin{equation}\label{gaussian-bst-p}
 	f(Y|\bx;p,\mu,\sigma)=p_1(\bx)f_N(Y;\mu_1,\sigma_1)+p_2(\bx)f_N(y;\mu_2,\sigma_2)+p_3(\bx)f_N(Y;\mu_3,\sigma_3)
 \end{equation}
 where
@@ -462,31 +468,49 @@ where
 \end{equation}
 Here $F_1,F_2,F_3$ are estimated non-parametrically via boosting algorithm.
 
-\item Mixture of boosting with heterogeneous mean and homogeneous mixing probabilities:
-\begin{equation}\label{bst-mu}
-	f(Y|\bx;p,\mu,\sigma)=p_1f_N(Y;\mu_1(\bx),\sigma_1)+p_2f_N(y;\mu_2(\bx),\sigma_2)+p_3f_N(Y;\mu_3(\bx),\sigma_3),
-\end{equation}
-where $\mu_1,\mu_2,\mu_3$ are estimated non-parametrically via boosting algorithm.
-
 \item Mixture of boosting with both heterogeneous mean and mixing probabilities:
-\begin{equation}\label{bst-both}
+\begin{equation}\label{gaussian-bst-b}
 	f(Y|\bx;p,\mu,\sigma)=p_1(\bx)f_N(Y;\mu_1(\bx),\sigma_1)+p_2(\bx)f_N(y;\mu_2(\bx),\sigma_2)+p_3(\bx)f_N(Y;\mu_3(\bx),\sigma_3)
 \end{equation}
 where the mean and mixing probabilities are estimated non-parametrically via boosting algorithm.
 
 \end{itemize}
 We summarize the test losses in Table \ref{gaussian-summary}. 
-Models with linear predictor have large test loss since they cannot capture non-linear effects of covariates.
-Models with heterogeneous mean have no obvious better out-of-sample performance compared with the counterpart models with homogeneous mean.
-Models with heterogeneous mixing probabilities have a better out-of-sample performance compared with the counterpart models with homogeneous mixing probabilities.
+Note that the true negative log-likelihood is calculated based on the simulated parameters $p(\bx), \mu,\sigma$.
+% Please add the following required packages to your document preamble:
+% \usepackage{multirow}
+\begin{table}[htp!]
+	\caption{Comparison of different models in terms of test loss and running time.}\label{gaussian-summary}
+			\centering
+	\begin{tabular}{c|ccc}
+		\hline
+		\multirow{2}{*}{model} & negative       & running time               & running time            \\
+		& log-likelihood & without parallel computing & with parallel computing \\ \hline
+		Null \eqref{gaussian-0}                   & 2.4821         & $<$ 10 seconds       & NA    \\
+		Constant $\mu$	\eqref{gaussian-glm-mu}                & 2.4779         & $<$ 10 seconds       & NA    \\
+		Constant $p$ \eqref{gaussian-glm-p}                 & 2.2016         & $<$ 10 seconds       & NA   \\
+		Varying $\mu$ and $p$ \eqref{gaussian-glm-b}              & 2.2011         & $<$ 10 seconds       & NA   \\
+		Constant $\mu$ \eqref{gaussian-bst-mu}                & 2.4139         & $<$ 10 seconds       & NA    \\
+		Constant $p$ \eqref{gaussian-bst-p}                 & 2.1330          &                            & 381 seconds           \\
+		Varying $\mu$ and $p$ \eqref{gaussian-bst-b}              & 2.1320          &                            & 597 seconds               \\
+		True                   & 2.1231         &            NA                &               NA         \\ \hline
+	\end{tabular}
+\end{table}
+Models with linear predictor  \eqref{gaussian-glm-mu}, \eqref{gaussian-glm-p} and \eqref{gaussian-glm-b} have larger test loss 
+than Models \eqref{gaussian-bst-mu}, \eqref{gaussian-bst-p} and \eqref{gaussian-bst-b} 
+since they cannot capture non-linear effects of covariates.
+Models with heterogeneous mean and mixing probabilities \eqref{gaussian-glm-b} and \eqref{gaussian-bst-b}  have no obvious better out-of-sample performance compared with the counterpart models with homogeneous mean \eqref{gaussian-glm-p} and \eqref{gaussian-bst-p}.
+Models with heterogeneous mixing probabilities \eqref{gaussian-glm-p} and \eqref{gaussian-bst-p} have a better out-of-sample performance compared with the counterpart models with homogeneous mixing probabilities \eqref{gaussian-0}.
 Hence, an appropriate mixture structure is heterogeneous mixing probabilities with homogeneous mean. 
 
-Hence, we see the mixture of boosting with varying mixing probabilities has the outstanding out-of-sample predictive performance.
+The boosting of mixing probabilities takes the majority of running in the EB algorithm. We accelerate the EB algorithm by applying parallel computing for the boosting of mixing probabilities in step 3.1 of the EB algorithm, i.e., we fit $K$ trees for $F_k, k=1:K$ simultaneously.
+The running time with and without parallel computing are listed in Table \ref{gaussian-summary}.
+Parallel computing accelerates the EB algorithm significantly.   
 
-{\bf Remarks.} early stop for boosting and EB outer iteration.
 
-\red{Accelerating by paralleling computing}
-
+{\bf Remarks.} In the EB algorithm, we need to determine when to stop inner boosting loop and when to stop outer EB loop.
+We partition the learning data into training data and validation data. 
+We use the validation loss to early stop the inner boosting iteration and the training loss to stop the outer EB iteration.
 
 \subsection{Second simulated example: zero-inflated Poisson model}
 
@@ -592,25 +616,23 @@ Furthermore, all the models can address the excess of zero claims since they are
 	\end{tabular}
 \end{table}
 
-\subsection{A real data example: claims severity modelling}
-		
-\begin{frame}{Distribution of average claim amount}
-	Claims amount data {\tt freMTPL2sev} from R package {\bf CASdatasets}. Sample size $n=24,938$. \blue{Three peaks and heavy tail}.
+\subsection{Third example: claims severity modelling}
+In this example, we study the claims amount data {\tt freMTPL2sev} from R package {\bf CASdatasets}, which contains $n=24,938$ samples. 
+We plot the histogram and the logged survival function of logged average claim  amount in Figure \ref{tail}, which shows three peaks and a heavy tail. 
 	\begin{figure}[h!]
 		\centering
-		\includegraphics[width=0.35\linewidth]{../plots/sev/hist.png}
-		\includegraphics[width=0.35\linewidth]{../plots/sev/log-log.png}
+		\includegraphics[width=0.45\linewidth]{../plots/sev/hist.png}
+		\includegraphics[width=0.45\linewidth]{../plots/sev/log-log.png}
 		\caption{Histogram and logged survival function of logged average claims.}\label{tail}
 	\end{figure}
-\end{frame}
+An intuitive choice of component distributions is that 
+three peaks are modelled by three gamma distributions, respectively, the resting non-tail part by a forth gamma distribution, and the tail part by a Pareto distribution.
+Therefore, the probability density function (of the null model) is given by
+\begin{equation}\label{sev-0}
+	f(Y|\bx;p,\mu,\phi,\alpha)=\sum_{k=1}^4p_kf_{G}(Y;\mu_k,\phi_k)+p_5f_{P}(Y;\alpha,M)
+\end{equation}
 
-\begin{frame}{Mixture of distributions}
-	Three gamma distributions for three peaks. One gamma distribution for resting non-tail part. One Pareto distribution for tail.
-	$$f(y)=\sum_{k=1}^4p_kf_{gamma}(y;\mu_k,\phi_k)+p_5f_{pareto}(y;\alpha,M)$$
 	where $\mu,\phi$ are mean and dispersion parameter, and $\alpha, M$ are tail index and threshold. The threshold is pre-determined as $8158.13$ according to Hill plot.
-\end{frame}
-
-\begin{frame}{Initialization of hidden variable}
 	
 	Figure \ref{tail} indicates a way to initialize the hidden variable:
 	\begin{equation}
@@ -619,23 +641,18 @@ Furthermore, all the models can address the excess of zero claims since they are
 			&=(\mathbbm{1}_{(0,500]}y_i,\mathbbm{1}_{(500, 1000]}y_i,\mathbbm{1}_{(1000,1200]}y_i,\mathbbm{1}_{(1200,8158.13]}y_i,\mathbbm{1}_{(8158.13,\infty)}y_i)^\top
 		\end{aligned}
 	\end{equation}
-	
 	Other parameters can be initialized as the MLE based on the full likelihood function.
-	
-\end{frame}
-
-
-\begin{frame}{EM algorithm}
+We first fit a null model \eqref{sev-0} to the data via the EM algorithm. 
+The trace of learning loss is shown in Figure \ref{null_sev}.
 	\begin{figure}[h!]
 		\centering
-		\includegraphics[width=0.35\linewidth]{../plots/sev/null_trace}
+		\includegraphics[width=0.5\linewidth]{../plots/sev/null_trace}
 		\caption{Learning loss of mixture of distributions.}\label{null_sev}
 	\end{figure}
-\end{frame}
-
-\begin{frame}{Estimated parameters}	\begin{table}[h!]
+The estimated parameters are listed in Table \ref{null-gamma}. We observe that three peaks are captured by the first three component gamma distributions.
+	\begin{table}[h!]
 		\centering
-		\caption{MLE of four component gamma distributions. Tail index is estimated as $\hat{\alpha}=1.0773$}\label{null-gamma}
+		\caption{MLE of four component gamma distributions. Tail index is estimated as $\hat{\alpha}=1.0773$.}\label{null-gamma}
 		\begin{tabular}{crrrr}
 			\hline
 			component $k$ & \multicolumn{1}{c}{$\mu_k$} & \multicolumn{1}{c}{shape $(1/\phi_k)$} & \multicolumn{1}{c}{scale} & \multicolumn{1}{c}{rate} \\ \hline
@@ -645,58 +662,47 @@ Furthermore, all the models can address the excess of zero claims since they are
 			4         & 1534.5143              & 1.0377                    & 1478.7768                 & 7e-04                    \\ \hline
 		\end{tabular}
 	\end{table}
-	
-	~
-	
-	Those large shape parameters (small dispersion) implies the difficulties with \blue{gamma mean modeling}.
-\end{frame}
+	Those large shape parameters (small dispersion) implies the  difficulties with {gamma mean modeling}. The test loss is calculated as 7.5815.
 
-\begin{frame}{Boosting mixing probabilities}
-	$$f(y|\bx)=\sum_{k=1}^4p_k(\bx)f_{gamma}(y;\mu_k,\phi_k)+p_5(\bx)f_{pareto}(y;\alpha,M)$$
+Next we model the mixing probabilities by boosting algorithm:
+\begin{equation}\label{sev-bst-p}
+f(Y|\bx;p,\mu,\phi,\alpha)=\sum_{k=1}^4p_k(\bx)f_{G}(Y;\mu_k,\phi_k)+p_5(\bx)f_{P}(Y;\alpha,M).
+\end{equation}
+We draw the boxplot of the mixing probabilities in Figure \ref{bx-bst-p}, which implies that the mixing probabilities of third and forth components $p_3$ and $p_4$ are more related with the covariates.
+The test loss is calculated as 7.5588 smaller than the null model.
 	\begin{figure}[htp!]
 		\centering
-		\includegraphics[width=0.35\linewidth]{../plots/sev/glm_p}
-		\caption{Boxplot of estimated mixing probabilities.}\label{glm-p}
+		\includegraphics[width=0.35\linewidth]{../plots/sev/bst_p}
+		\caption{Boxplot of estimated mixing probabilities.}\label{bx-bst-p}
 	\end{figure}
-\end{frame}
 
-\begin{frame}{Boosting the forth component  mean}
+
+The small shape parameter of the forth component as shown in Table \ref{null-gamma} indicates a possible improvement by boosting the forth component  mean.
+Therefore, we fit the following model:
 	$$
 	\begin{aligned}
-		f(y|\bx)=&\sum_{k=1}^3p_k(\bx)f_{gamma}(y;\mu_k,\phi_k)+ \\
-		&p_4(\bx)f_{gamma}(y;\mu_4(\bx),\phi_4)+ p_5(\bx)f_{pareto}(y;\alpha,M)
+		f(Y|\bx;p,\mu,\phi,\alpha)=&\sum_{k=1}^3p_k(\bx)f_{G}(Y;\mu_k,\phi_k)+ \\
+		&p_4(\bx)f_{G}(Y|\bx;\mu_4(\bx),\phi_4)+ p_5(\bx)f_{P}(Y;\alpha,M).
 	\end{aligned}
 	$$
-	Test loss (negative log-likelihood)
-	\begin{enumerate}
-		\item Mixture of distributions:
-		7.5815
-		\item Boosting mixing probabilities:
-		{\bf 7.5588}
-		\item Boosting mixing probabilities and the forth component mean:
-		7.5573.
-	\end{enumerate}
-\end{frame}
+	Test loss is calculated as 7.5573 smaller than that of model \eqref{sev-bst-p}. 
+
 
 \section{Conclusions}
-\begin{frame}{Our proposal: Expectation-Boosting algorithm}
-	Expectation-Boosting (EB) algorithm:
-	\begin{itemize}
-		\item Replaces the maximization step by an \blue{overfitting-sensitive} boosting step.
-		\item The boosting step follows a \blue{generic functional gradient descent algorithm}.
-		
-	\end{itemize}
-\end{frame}
+Insurance loss data sometimes cannot be sufficiently modelled by a single distribution.
+Those data is usually modelled by mixture of models.
+The traditional estimation method for mixture of models is the EM algorithm.
+However, thee EM algorithm is not quite useful when the component model is supposed to be non-parametric.
+In this paper, we propose an Expectation-Boosting (EB) algorithm for mixture of models, where both the mixing probabilities and the component models are supposed to be modelled non-parametrically. 
+The proposed algorithm replaces the maximization step of the EM algorithm by a generic functional gradient descent algorithm.
+There are several advantages of EB algorithm over the EM algorithm. 
+First, boosting algorithm is a flexible non-parametric regression facilitating both {non-linear effects and interaction}.  
+There is no need for specifying the form of component regression functions and performing covariate transformation, which is difficult in the mixture of models.
+Second, boosting algorithm is {overfitting-sensitive}, we can perform {variable selection} simultaneously during the EB algorithm.
+In this paper, we do not discuss the model interpretation, which is quite similar to those in normal boosting algorithm, such as variable importance, ice curve, etc. 
+We discuss number of components selection ad hoc rather than systematically.
+One may refer to ?? for more details.
 
-\begin{frame}{Advantages}
-	Several advantages of EB algorithm over the EM algorithm.
-	\begin{itemize}
-		\item No need for specifying the form of component regression functions and performing covariate transformation.
-		\item Only need for component \blue{loss functions}.
-		\item Boosting algorithm is a flexible non-parametric regression facilitating both \blue{non-linear effects and interaction}.
-		\item  Boosting algorithm is \blue{overfitting-sensitive}, we can perform \blue{variable selection} simultaneously during the EB algorithm.
-	\end{itemize}
-\end{frame}
 
 \bibliography{boosting}
 \bibliographystyle{boosting}

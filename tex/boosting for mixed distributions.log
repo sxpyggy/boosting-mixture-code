@@ -1,119 +1,119 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.23 (TeX Live 2021/W32TeX) (preloaded format=pdflatex 2021.9.15)  18 FEB 2022 16:42
+This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2021) (preloaded format=pdflatex 2021.6.22)  20 FEB 2022 19:27
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
 **"boosting for mixed distributions.tex"
 (./boosting for mixed distributions.tex
-LaTeX2e <2021-06-01> patch level 1
-L3 programming layer <2021-08-27>
-(f:/texlive/2021/texmf-dist/tex/latex/base/article.cls
-Document Class: article 2021/02/12 v1.4n Standard LaTeX document class
-(f:/texlive/2021/texmf-dist/tex/latex/base/size11.clo
-File: size11.clo 2021/02/12 v1.4n Standard LaTeX file (size option)
+LaTeX2e <2020-10-01> patch level 4
+L3 programming layer <2021-02-18>
+(/usr/local/texlive/2021basic/texmf-dist/tex/latex/base/article.cls
+Document Class: article 2020/04/10 v1.4m Standard LaTeX document class
+(/usr/local/texlive/2021basic/texmf-dist/tex/latex/base/size11.clo
+File: size11.clo 2020/04/10 v1.4m Standard LaTeX file (size option)
 )
-\c@part=\count182
-\c@section=\count183
-\c@subsection=\count184
-\c@subsubsection=\count185
-\c@paragraph=\count186
-\c@subparagraph=\count187
-\c@figure=\count188
-\c@table=\count189
+\c@part=\count179
+\c@section=\count180
+\c@subsection=\count181
+\c@subsubsection=\count182
+\c@paragraph=\count183
+\c@subparagraph=\count184
+\c@figure=\count185
+\c@table=\count186
 \abovecaptionskip=\skip47
 \belowcaptionskip=\skip48
 \bibindent=\dimen138
 )
-(f:/texlive/2021/texmf-dist/tex/latex/listings/listings.sty
-(f:/texlive/2021/texmf-dist/tex/latex/graphics/keyval.sty
+(/usr/local/texlive/2021basic/texmf-dist/tex/latex/listings/listings.sty
+(/usr/local/texlive/2021basic/texmf-dist/tex/latex/graphics/keyval.sty
 Package: keyval 2014/10/28 v1.15 key=value parser (DPC)
-\KV@toks@=\toks16
+\KV@toks@=\toks15
 )
-\lst@mode=\count190
-\lst@gtempboxa=\box50
-\lst@token=\toks17
-\lst@length=\count191
+\lst@mode=\count187
+\lst@gtempboxa=\box47
+\lst@token=\toks16
+\lst@length=\count188
 \lst@currlwidth=\dimen139
-\lst@column=\count192
-\lst@pos=\count193
+\lst@column=\count189
+\lst@pos=\count190
 \lst@lostspace=\dimen140
 \lst@width=\dimen141
-\lst@newlines=\count194
-\lst@lineno=\count195
+\lst@newlines=\count191
+\lst@lineno=\count192
 \lst@maxwidth=\dimen142
 
-(f:/texlive/2021/texmf-dist/tex/latex/listings/lstmisc.sty
+(/usr/local/texlive/2021basic/texmf-dist/tex/latex/listings/lstmisc.sty
 File: lstmisc.sty 2020/03/24 1.8d (Carsten Heinz)
-\c@lstnumber=\count196
-\lst@skipnumbers=\count197
-\lst@framebox=\box51
+\c@lstnumber=\count193
+\lst@skipnumbers=\count194
+\lst@framebox=\box48
 )
-(f:/texlive/2021/texmf-dist/tex/latex/listings/listings.cfg
+(/usr/local/texlive/2021basic/texmf-dist/tex/latex/listings/listings.cfg
 File: listings.cfg 2020/03/24 1.8d listings configuration
 ))
 Package: listings 2020/03/24 1.8d (Carsten Heinz)
 
-(f:/texlive/2021/texmf-dist/tex/latex/amsmath/amsmath.sty
-Package: amsmath 2021/04/20 v2.17j AMS math features
+(/usr/local/texlive/2021basic/texmf-dist/tex/latex/amsmath/amsmath.sty
+Package: amsmath 2020/09/23 v2.17i AMS math features
 \@mathmargin=\skip49
 
 For additional information on amsmath, use the `?' option.
-(f:/texlive/2021/texmf-dist/tex/latex/amsmath/amstext.sty
+(/usr/local/texlive/2021basic/texmf-dist/tex/latex/amsmath/amstext.sty
 Package: amstext 2000/06/29 v2.01 AMS text
 
-(f:/texlive/2021/texmf-dist/tex/latex/amsmath/amsgen.sty
+(/usr/local/texlive/2021basic/texmf-dist/tex/latex/amsmath/amsgen.sty
 File: amsgen.sty 1999/11/30 v2.0 generic functions
-\@emptytoks=\toks18
+\@emptytoks=\toks17
 \ex@=\dimen143
 ))
-(f:/texlive/2021/texmf-dist/tex/latex/amsmath/amsbsy.sty
+(/usr/local/texlive/2021basic/texmf-dist/tex/latex/amsmath/amsbsy.sty
 Package: amsbsy 1999/11/29 v1.2d Bold Symbols
 \pmbraise@=\dimen144
 )
-(f:/texlive/2021/texmf-dist/tex/latex/amsmath/amsopn.sty
+(/usr/local/texlive/2021basic/texmf-dist/tex/latex/amsmath/amsopn.sty
 Package: amsopn 2016/03/08 v2.02 operator names
 )
-\inf@bad=\count198
+\inf@bad=\count195
 LaTeX Info: Redefining \frac on input line 234.
-\uproot@=\count199
-\leftroot@=\count266
+\uproot@=\count196
+\leftroot@=\count197
 LaTeX Info: Redefining \overline on input line 399.
-\classnum@=\count267
-\DOTSCASE@=\count268
+\classnum@=\count198
+\DOTSCASE@=\count199
 LaTeX Info: Redefining \ldots on input line 496.
 LaTeX Info: Redefining \dots on input line 499.
 LaTeX Info: Redefining \cdots on input line 620.
-\Mathstrutbox@=\box52
-\strutbox@=\box53
+\Mathstrutbox@=\box49
+\strutbox@=\box50
 \big@size=\dimen145
 LaTeX Font Info:    Redeclaring font encoding OML on input line 743.
 LaTeX Font Info:    Redeclaring font encoding OMS on input line 744.
-\macc@depth=\count269
-\c@MaxMatrixCols=\count270
+\macc@depth=\count266
+\c@MaxMatrixCols=\count267
 \dotsspace@=\muskip16
-\c@parentequation=\count271
-\dspbrk@lvl=\count272
-\tag@help=\toks19
-\row@=\count273
-\column@=\count274
-\maxfields@=\count275
-\andhelp@=\toks20
+\c@parentequation=\count268
+\dspbrk@lvl=\count269
+\tag@help=\toks18
+\row@=\count270
+\column@=\count271
+\maxfields@=\count272
+\andhelp@=\toks19
 \eqnshift@=\dimen146
 \alignsep@=\dimen147
 \tagshift@=\dimen148
 \tagwidth@=\dimen149
 \totwidth@=\dimen150
 \lineht@=\dimen151
-\@envbody=\toks21
+\@envbody=\toks20
 \multlinegap=\skip50
 \multlinetaggap=\skip51
-\mathdisplay@stack=\toks22
+\mathdisplay@stack=\toks21
 LaTeX Info: Redefining \[ on input line 2923.
 LaTeX Info: Redefining \] on input line 2924.
 )
-(f:/texlive/2021/texmf-dist/tex/latex/amsfonts/amssymb.sty
+(/usr/local/texlive/2021basic/texmf-dist/tex/latex/amsfonts/amssymb.sty
 Package: amssymb 2013/01/14 v3.01 AMS font symbols
 
-(f:/texlive/2021/texmf-dist/tex/latex/amsfonts/amsfonts.sty
+(/usr/local/texlive/2021basic/texmf-dist/tex/latex/amsfonts/amsfonts.sty
 Package: amsfonts 2013/01/14 v3.01 Basic AMSFonts support
 \symAMSa=\mathgroup4
 \symAMSb=\mathgroup5
@@ -121,77 +121,77 @@ LaTeX Font Info:    Redeclaring math symbol \hbar on input line 98.
 LaTeX Font Info:    Overwriting math alphabet `\mathfrak' in version `bold'
 (Font)                  U/euf/m/n --> U/euf/b/n on input line 106.
 ))
-(f:/texlive/2021/texmf-dist/tex/latex/bbm-macros/bbm.sty
+(/usr/local/texlive/2021basic/texmf-dist/tex/latex/bbm-macros/bbm.sty
 Package: bbm 1999/03/15 V 1.2 provides fonts for set symbols - TH
 LaTeX Font Info:    Overwriting math alphabet `\mathbbm' in version `bold'
 (Font)                  U/bbm/m/n --> U/bbm/bx/n on input line 33.
 LaTeX Font Info:    Overwriting math alphabet `\mathbbmss' in version `bold'
 (Font)                  U/bbmss/m/n --> U/bbmss/bx/n on input line 35.
 )
-(f:/texlive/2021/texmf-dist/tex/latex/amscls/amsthm.sty
+(/usr/local/texlive/2021basic/texmf-dist/tex/latex/amscls/amsthm.sty
 Package: amsthm 2020/05/29 v2.20.6
-\thm@style=\toks23
-\thm@bodyfont=\toks24
-\thm@headfont=\toks25
-\thm@notefont=\toks26
-\thm@headpunct=\toks27
+\thm@style=\toks22
+\thm@bodyfont=\toks23
+\thm@headfont=\toks24
+\thm@notefont=\toks25
+\thm@headpunct=\toks26
 \thm@preskip=\skip52
 \thm@postskip=\skip53
 \thm@headsep=\skip54
-\dth@everypar=\toks28
+\dth@everypar=\toks27
 )
-(f:/texlive/2021/texmf-dist/tex/latex/graphics/graphicx.sty
-Package: graphicx 2020/12/05 v1.2c Enhanced LaTeX Graphics (DPC,SPQR)
+(/usr/local/texlive/2021basic/texmf-dist/tex/latex/graphics/graphicx.sty
+Package: graphicx 2020/09/09 v1.2b Enhanced LaTeX Graphics (DPC,SPQR)
 
-(f:/texlive/2021/texmf-dist/tex/latex/graphics/graphics.sty
-Package: graphics 2021/03/04 v1.4d Standard LaTeX Graphics (DPC,SPQR)
+(/usr/local/texlive/2021basic/texmf-dist/tex/latex/graphics/graphics.sty
+Package: graphics 2020/08/30 v1.4c Standard LaTeX Graphics (DPC,SPQR)
 
-(f:/texlive/2021/texmf-dist/tex/latex/graphics/trig.sty
+(/usr/local/texlive/2021basic/texmf-dist/tex/latex/graphics/trig.sty
 Package: trig 2016/01/03 v1.10 sin cos tan (DPC)
 )
-(f:/texlive/2021/texmf-dist/tex/latex/graphics-cfg/graphics.cfg
+(/usr/local/texlive/2021basic/texmf-dist/tex/latex/graphics-cfg/graphics.cfg
 File: graphics.cfg 2016/06/04 v1.11 sample graphics configuration
 )
-Package graphics Info: Driver file: pdftex.def on input line 107.
+Package graphics Info: Driver file: pdftex.def on input line 105.
 
-(f:/texlive/2021/texmf-dist/tex/latex/graphics-def/pdftex.def
+(/usr/local/texlive/2021basic/texmf-dist/tex/latex/graphics-def/pdftex.def
 File: pdftex.def 2020/10/05 v1.2a Graphics/color driver for pdftex
 ))
 \Gin@req@height=\dimen152
 \Gin@req@width=\dimen153
 )
-(f:/texlive/2021/texmf-dist/tex/latex/graphics/color.sty
+(/usr/local/texlive/2021basic/texmf-dist/tex/latex/graphics/color.sty
 Package: color 2020/02/24 v1.2b Standard LaTeX Color (DPC)
 
-(f:/texlive/2021/texmf-dist/tex/latex/graphics-cfg/color.cfg
+(/usr/local/texlive/2021basic/texmf-dist/tex/latex/graphics-cfg/color.cfg
 File: color.cfg 2016/01/02 v1.6 sample color configuration
 )
-Package color Info: Driver file: pdftex.def on input line 149.
+Package color Info: Driver file: pdftex.def on input line 147.
 )
-(f:/texlive/2021/texmf-dist/tex/latex/multirow/multirow.sty
+(/usr/local/texlive/2021basic/texmf-dist/tex/latex/multirow/multirow.sty
 Package: multirow 2021/03/15 v2.8 Span multiple rows of a table
 \multirow@colwidth=\skip55
-\multirow@cntb=\count276
+\multirow@cntb=\count273
 \multirow@dima=\skip56
 \bigstrutjot=\dimen154
 )
-(f:/texlive/2021/texmf-dist/tex/latex/natbib/natbib.sty
+(/usr/local/texlive/2021basic/texmf-dist/tex/latex/natbib/natbib.sty
 Package: natbib 2010/09/13 8.31b (PWD, AO)
 \bibhang=\skip57
 \bibsep=\skip58
 LaTeX Info: Redefining \cite on input line 694.
-\c@NAT@ctr=\count277
+\c@NAT@ctr=\count274
 )
-(f:/texlive/2021/texmf-dist/tex/latex/listings/lstlang1.sty
+(/usr/local/texlive/2021basic/texmf-dist/tex/latex/listings/lstlang1.sty
 File: lstlang1.sty 2020/03/24 1.8d listings language file
 )
-(f:/texlive/2021/texmf-dist/tex/latex/listings/lstlang2.sty
+(/usr/local/texlive/2021basic/texmf-dist/tex/latex/listings/lstlang2.sty
 File: lstlang2.sty 2020/03/24 1.8d listings language file
 )
-(f:/texlive/2021/texmf-dist/tex/latex/listings/lstlang3.sty
+(/usr/local/texlive/2021basic/texmf-dist/tex/latex/listings/lstlang3.sty
 File: lstlang3.sty 2020/03/24 1.8d listings language file
 )
-(f:/texlive/2021/texmf-dist/tex/latex/booktabs/booktabs.sty
+(/usr/local/texlive/2021basic/texmf-dist/tex/latex/booktabs/booktabs.sty
 Package: booktabs 2020/01/12 v1.61803398 Publication quality tables
 \heavyrulewidth=\dimen155
 \lightrulewidth=\dimen156
@@ -203,26 +203,26 @@ Package: booktabs 2020/01/12 v1.61803398 Publication quality tables
 \cmidrulesep=\dimen162
 \cmidrulekern=\dimen163
 \defaultaddspace=\dimen164
-\@cmidla=\count278
-\@cmidlb=\count279
+\@cmidla=\count275
+\@cmidlb=\count276
 \@aboverulesep=\dimen165
 \@belowrulesep=\dimen166
-\@thisruleclass=\count280
-\@lastruleclass=\count281
+\@thisruleclass=\count277
+\@lastruleclass=\count278
 \@thisrulewidth=\dimen167
 )
-\c@saveenumi=\count282
+\c@saveenumi=\count279
 
-(f:/texlive/2021/texmf-dist/tex/latex/url/url.sty
+(/usr/local/texlive/2021basic/texmf-dist/tex/latex/url/url.sty
 \Urlmuskip=\muskip17
 Package: url 2013/09/16  ver 3.4  Verb mode for urls, etc.
 )
-(f:/texlive/2021/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def
-File: l3backend-pdftex.def 2021-08-04 L3 backend support: PDF output (pdfTeX)
-\l__color_backend_stack_int=\count283
-\l__pdf_internal_box=\box54
-)
-(./boosting for mixed distributions.aux
+(/usr/local/texlive/2021basic/texmf-dist/tex/latex/l3backend/l3backend-pdftex.d
+ef
+File: l3backend-pdftex.def 2021-03-18 L3 backend support: PDF output (pdfTeX)
+\l__color_backend_stack_int=\count280
+\l__pdf_internal_box=\box51
+) (./boosting for mixed distributions.aux
 
 LaTeX Warning: Label `logistic' multiply defined.
 
@@ -243,43 +243,44 @@ LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 41.
 LaTeX Font Info:    ... okay on input line 41.
 LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 41.
 LaTeX Font Info:    ... okay on input line 41.
-\c@lstlisting=\count284
- (f:/texlive/2021/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
+\c@lstlisting=\count281
+ (/usr/local/texlive/2021basic/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count285
+\scratchcounter=\count282
 \scratchdimen=\dimen168
-\scratchbox=\box55
-\nofMPsegments=\count286
-\nofMParguments=\count287
-\everyMPshowfont=\toks29
-\MPscratchCnt=\count288
+\scratchbox=\box52
+\nofMPsegments=\count283
+\nofMParguments=\count284
+\everyMPshowfont=\toks28
+\MPscratchCnt=\count285
 \MPscratchDim=\dimen169
-\MPnumerator=\count289
-\makeMPintoPDFobject=\count290
-\everyMPtoPDFconversion=\toks30
-) (f:/texlive/2021/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.sty
+\MPnumerator=\count286
+\makeMPintoPDFobject=\count287
+\everyMPtoPDFconversion=\toks29
+)
+(/usr/local/texlive/2021basic/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.s
+ty
 Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
 Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 4
 85.
 
-(f:/texlive/2021/texmf-dist/tex/latex/latexconfig/epstopdf-sys.cfg
+(/usr/local/texlive/2021basic/texmf-dist/tex/latex/latexconfig/epstopdf-sys.cfg
 File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Liv
 e
 ))
 LaTeX Font Info:    Trying to load font information for U+msa on input line 43.
 
-
-(f:/texlive/2021/texmf-dist/tex/latex/amsfonts/umsa.fd
+ (/usr/local/texlive/2021basic/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
 LaTeX Font Info:    Trying to load font information for U+msb on input line 43.
 
 
-(f:/texlive/2021/texmf-dist/tex/latex/amsfonts/umsb.fd
+(/usr/local/texlive/2021basic/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 ) [1
 
-{f:/texlive/2021/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
+{/usr/local/texlive/2021basic/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
 Overfull \hbox (6.75537pt too wide) in paragraph at lines 85--86
 []\OT1/cmr/m/n/10.95 Binary clas-si-fi-ca-tion: Ad-aBoost, Log-it-Boost (real, 
 dis-crete, gen-tle Ad-aBoost), Ad-aBoost.M1 
@@ -288,92 +289,90 @@ dis-crete, gen-tle Ad-aBoost), Ad-aBoost.M1
 [2]
 LaTeX Font Info:    Trying to load font information for U+bbm on input line 126
 .
- (f:/texlive/2021/texmf-dist/tex/latex/bbm-macros/ubbm.fd
+ (/usr/local/texlive/2021basic/texmf-dist/tex/latex/bbm-macros/ubbm.fd
 File: ubbm.fd 1999/03/15 V 1.2 Font definition for bbm font - TH
-) [3] [4] [5]
-[6] [7] [8] [9] [10]
+)
+[3] [4] [5] [6] [7] [8] [9] [10]
+Overfull \hbox (11.01736pt too wide) in paragraph at lines 485--498
+ [][] 
+ []
 
-LaTeX Warning: Reference `gaussian-summary' on page 11 undefined on input line 
-478.
-
-[11] [12]
-<../plots/sev/hist.png, id=61, 481.8pt x 481.8pt>
+[11] [12] [13]
+<../plots/sev/hist.png, id=65, 481.8pt x 481.8pt>
 File: ../plots/sev/hist.png Graphic file (type png)
 <use ../plots/sev/hist.png>
-Package pdftex.def Info: ../plots/sev/hist.png  used on input line 601.
-(pdftex.def)             Requested size: 159.3382pt x 159.33266pt.
-<../plots/sev/log-log.png, id=62, 481.8pt x 481.8pt>
+Package pdftex.def Info: ../plots/sev/hist.png  used on input line 624.
+(pdftex.def)             Requested size: 204.85844pt x 204.85417pt.
+<../plots/sev/log-log.png, id=66, 481.8pt x 481.8pt>
 File: ../plots/sev/log-log.png Graphic file (type png)
 <use ../plots/sev/log-log.png>
-Package pdftex.def Info: ../plots/sev/log-log.png  used on input line 602.
-(pdftex.def)             Requested size: 159.3382pt x 159.33266pt.
+Package pdftex.def Info: ../plots/sev/log-log.png  used on input line 625.
+(pdftex.def)             Requested size: 204.85844pt x 204.85417pt.
 
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
-[13]
-<../plots/sev/null_trace.png, id=68, 481.8pt x 481.8pt>
+[14]
+<../plots/sev/null_trace.png, id=71, 481.8pt x 481.8pt>
 File: ../plots/sev/null_trace.png Graphic file (type png)
 <use ../plots/sev/null_trace.png>
-Package pdftex.def Info: ../plots/sev/null_trace.png  used on input line 631.
-(pdftex.def)             Requested size: 159.3382pt x 159.33266pt.
+Package pdftex.def Info: ../plots/sev/null_trace.png  used on input line 649.
+(pdftex.def)             Requested size: 227.62204pt x 227.62228pt.
 
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
-
-LaTeX Warning: `!h' float specifier changed to `!ht'.
-
-[14 <../plots/sev/hist.png> <../plots/sev/log-log.png>]
-<../plots/sev/glm_p.png, id=74, 481.8pt x 481.8pt>
-File: ../plots/sev/glm_p.png Graphic file (type png)
-<use ../plots/sev/glm_p.png>
-Package pdftex.def Info: ../plots/sev/glm_p.png  used on input line 658.
+[15 <../plots/sev/hist.png> <../plots/sev/log-log.png> <../plots/sev/null_trace
+.png>]
+<../plots/sev/bst_p.png, id=78, 481.8pt x 481.8pt>
+File: ../plots/sev/bst_p.png Graphic file (type png)
+<use ../plots/sev/bst_p.png>
+Package pdftex.def Info: ../plots/sev/bst_p.png  used on input line 675.
 (pdftex.def)             Requested size: 159.3382pt x 159.33266pt.
- [15 <../plots/sev/null_trace.png> <../plots/sev/glm_p.png>] (./boosting for mi
-xed distributions.bbl)
-[16] (./boosting for mixed distributions.aux)
-
-LaTeX Warning: There were undefined references.
-
+ [16 <../plots/sev/bst_p.png>] (./boosting for mixed distributions.bbl)
+[17] (./boosting for mixed distributions.aux)
 
 LaTeX Warning: There were multiply-defined labels.
 
  ) 
 Here is how much of TeX's memory you used:
- 4608 strings out of 480050
- 63666 string characters out of 5890936
- 552902 words of memory out of 5000000
- 22206 multiletter control sequences out of 15000+600000
+ 4527 strings out of 480445
+ 62798 string characters out of 5892391
+ 544906 words of memory out of 5000000
+ 21729 multiletter control sequences out of 15000+600000
  415163 words of font info for 71 fonts, out of 8000000 for 9000
  319 hyphenation exceptions out of 8191
- 57i,14n,66p,1037b,264s stack positions out of 5000i,500n,10000p,200000b,80000s
- <c:/Users/Guangyuan/.texlive2021/texmf-var/fonts/pk/ljfour/public/bbm/bbm10.
-657pk>{f:/texlive/2021/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc}<f:
-/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb><f:/texlive/
-2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb><f:/texlive/2021/texm
-f-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb><f:/texlive/2021/texmf-dist/fo
-nts/type1/public/amsfonts/cmextra/cmex8.pfb><f:/texlive/2021/texmf-dist/fonts/t
-ype1/public/amsfonts/cm/cmmi10.pfb><f:/texlive/2021/texmf-dist/fonts/type1/publ
-ic/amsfonts/cm/cmmi6.pfb><f:/texlive/2021/texmf-dist/fonts/type1/public/amsfont
-s/cm/cmmi8.pfb><f:/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmmib
-10.pfb><f:/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cmextra/cmmib8.p
-fb><f:/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb><f:/tex
-live/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb><f:/texlive/2021/
-texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb><f:/texlive/2021/texmf-dist
-/fonts/type1/public/amsfonts/cm/cmr6.pfb><f:/texlive/2021/texmf-dist/fonts/type
-1/public/amsfonts/cm/cmr8.pfb><f:/texlive/2021/texmf-dist/fonts/type1/public/am
-sfonts/cm/cmsy10.pfb><f:/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm
-/cmsy6.pfb><f:/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb
-><f:/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb><f:/texl
-ive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb><f:/texlive/2021/
-texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb><f:/texlive/2021/texm
-f-dist/fonts/type1/public/cm-super/sfrm1095.pfb>
-Output written on "boosting for mixed distributions.pdf" (16 pages, 326467 byte
+ 68i,14n,74p,1037b,263s stack positions out of 5000i,500n,10000p,200000b,80000s
+ </Users/Guangyuan/Library/texlive/2021basic/texmf-var/fonts/pk/ljfour/public
+/bbm/bbm10.657pk>{/usr/local/texlive/2021basic/texmf-dist/fonts/enc/dvips/cm-su
+per/cm-super-ts1.enc}</usr/local/texlive/2021basic/texmf-dist/fonts/type1/publi
+c/amsfonts/cm/cmbx10.pfb></usr/local/texlive/2021basic/texmf-dist/fonts/type1/p
+ublic/amsfonts/cm/cmbx12.pfb></usr/local/texlive/2021basic/texmf-dist/fonts/typ
+e1/public/amsfonts/cm/cmex10.pfb></usr/local/texlive/2021basic/texmf-dist/fonts
+/type1/public/amsfonts/cmextra/cmex8.pfb></usr/local/texlive/2021basic/texmf-di
+st/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/texlive/2021basic/texm
+f-dist/fonts/type1/public/amsfonts/cm/cmmi6.pfb></usr/local/texlive/2021basic/t
+exmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb></usr/local/texlive/2021basi
+c/texmf-dist/fonts/type1/public/amsfonts/cm/cmmib10.pfb></usr/local/texlive/202
+1basic/texmf-dist/fonts/type1/public/amsfonts/cmextra/cmmib8.pfb></usr/local/te
+xlive/2021basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local
+/texlive/2021basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/lo
+cal/texlive/2021basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr
+/local/texlive/2021basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr6.pfb></u
+sr/local/texlive/2021basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb><
+/usr/local/texlive/2021basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.p
+fb></usr/local/texlive/2021basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy
+6.pfb></usr/local/texlive/2021basic/texmf-dist/fonts/type1/public/amsfonts/cm/c
+msy8.pfb></usr/local/texlive/2021basic/texmf-dist/fonts/type1/public/amsfonts/c
+m/cmti10.pfb></usr/local/texlive/2021basic/texmf-dist/fonts/type1/public/amsfon
+ts/cm/cmtt10.pfb></usr/local/texlive/2021basic/texmf-dist/fonts/type1/public/am
+sfonts/symbols/msbm10.pfb></usr/local/texlive/2021basic/texmf-dist/fonts/type1/
+public/cm-super/sfrm1095.pfb>
+Output written on "boosting for mixed distributions.pdf" (17 pages, 308657 byte
 s).
 PDF statistics:
- 176 PDF objects out of 1000 (max. 8388607)
- 105 compressed objects within 2 object streams
+ 158 PDF objects out of 1000 (max. 8388607)
+ 107 compressed objects within 2 object streams
  0 named destinations out of 1000 (max. 500000)
  21 words of extra memory for PDF output out of 10000 (max. 10000000)
 
