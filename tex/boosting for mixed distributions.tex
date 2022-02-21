@@ -35,29 +35,35 @@
 \usepackage{url}%For ref url
 %\bibliographystyle{plain}
 %opening
-\title{Non-life insurance pricing with gradient tree-boosted mixture models.}
+\title{Insurance loss modeling with gradient tree-boosted mixture models.}
 \author{Guangyuan Gao \and Jiahong Li}
+
 
 \begin{document}
 
 \maketitle
 
 \begin{abstract}
-Insurance loss data often cannot be well modeled by a single distribution. Mixture of models are often applied in insurance loss modeling. 
-The Expectation-Maximization (EM) algorithm is used for parameter estimation in mixture of models. 
+Sometimes insurance loss data cannot be well modeled by a single distribution. Mixture of models are often applied in insurance loss modeling. 
+The Expectation-Maximization (EM) algorithm is usually applied for parameter estimation in mixture of models. 
 Feature engineering and variable selection are challenging for mixture of models due to several component models involving. 
 Overfitting is also a concern when predicting future loss. 
 To address those issues, we propose an Expectation-Boosting (EB) algorithm, 
-which replaces the maximization step in the EM algorithm by a gradient boosting with decision tree. The boosting is overfitting-sensitive. 
-Moreover, it performs automated feature engineering, model fitting and variable selection simultaneously. 
+which replaces the maximization step in the EM algorithm by a gradient boosting with decision trees. 
+The boosting algorithm estimates the regression functions in component models non-paramerically and overfitting-sensitively. 
+The EB algorithm performs automated feature engineering, model fitting and variable selection simultaneously. 
 The EB algorithm fully explores the predictive power of covariate space.
-We illustrate those advantages in two simulated data and a real insurance loss data.
+Simulations show that the proposed method performs very well.
+An empirical analysis of the claims amounts data is illustrated for the proposed methodology. 
 
 \end{abstract}
 
+{\bf Keywords:} Mixture models; EM algorithm; Gradient boosting.
+
+
 \section{Introduction}
 
-Insurance loss data usually cannot be well modelled by a single distribution.
+Insurance loss data sometimes cannot be well modelled by a single distribution.
 For claims counts data, there may be an excess of zero claims, so a Poisson distribution is not the best option.
 For claims amount data, there may be a heavy tail, so a gamma distribution is not enough to describe the entire data.
 One solution to such issues is to apply mixture models.
