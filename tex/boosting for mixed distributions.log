@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.23 (TeX Live 2021/W32TeX) (preloaded format=pdflatex 2021.9.15)  21 FEB 2022 12:45
+This is pdfTeX, Version 3.141592653-2.6-1.40.23 (TeX Live 2021/W32TeX) (preloaded format=pdflatex 2021.9.15)  22 FEB 2022 16:54
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -280,19 +280,19 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 ) [1
 
 {f:/texlive/2021/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
-Overfull \hbox (6.75537pt too wide) in paragraph at lines 91--92
+Overfull \hbox (6.75537pt too wide) in paragraph at lines 102--103
 []\OT1/cmr/m/n/10.95 Binary clas-si-fi-ca-tion: Ad-aBoost, Log-it-Boost (real, 
 dis-crete, gen-tle Ad-aBoost), Ad-aBoost.M1 
  []
 
 [2]
-LaTeX Font Info:    Trying to load font information for U+bbm on input line 132
+LaTeX Font Info:    Trying to load font information for U+bbm on input line 145
 .
  (f:/texlive/2021/texmf-dist/tex/latex/bbm-macros/ubbm.fd
 File: ubbm.fd 1999/03/15 V 1.2 Font definition for bbm font - TH
 ) [3] [4] [5]
 [6] [7] [8] [9] [10]
-Overfull \hbox (11.01736pt too wide) in paragraph at lines 491--504
+Overfull \hbox (11.01736pt too wide) in paragraph at lines 504--517
  [][] 
  []
 
@@ -300,12 +300,12 @@ Overfull \hbox (11.01736pt too wide) in paragraph at lines 491--504
 <../plots/sev/hist.png, id=65, 481.8pt x 481.8pt>
 File: ../plots/sev/hist.png Graphic file (type png)
 <use ../plots/sev/hist.png>
-Package pdftex.def Info: ../plots/sev/hist.png  used on input line 630.
+Package pdftex.def Info: ../plots/sev/hist.png  used on input line 643.
 (pdftex.def)             Requested size: 204.85844pt x 204.85417pt.
 <../plots/sev/log-log.png, id=66, 481.8pt x 481.8pt>
 File: ../plots/sev/log-log.png Graphic file (type png)
 <use ../plots/sev/log-log.png>
-Package pdftex.def Info: ../plots/sev/log-log.png  used on input line 631.
+Package pdftex.def Info: ../plots/sev/log-log.png  used on input line 644.
 (pdftex.def)             Requested size: 204.85844pt x 204.85417pt.
 
 
@@ -315,30 +315,32 @@ LaTeX Warning: `!h' float specifier changed to `!ht'.
 <../plots/sev/null_trace.png, id=71, 481.8pt x 481.8pt>
 File: ../plots/sev/null_trace.png Graphic file (type png)
 <use ../plots/sev/null_trace.png>
-Package pdftex.def Info: ../plots/sev/null_trace.png  used on input line 655.
+Package pdftex.def Info: ../plots/sev/null_trace.png  used on input line 668.
 (pdftex.def)             Requested size: 227.62204pt x 227.62228pt.
 
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
-[15 <../plots/sev/hist.png> <../plots/sev/log-log.png> <../plots/sev/null_trace
-.png>]
-<../plots/sev/bst_p.png, id=78, 481.8pt x 481.8pt>
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+[15 <../plots/sev/hist.png> <../plots/sev/log-log.png>]
+<../plots/sev/bst_p.png, id=77, 481.8pt x 481.8pt>
 File: ../plots/sev/bst_p.png Graphic file (type png)
 <use ../plots/sev/bst_p.png>
-Package pdftex.def Info: ../plots/sev/bst_p.png  used on input line 681.
+Package pdftex.def Info: ../plots/sev/bst_p.png  used on input line 694.
 (pdftex.def)             Requested size: 159.3382pt x 159.33266pt.
- [16 <../plots/sev/bst_p.png>] (./boosting for mixed distributions.bbl)
-[17] (./boosting for mixed distributions.aux)
+ [16 <../plots/sev/null_trace.png>] (./boosting for mixed distributions.bbl [17
+ <../plots/sev/bst_p.png>] [18]) [19] (./boosting for mixed distributions.aux)
 
 LaTeX Warning: There were multiply-defined labels.
 
  ) 
 Here is how much of TeX's memory you used:
- 4608 strings out of 480050
- 63663 string characters out of 5890936
+ 4672 strings out of 480050
+ 65193 string characters out of 5890936
  552902 words of memory out of 5000000
- 22206 multiletter control sequences out of 15000+600000
+ 22270 multiletter control sequences out of 15000+600000
  415163 words of font info for 71 fonts, out of 8000000 for 9000
  319 hyphenation exceptions out of 8191
  57i,14n,66p,1037b,264s stack positions out of 5000i,500n,10000p,200000b,80000s
@@ -363,11 +365,11 @@ sfonts/cm/cmsy10.pfb><f:/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm
 ive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb><f:/texlive/2021/
 texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb><f:/texlive/2021/texm
 f-dist/fonts/type1/public/cm-super/sfrm1095.pfb>
-Output written on "boosting for mixed distributions.pdf" (17 pages, 326732 byte
+Output written on "boosting for mixed distributions.pdf" (19 pages, 334278 byte
 s).
 PDF statistics:
- 179 PDF objects out of 1000 (max. 8388607)
- 107 compressed objects within 2 object streams
+ 186 PDF objects out of 1000 (max. 8388607)
+ 112 compressed objects within 2 object streams
  0 named destinations out of 1000 (max. 500000)
  21 words of extra memory for PDF output out of 10000 (max. 10000000)
 

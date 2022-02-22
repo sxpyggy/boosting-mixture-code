@@ -51,8 +51,8 @@ Overfitting is also a concern when predicting future loss.
 To address those issues, we propose an Expectation-Boosting (EB) algorithm, 
 which replaces the maximization step in the EM algorithm by a gradient boosting with decision trees. 
 The boosting algorithm estimates the regression functions in component models non-paramerically and overfitting-sensitively. 
-The EB algorithm performs automated feature engineering, model fitting and variable selection simultaneously. 
-The EB algorithm fully explores the predictive power of covariate space.
+The EB algorithm performs automated feature engineering, model fitting and variable selection simultaneously, 
+fully exploring the predictive power of covariate space.
 Simulations show that the proposed method performs very well.
 An empirical analysis of the claims amounts data is illustrated for the proposed methodology. 
 
@@ -64,27 +64,38 @@ An empirical analysis of the claims amounts data is illustrated for the proposed
 \section{Introduction}
 
 Insurance loss data sometimes cannot be well modelled by a single distribution.
-For claims counts data, there may be an excess of zero claims, so a Poisson distribution is not the best option.
-For claims amount data, there may be a heavy tail, so a gamma distribution is not enough to describe the entire data.
-One solution to such issues is to apply mixture models.
-For claims counts data, we can utilize zero-modified Poisson distribution.
-For claims amount data, we can utilize mixture of gamma distribution and heavy-tailed distribution such as Pareto distribution.
+For claim count data, it may have an excess of zero claims, so a Poisson distribution may not be the best option.
+For claim amount data, its probability density function may be multimodal or heavy tailed, so a gamma distribution is not enough to describe the entire data.
+One solution to such issues is to apply mixture of distributions.
 When the individual risk factors are available, the mixture of distributions can be extended to mixture of regressions to address the risk heterogeneity in the portfolio.
+Mixture model is proposed by \citet{goldfeld1973markov}.
+We refer to \citet{lindsay1995mixture} and \citet{peel2000finite} for detailed review of mixture models.
+In machine learning applications, mixture models are also called as mixture of experts models \citep{jacobs1991adaptive,jiang1999hierarchical}.
 
-The Expectation-Maximization (EM) algorithm is an iterative method to estimate component parameters and (hidden) component indicator variable. 
-Parameter estimation in mixture models is challenging since component distribution/regression parameters are related to each other. 
-Variable selection  is also challenging since we need
-to perform variable selection for each component regression.  
+Mixture models have been used for insurance loss modeling frequently.
+\citet{zhang2020type, zhang2022new} developed a multivariate zero-inflated hurdle model to describe multivariate count data with extra zeros.
+\citet{delong2021gamma} propose a mixture of neural networks with gamma loss to model insurance claim amounts.
+\citet{verbelen2015fitting} and \citet{lee2010modeling} used mixture of Erlangs to model insurance claim amounts including censored and truncated data.
+\citet{lee2012modeling} developed the multivariate version of mixture Erlangs.
+\citet{fung2019class}, \citet{fung2019class2} and \citet{tseung2021lrmoe} developed a so called logit-weighted reduced mixture of experts models for multivariate claim frequencies or severities distributions.
+To the best of our knowledge, the existing studies always impose a linear constraint on the regression function, i.e., under a generalized linear model framework.
+In this paper, we will relax this constraint by estimating regression function nonparametrically.
 
-\blue{literature review.}
+Parameter estimation in mixture models is challenging since component parameters are related to each other. 
+The Expectation-Maximization (EM) algorithm proposed by \citet{dempster1977maximum} is an iterative method to estimate component parameters and (hidden) component indicator variable. 
+Variable selection and feature engineering in mixture models  is also challenging since the relationship between covariates and response vary from one component to another.  
+\citet{khalili2007variable} introduced a penalized likelihood approach for variable selection.
+\citet{huang2013nonparametric} and \citet{huang2012mixture} proposed nonparametric mixture of regression to relax the linearity assumption on the regression function.
+Selecting the number of components is another challenging problem.
+\citet{naik2007extending} derived a new information criterion for selection of component numbers and variables.
+\citet{kasahara2015testing} proposed a likelihood-based test to contrast mixture models with different numbers of components. 
 
 In this paper, we propose an Expectation-Boosting (EB) algorithm, which replaces the maximization step by an overfitting-sensitive boosting step. 
 There are several advantages of EB algorithm over the EM algorithm. 
 First, boosting algorithm is a flexible non-parametric regression facilitating both non-linear effects and interaction. 
-Second, boosting algorithm is overfitting-sensitive, if we add suitable normalization to boosting step (e.g. using decision tree as weak learner) we can perform variable selection simultaneously. 
-Third, by investigating the final boosted component, we can select component by removing those components containing very few weak learners. 
-
-
+Second, boosting algorithm is overfitting-sensitive. With decision tree as weak learner, we can perform variable selection simultaneously. 
+Boosting algorithm is an iteration method to estimate weak learners step-wisely.
+It has a close relationship with the additive model.
 Commonly used boosting algorithms are listed below
 	\begin{enumerate}
 		
@@ -93,10 +104,12 @@ Commonly used boosting algorithms are listed below
 		\item Multinomial classification: Stagewise Additive Modeling using a Multi-class Exponential loss (SAMME), SAMME.R (multi-class real AdaBoost),
 		\item {Gradient based}: {gradient boosting machine/model (GBM)}, Newton boosting, gradient boosting decision tree (GBDT), {eXtreme Gradient Boosting (XGBoost)}, {light gradient boosting machine (LightGBM)}
 	\end{enumerate}
-	
-	The last type is based on {gradient of loss function}, and our EB algorithm uses this version of boosting.
+The last type is based on {gradient of loss function} \citep{friedman2001greedy}, and our EB algorithm uses this version of boosting.
 
-\section{Review: mixture of models and the EM algorithm}
+The paper is structured as follows. Section \ref{sec:review} reviews mixture of models and the EM algorithm. Section \ref{sec:EB} proposes the EB algorithm. Section \ref{sec:application} studies two simulated data and a real data to illustrate the proposed methodology. Section \ref{sec:conclusions} concludes the paper with several important findings.  
+
+
+\section{Review: mixture of models and the EM algorithm}\label{sec:review}
 
 
 \subsection{Mixture of models}\label{review:mix1}
@@ -166,7 +179,7 @@ In practice we do not have full information  $(Y,\bZ,\bx)$ but only the incomple
 	This step is similar to \eqref{p-reg} and \eqref{comp-reg}. However, now we have $\hat{z}_{i,k}\in(0,1)$, 
 	so we need to consider a multinomial logistic classification with {fractional} response and $K$ {weighted}-regressions fitted to {all} samples.
 
-\section{Expectation-Boosting algorithm}
+\section{Expectation-Boosting algorithm}\label{sec:EB}
 We replace the maximization step in the EM algorithm by a boosting step. The boosting step increases the likelihood in each iteration, but overfitting-sensitively.
 The boosting step follows a generic functional gradient descent algorithm.
 We first review generic functional gradient descent algorithm, then describe our proposed EB algorithm.
@@ -382,13 +395,13 @@ In the EB algorithm, we have the following tuning parameters and the correspondi
 	We call this as forward boosting. 
 	However, with forward boosting, it is difficult to predict for new data due to the {iterative initialization}. One solution is to apply an additional boosting with default initialization \eqref{ini-1} and \eqref{ini-2} given the {last expected hidden variables $\hat{\bz}_i^{[T]}$}. In the following applications, we only implement the independent boosting.
 			
-\section{Applications}
+\section{Applications}\label{sec:application}
 
 We conduct two simulated data analysis and a real data analysis. 
 The first simulated data follows a mixture of Gaussian models. 
 We use this example to illustrate the advantages of the EB algorithm over the EM algorithm.
 We also discuss mixture structure and paralleling computing in this example.
-The second simulated data follows a zero-inflated Poisson model, which mimics claims counts data with excess of zero.
+The second simulated data follows a zero-inflated Poisson model, which mimics claims count data with excess of zero.
 The real data contains the claims severity of an insurance company. This example demonstrates how we choose component models and mixing structure in practice.
 
 
@@ -497,8 +510,8 @@ Note that the true negative log-likelihood is calculated based on the simulated 
 		Constant $p$ \eqref{gaussian-glm-p}                 & 2.2016         & $<$ 10 seconds       & NA   \\
 		Varying $\mu$ and $p$ \eqref{gaussian-glm-b}              & 2.2011         & $<$ 10 seconds       & NA   \\
 		Constant $\mu$ \eqref{gaussian-bst-mu}                & 2.4139         & $<$ 10 seconds       & NA    \\
-		Constant $p$ \eqref{gaussian-bst-p}                 & 2.1330          &                            & 381 seconds           \\
-		Varying $\mu$ and $p$ \eqref{gaussian-bst-b}              & 2.1320          &                            & 597 seconds               \\
+		Constant $p$ \eqref{gaussian-bst-p}                 & 2.1330          &            650 seconds                & 381 seconds           \\
+		Varying $\mu$ and $p$ \eqref{gaussian-bst-b}              & 2.1320          &              1054 seconds              & 597 seconds               \\
 		True                   & 2.1231         &            NA                &               NA         \\ \hline
 	\end{tabular}
 \end{table}
@@ -694,7 +707,7 @@ Therefore, we fit the following model:
 	Test loss is calculated as 7.5573 smaller than that of model \eqref{sev-bst-p}. 
 
 
-\section{Conclusions}
+\section{Conclusions}\label{sec:conclusions}
 Insurance loss data sometimes cannot be sufficiently modelled by a single distribution.
 Those data is usually modelled by mixture of models.
 The traditional estimation method for mixture of models is the EM algorithm.

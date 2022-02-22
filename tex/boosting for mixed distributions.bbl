@@ -11,9 +11,139 @@ B{\"u}hlmann, P. \harvardand\ Yu, B.  \harvardyearleft 2003\harvardyearright .
 \newblock Boosting with the l 2 loss: regression and classification, {\em
   Journal of the American Statistical Association} {\bf 98}(462):~324--339.
 
+\harvarditem[Delong et~al.]{Delong, Lindholm \harvardand\
+  W{\"u}thrich}{2021}{delong2021gamma}
+Delong, {\L}., Lindholm, M. \harvardand\ W{\"u}thrich, M.~V.  \harvardyearleft
+  2021\harvardyearright .
+\newblock Gamma mixture density networks and their application to modelling
+  insurance claim amounts, {\em Insurance: Mathematics and Economics} {\bf
+  101}:~240--261.
+
+\harvarditem[Dempster et~al.]{Dempster, Laird \harvardand\
+  Rubin}{1977}{dempster1977maximum}
+Dempster, A.~P., Laird, N.~M. \harvardand\ Rubin, D.~B.  \harvardyearleft
+  1977\harvardyearright .
+\newblock Maximum likelihood from incomplete data via the em algorithm, {\em
+  Journal of the Royal Statistical Society: Series B (Methodological)} {\bf
+  39}(1):~1--22.
+
 \harvarditem{Friedman}{2001}{friedman2001greedy}
 Friedman, J.~H.  \harvardyearleft 2001\harvardyearright .
 \newblock Greedy function approximation: a gradient boosting machine, {\em
   Annals of statistics} pp.~1189--1232.
+
+\harvarditem[Fung et~al.]{Fung, Badescu \harvardand\
+  Lin}{2019a}{fung2019class2}
+Fung, T.~C., Badescu, A.~L. \harvardand\ Lin, X.~S.  \harvardyearleft
+  2019a\harvardyearright .
+\newblock A class of mixture of experts models for general insurance:
+  Application to correlated claim frequencies, {\em ASTIN Bulletin: The Journal
+  of the IAA} {\bf 49}(3):~647--688.
+
+\harvarditem[Fung et~al.]{Fung, Badescu \harvardand\ Lin}{2019b}{fung2019class}
+Fung, T.~C., Badescu, A.~L. \harvardand\ Lin, X.~S.  \harvardyearleft
+  2019b\harvardyearright .
+\newblock A class of mixture of experts models for general insurance:
+  Theoretical developments, {\em Insurance: Mathematics and Economics} {\bf
+  89}:~111--127.
+
+\harvarditem{Goldfeld \harvardand\ Quandt}{1973}{goldfeld1973markov}
+Goldfeld, S.~M. \harvardand\ Quandt, R.~E.  \harvardyearleft
+  1973\harvardyearright .
+\newblock A markov model for switching regressions, {\em Journal of
+  econometrics} {\bf 1}(1):~3--15.
+
+\harvarditem[Huang et~al.]{Huang, Li \harvardand\
+  Wang}{2013}{huang2013nonparametric}
+Huang, M., Li, R. \harvardand\ Wang, S.  \harvardyearleft 2013\harvardyearright
+  .
+\newblock Nonparametric mixture of regression models, {\em Journal of the
+  American Statistical Association} {\bf 108}(503):~929--941.
+
+\harvarditem{Huang \harvardand\ Yao}{2012}{huang2012mixture}
+Huang, M. \harvardand\ Yao, W.  \harvardyearleft 2012\harvardyearright .
+\newblock Mixture of regression models with varying mixing proportions: a
+  semiparametric approach, {\em Journal of the American Statistical
+  Association} {\bf 107}(498):~711--724.
+
+\harvarditem[Jacobs et~al.]{Jacobs, Jordan, Nowlan \harvardand\
+  Hinton}{1991}{jacobs1991adaptive}
+Jacobs, R.~A., Jordan, M.~I., Nowlan, S.~J. \harvardand\ Hinton, G.~E.
+  \harvardyearleft 1991\harvardyearright .
+\newblock Adaptive mixtures of local experts, {\em Neural computation} {\bf
+  3}(1):~79--87.
+
+\harvarditem{Jiang \harvardand\ Tanner}{1999}{jiang1999hierarchical}
+Jiang, W. \harvardand\ Tanner, M.~A.  \harvardyearleft 1999\harvardyearright .
+\newblock Hierarchical mixtures-of-experts for exponential family regression
+  models: approximation and maximum likelihood estimation, {\em The Annals of
+  Statistics} {\bf 27}(3):~987--1011.
+
+\harvarditem{Kasahara \harvardand\ Shimotsu}{2015}{kasahara2015testing}
+Kasahara, H. \harvardand\ Shimotsu, K.  \harvardyearleft 2015\harvardyearright
+  .
+\newblock Testing the number of components in normal mixture regression models,
+  {\em Journal of the American Statistical Association} {\bf
+  110}(512):~1632--1645.
+
+\harvarditem{Khalili \harvardand\ Chen}{2007}{khalili2007variable}
+Khalili, A. \harvardand\ Chen, J.  \harvardyearleft 2007\harvardyearright .
+\newblock Variable selection in finite mixture of regression models, {\em
+  Journal of the american Statistical association} {\bf 102}(479):~1025--1038.
+
+\harvarditem{Lee \harvardand\ Lin}{2010}{lee2010modeling}
+Lee, S.~C. \harvardand\ Lin, X.~S.  \harvardyearleft 2010\harvardyearright .
+\newblock Modeling and evaluating insurance losses via mixtures of erlang
+  distributions, {\em North American Actuarial Journal} {\bf 14}(1):~107--130.
+
+\harvarditem{Lee \harvardand\ Lin}{2012}{lee2012modeling}
+Lee, S.~C. \harvardand\ Lin, X.~S.  \harvardyearleft 2012\harvardyearright .
+\newblock Modeling dependent risks with multivariate erlang mixtures, {\em
+  ASTIN Bulletin: The Journal of the IAA} {\bf 42}(1):~153--180.
+
+\harvarditem{Lindsay}{1995}{lindsay1995mixture}
+Lindsay, B.~G.  \harvardyearleft 1995\harvardyearright .
+\newblock Mixture models: theory, geometry, and applications, Ims.
+
+\harvarditem[Naik et~al.]{Naik, Shi \harvardand\ Tsai}{2007}{naik2007extending}
+Naik, P.~A., Shi, P. \harvardand\ Tsai, C.-L.  \harvardyearleft
+  2007\harvardyearright .
+\newblock Extending the akaike information criterion to mixture regression
+  models, {\em Journal of the American Statistical Association} {\bf
+  102}(477):~244--254.
+
+\harvarditem{Peel \harvardand\ MacLahlan}{2000}{peel2000finite}
+Peel, D. \harvardand\ MacLahlan, G.  \harvardyearleft 2000\harvardyearright .
+\newblock Finite mixture models, {\em John \& Sons} .
+
+\harvarditem[Tseung et~al.]{Tseung, Badescu, Fung \harvardand\
+  Lin}{2021}{tseung2021lrmoe}
+Tseung, S.~C., Badescu, A.~L., Fung, T.~C. \harvardand\ Lin, X.~S.
+  \harvardyearleft 2021\harvardyearright .
+\newblock Lrmoe. jl: a software package for insurance loss modelling using
+  mixture of experts regression model, {\em Annals of Actuarial Science} {\bf
+  15}(2):~419--440.
+
+\harvarditem[Verbelen et~al.]{Verbelen, Gong, Antonio, Badescu \harvardand\
+  Lin}{2015}{verbelen2015fitting}
+Verbelen, R., Gong, L., Antonio, K., Badescu, A. \harvardand\ Lin, S.
+  \harvardyearleft 2015\harvardyearright .
+\newblock Fitting mixtures of erlangs to censored and truncated data using the
+  em algorithm, {\em ASTIN Bulletin: The Journal of the IAA} {\bf
+  45}(3):~729--758.
+
+\harvarditem[Zhang et~al.]{Zhang, Calderin, Li \harvardand\
+  Wu}{2020}{zhang2020type}
+Zhang, P., Calderin, E., Li, S. \harvardand\ Wu, X.  \harvardyearleft
+  2020\harvardyearright .
+\newblock On the type i multivariate zero-truncated hurdle model with
+  applications in health insurance, {\em Insurance: Mathematics and Economics}
+  {\bf 90}:~35--45.
+
+\harvarditem[Zhang et~al.]{Zhang, Pitt \harvardand\ Wu}{2022}{zhang2022new}
+Zhang, P., Pitt, D. \harvardand\ Wu, X.  \harvardyearleft 2022\harvardyearright
+  .
+\newblock A new multivariate zero-inflated hurdle model with applications in
+  automobile insurance, {\em ASTIN Bulletin: The Journal of the IAA} pp.~1--24.
 
 \end{thebibliography}
