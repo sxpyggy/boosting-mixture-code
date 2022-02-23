@@ -44,7 +44,8 @@
 \maketitle
 
 \begin{abstract}
-Sometimes insurance loss data cannot be well modeled by a single distribution. Mixture of models are often applied in insurance loss modeling. 
+%Insurance loss data always cannot be well modeled by a single distribution. 
+Mixture of models are often applied in insurance loss modeling. 
 The Expectation-Maximization (EM) algorithm is usually applied for parameter estimation in mixture of models. 
 Feature engineering and variable selection are challenging for mixture of models due to several component models involving. 
 Overfitting is also a concern when predicting future loss. 
@@ -63,7 +64,7 @@ An empirical analysis of the claims amounts data is illustrated for the proposed
 
 \section{Introduction}
 
-Insurance loss data sometimes cannot be well modelled by a single distribution.
+Insurance loss data always cannot be well modelled by a single distribution.
 For claim count data, it may have an excess of zero claims, so a Poisson distribution may not be the best option.
 For claim amount data, its probability density function may be multimodal or heavy tailed, so a gamma distribution is not enough to describe the entire data.
 One solution to such issues is to apply mixture of distributions.
@@ -77,90 +78,106 @@ Mixture models have been used for insurance loss modeling frequently.
 \citet{delong2021gamma} propose a mixture of neural networks with gamma loss to model insurance claim amounts.
 \citet{verbelen2015fitting} and \citet{lee2010modeling} used mixture of Erlangs to model insurance claim amounts including censored and truncated data.
 \citet{lee2012modeling} developed the multivariate version of mixture Erlangs.
-\citet{fung2019class}, \citet{fung2019class2} and \citet{tseung2021lrmoe} developed a so called logit-weighted reduced mixture of experts models for multivariate claim frequencies or severities distributions.
-To the best of our knowledge, the existing studies always impose a linear constraint on the regression function, i.e., under a generalized linear model framework.
-In this paper, we will relax this constraint by estimating regression function nonparametrically.
+\citet{fung2019class}, \citet{fung2019class2} and \citet{tseung2021lrmoe} proposed a so called logit-weighted reduced mixture of experts models for multivariate claim frequencies or severities distributions.
+To the best of our knowledge, the existing studies always impose a linearity constraint on the regression function, i.e., under a generalized linear model framework.
+In this paper, we will relax this constraint by estimating regression function non-parametrically.
 
 Parameter estimation in mixture models is challenging since component parameters are related to each other. 
 The Expectation-Maximization (EM) algorithm proposed by \citet{dempster1977maximum} is an iterative method to estimate component parameters and (hidden) component indicator variable. 
 Variable selection and feature engineering in mixture models  is also challenging since the relationship between covariates and response vary from one component to another.  
 \citet{khalili2007variable} introduced a penalized likelihood approach for variable selection.
-\citet{huang2013nonparametric} and \citet{huang2012mixture} proposed nonparametric mixture of regression to relax the linearity assumption on the regression function.
+\citet{huang2013nonparametric} and \citet{huang2012mixture} proposed non-parametric mixture of regression to relax the linearity assumption on the regression function.
 Selecting the number of components is another challenging problem.
 \citet{naik2007extending} derived a new information criterion for selection of component numbers and variables.
 \citet{kasahara2015testing} proposed a likelihood-based test to contrast mixture models with different numbers of components. 
+In this paper, we assume that the number of components is known, and we will address variable selection and feature engineering in the proposed method.
 
-In this paper, we propose an Expectation-Boosting (EB) algorithm, which replaces the maximization step by an overfitting-sensitive boosting step. 
+
+We propose an Expectation-Boosting (EB) algorithm, which replaces the maximization step by a boosting step. 
+Boosting algorithm is an iterative method to estimate regression function non-parametrically, where weak learners are calibrated step-wisely and added together.
+We roughly categorize some commonly used boosting algorithms into three groups: 
+(a) Binary classification: {AdaBoost}, LogitBoost (real, discrete, gentle AdaBoost), AdaBoost.M1; 
+(b) Multinomial classification: Stagewise Additive Modeling using a Multi-class Exponential loss (SAMME), SAMME.R (multi-class real AdaBoost); 
+(c) {Gradient based}: {gradient boosting machine/model (GBM)}, Newton boosting, gradient boosting decision tree (GBDT), {eXtreme Gradient Boosting (XGBoost)}, {light gradient boosting machine (LightGBM)}.
+The last type is based on {gradient of loss function}.  \citet{friedman2001greedy} has studied this type of boosting from a statistical perspective. Our EB algorithm uses GBDT in the boosting step.
+With the negative log-likelihood as the loss function for boosting, the boosting step increases the likelihood at each iteration of the EB algorithm. 
 There are several advantages of EB algorithm over the EM algorithm. 
-First, boosting algorithm is a flexible non-parametric regression facilitating both non-linear effects and interaction. 
-Second, boosting algorithm is overfitting-sensitive. With decision tree as weak learner, we can perform variable selection simultaneously. 
-Boosting algorithm is an iteration method to estimate weak learners step-wisely.
-It has a close relationship with the additive model.
-Commonly used boosting algorithms are listed below
-	\begin{enumerate}
-		
-		\item Binary classification: {AdaBoost}, LogitBoost (real, discrete, gentle AdaBoost), AdaBoost.M1
-		
-		\item Multinomial classification: Stagewise Additive Modeling using a Multi-class Exponential loss (SAMME), SAMME.R (multi-class real AdaBoost),
-		\item {Gradient based}: {gradient boosting machine/model (GBM)}, Newton boosting, gradient boosting decision tree (GBDT), {eXtreme Gradient Boosting (XGBoost)}, {light gradient boosting machine (LightGBM)}
-	\end{enumerate}
-The last type is based on {gradient of loss function} \citep{friedman2001greedy}, and our EB algorithm uses this version of boosting.
+First, boosting algorithm is a flexible non-parametric regression facilitating both non-linear effects and interaction. Variable selection and feature engineering are performed automatically during model fitting. 
+Second, it is well known that boosting algorithm is overfitting-sensitive \citep{buehlmann:2003}. This property is very valuable since the ultimate goal of insurance loss modeling is to predict the future loss.
+The out-of-sample prediction is more important than the goodness-of-fitting in our applications. 
 
-The paper is structured as follows. Section \ref{sec:review} reviews mixture of models and the EM algorithm. Section \ref{sec:EB} proposes the EB algorithm. Section \ref{sec:application} studies two simulated data and a real data to illustrate the proposed methodology. Section \ref{sec:conclusions} concludes the paper with several important findings.  
+%Boosting algorithm has a close relationship with the additive model.
+
+
+The resting of paper is structured as follows. 
+Section \ref{sec:review} reviews mixture models and the EM algorithm. 
+Section \ref{sec:EB} proposes the EB algorithm. Initialization, tuning parameters and parallel computing are discussed.   
+Section \ref{sec:application} studies two simulated data and a real data to illustrate the proposed methodology. Section \ref{sec:conclusions} concludes the paper with several important findings.  
 
 
 \section{Review: mixture of models and the EM algorithm}\label{sec:review}
 
+In this section, we first review mixture models, particularly finite mixture of regressions \citep{peel2000finite}, and discuss different mixture structure. 
+Then we review the EM algorithm which is the foundation of the proposed EB algorithm. 
+
 
 \subsection{Mixture of models}\label{review:mix1}
-In this paper, we focus on the exponential distribution family with expectation parameter $\mu$ and dispersion parameter $\phi$. The exponential distribution family is normally sufficient to fit to most insurance loss data.
-	Suppose a random variable $y$ follows the $k$-th {\it component distribution} from
+In this paper, we focus on the exponential distribution family with expectation parameter $\mu$ and dispersion parameter $\phi$. 
+The exponential distribution family is normally sufficient to fit to most insurance loss data.
+
+	Suppose a random variable $y$ follows the $k$-th {\it component distribution} from a collection of distributions
 	$$\{f_1(y;\mu_1,\phi_1),\ldots,f_K(y;\mu_K,\phi_K)\}$$
 	with \textit{mixing probability} $p_k, k=1,\ldots,K$,
-	then the probability density function for $y$ is
+	then the probability density function for $y$ is given by 
 	$$f(y)=\sum_{k=1}^Kp_kf_k(y;\mu_k,\phi_k).$$
 
-	If {\it individual features $\bx_i$} are available and they have systematic effects on the distribution of $y_i$, then we establish a mixture of regressions:
-	$$f(y|\bx)=\sum_{k=1}^Kp_k(\bx)f_k(y;\mu_k(\bx),\phi_k(\bx)).$$
+	If {\it individual features $\bx_i$} are available and they have systematic effects on the component distribution of $y_i$, then we establish a finite mixture of regressions:
+	\begin{equation}\label{mix-gen}
+		f(y|\bx)=\sum_{k=1}^Kp_k(\bx)f_k(y|\bx;\mu_k(\bx),\phi_k(\bx)).
+	\end{equation}
 	
-	Above is the most general form of mixing. In applications, we always put some constraints on the \textit{mixing structure}:
 	
+	Above equation \eqref{mix-gen} is the most general form for a finite mixture of regressions, 
+	i.e., both mixing probabilities and component parameters depend on $\bx$.
+	 In applications,  based on  shape of data and  aspects of interest, we always put some constraints on this general form. For example,
 	\begin{itemize}
 		\item Mixing probabilities are not related to $\bx$
-		$$f(y)=\sum_{k=1}^Kp_kf_k(y;\mu_k(\bx),\phi_k(\bx)).$$
+		$$f(y|\bx)=\sum_{k=1}^Kp_kf_k(y|\bx;\mu_k(\bx),\phi_k(\bx));$$
 		\item Both mixing probabilities and dispersions are not related to $\bx$
-		$$f(y)=\sum_{k=1}^Kp_kf_k(y;\mu_k(\bx),\phi_k),$$
+		$$f(y|\bx)=\sum_{k=1}^Kp_kf_k(y|\bx;\mu_k(\bx),\phi_k);$$
 
-		\item If component distributions are from the same distribution family, we might assume different component distributions have the same dispersion $\phi$
-		$$f(y)=\sum_{k=1}^Kp_kf_k(y;\mu_k(\bx),\phi).$$
+		\item If component distributions are from the same distribution family, we might assume that different component distributions have the same dispersion $\phi$
+		$$f(y|\bx)=\sum_{k=1}^Kp_kf_k(y|\bx;\mu_k(\bx),\phi);$$
 		\item Covariates $\bx$ are only related to the mixing probabilities:
-		$$f(y)=\sum_{k=1}^Kp_k(\bx)f_k(y;\mu_k,\phi_k).$$
+		$$f(y|\bx)=\sum_{k=1}^Kp_k(\bx)f_k(y;\mu_k,\phi_k).$$
 	\end{itemize}
 	
-	We need to determine the mixture structure according to the data and our aim. Imposing suitable constraints on mixture, we can {accelerate model fitting} without compromising predictive performance.
+	We select among those above alternatives according to the data and our aim. 
+	Imposing suitable constraints, we can {accelerate and stabilize model fitting} without compromising predictive performance.
 
-\subsection{EM algorithm}
+\subsection{The EM algorithm}
 
-	Suppose that we know which component distribution $f_k$ each sample $y$ is from. That is we know the \textit{full information} $(Y,\bZ,\bx)$ where
-	$$\bZ=(Z_1,\ldots,Z_K)^\top=(\mathbbm{1}_1(k),\ldots,\mathbbm{1}_K(k))^\top$$
-	is the one-hot encoding of \textit{component indicator variable}.
+	Suppose that we know which component distribution each sample $y$ comes from. That is we know the \textit{full information} $(Y,\bZ,\bx)$, where
+	$$\bZ=(Z_1,\ldots,Z_K)=(\mathbbm{1}_1(k),\ldots,\mathbbm{1}_K(k))$$
+	is the one-hot encoding vector of \textit{component indicator variable $k$}.
 	The joint distribution function for full information (one sample) is given by
 	$$f(y,\bz|
-	\bx) = \prod_{k=1}^K\left[p_k(\bx)f_k(y;\mu_k(\bx),\phi_k(\bx))\right]^{z_k}$$
-	The {log-likelihood function} is given by
+	\bx) = \prod_{k=1}^K\left[p_k(\bx)f_k(y|\bx;\mu_k(\bx),\phi_k(\bx))\right]^{z_k}.$$
+	Thus, the {log-likelihood function} is derived as
 	\begin{equation}\label{full-L}
-		l(p,\mu,\phi|y,\bz,\bx)=\sum_{k=1}^K z_k\left[\log p_k(\bx) + \log f_k(y;\mu_k(\bx),\phi_k(\bx))\right]
+		l(p,\mu,\phi|y,\bz,\bx)=\sum_{k=1}^K z_k\left[\log p_k(\bx) + \log f_k(y|\bx;\mu_k(\bx),\phi_k(\bx))\right].
 	\end{equation}
-	Given a data set $(y_i,\bz_i,\bx_i)_{i=1:n}$, the regression coefficients $\theta_p, \theta_\mu, \theta_\phi$ in $p,\mu,\phi$ can be estimated by the following $K+1$ {independent optimizations}
+	Given a data set $(y_i,\bz_i,\bx_i)_{i=1:n}$, the regression coefficients $\theta_p, \theta_\mu, \theta_\phi$ in $p,\mu,\phi$ can be estimated by the following $K+1$ {independent optimizations:}
 	\begin{equation}\label{p-reg}
 		\hat{\theta}_p=\underset{\theta_p}{\arg\max}\sum_{i=1}^n\sum_{k=1}^Kz_{i,k}\log p_k(\bx_i;\theta_p)
 	\end{equation}
+and
 	\begin{equation}\label{comp-reg}
 		\left(\hat{\theta}_\mu^{(k)},\hat{\theta}_\phi^{(k)}\right)=\underset{\theta^{(k)}_\mu,\theta^{(k)}_\phi}{\arg\max}\sum_{i=1}^n\sum_{k=1}^Kz_{i,k}\log f_k\left(y_i;\mu_k\left(\bx_i;\theta_\mu^{(k)}\right),\phi_k\left(\bx_i;\theta_\phi^{(k)}\right)\right), ~\text{for} ~ k=1,\ldots,K.
 	\end{equation}
 	Those optimizations are corresponding to  {\it a multinomial logistic classification} and {\it $K$ regressions}.
-Note that the multinomial logistic classification \eqref{p-reg} are fitted to all samples, while $K$ regressions \eqref{comp-reg} are fitted to {partial} samples with $\{i:z_{i,k}=1\}$.
-In practice we do not have full information  $(Y,\bZ,\bx)$ but only the incomplete information $(Y,\bx)$. The following EM algorithm is inspired by the above discussion.
+The multinomial logistic classification \eqref{p-reg} are fitted to all samples, while $K$ regressions \eqref{comp-reg} are fitted to {partial} samples with $\{i:z_{i,k}=1\}$.
+In practice we do not have full information  $(Y,\bZ,\bx)$ but only the incomplete information $(Y,\bx)$. The  EM algorithm is inspired by the above discussion.
 \paragraph{Expectation step.}
 	With iterated $\hat{p},\hat{\mu},\hat{\phi}$, calculate the \textit{conditional expectation} of $\bz$:
 	$$\hat{z}_{i,k}=\hat{z}_k(\bx_i)=\frac{\hat{p}_{i,k}f_k(y_i;\hat{\mu}_{i,k},\hat{\phi}_{i,k})}{\sum_{l=1}^K\hat{p}_{i,l}f_l(y_i;\hat{\mu}_{i,l},\hat{\phi}_{i,l})},$$
@@ -168,21 +185,24 @@ In practice we do not have full information  $(Y,\bZ,\bx)$ but only the incomple
 	$\hat{p}_{i,k}=\hat{p}_k(\bx_i)= p_k(\bx_i;\hat{\theta}_p),\hat{\mu}_{i,k}=\hat{\mu}_k(\bx_i)=\mu_k\left(\bx_i;\hat{\theta}_\mu^{(k)}\right),\hat{\phi}_{i,k}=\hat{\phi}_k(\bx_i)=\phi_k\left(\bx_i;\hat{\theta}_\phi^{(k)}\right)$.
 
 \paragraph{Maximization step.}
-	Based on the following likelihood function for full information, calculate the MLE of regression coefficients  $\theta_p, \theta_\mu, \theta_\phi$.
+	Based on the following log-likelihood function for full information, calculate the MLE of regression coefficients  $\theta_p, \theta_\mu, \theta_\phi$.
 	\begin{equation}
 		\begin{aligned}
 			&l(p,\mu,\phi|y,\hat{z},\bx)\\
 			=&\sum_{i=1}^n\sum_{k=1}^K \hat{z}_{i,k}\left[\log p_k(\bx_i;\theta_p) + \log f_k\left(y_i;\mu_k\left(\bx_i;\theta_\mu^{(k)}\right),\phi_k\left(\bx_i;\theta_\phi^{(k)}\right)\right)\right]\\
-			=&\sum_{i=1}^n\sum_{k=1}^K \hat{z}_{i,k}\log p_k(\bx_i;\theta_p) + \sum_{i=1}^n\sum_{k=1}^K \hat{z}_{i,k}\log f_k\left(y_i;\mu_k\left(\bx_i;\theta_\mu^{(k)}\right),\phi_k\left(\bx_i;\theta_\phi^{(k)}\right)\right)
+			=&\sum_{i=1}^n\sum_{k=1}^K \hat{z}_{i,k}\log p_k(\bx_i;\theta_p) + \sum_{i=1}^n\sum_{k=1}^K \hat{z}_{i,k}\log f_k\left(y_i;\mu_k\left(\bx_i;\theta_\mu^{(k)}\right),\phi_k\left(\bx_i;\theta_\phi^{(k)}\right)\right).
 		\end{aligned}
 	\end{equation}
 	This step is similar to \eqref{p-reg} and \eqref{comp-reg}. However, now we have $\hat{z}_{i,k}\in(0,1)$, 
-	so we need to consider a multinomial logistic classification with {fractional} response and $K$ {weighted}-regressions fitted to {all} samples.
+	so we need to consider a multinomial logistic classification with {\it fractional} response and $K$ {weighted}-regressions fitted to {\it all} samples.
 
 \section{Expectation-Boosting algorithm}\label{sec:EB}
-We replace the maximization step in the EM algorithm by a boosting step. The boosting step increases the likelihood in each iteration, but overfitting-sensitively.
+In the EM algorithm, the regression functions $p(\bx;\theta_p), \mu(\bx;\theta_\mu), \phi(\bx;\theta_\phi)$ are always assumed to be parametric functions.
+To make component models more flexible, we replace the maximization step in the EM algorithm by a boosting step.
+Boosting algorithm estimates the regression functions non-parametrically and facilitates more flexible shapes of regression function.
+With negative log-likelihood function as the loss function in boosting algorithm, the boosting step increases the likelihood in each iteration, but overfitting-sensitively.
 The boosting step follows a generic functional gradient descent algorithm.
-We first review generic functional gradient descent algorithm, then describe our proposed EB algorithm.
+So we first review generic functional gradient descent algorithm, then describe our proposed EB algorithm.
 
 \subsection{Generic functional gradient descent algorithm}
 
@@ -191,18 +211,18 @@ We first review generic functional gradient descent algorithm, then describe our
 	We always replace the expected loss by sample average loss:
 	$$\hat{F}=\underset{F}{\arg\min} \frac{1}{n}\sum_{i=1}^nC(y_i,F(\bx_i))$$
 	We choose the \textit{negative log-likelihood} function as the loss function. Hence, minimizing the loss function is equivalent to maximizing the likelihood function.
-The link function is used to link the regression function $F$ with the parameter interested such as mean, probability odds, etc. 
-	Commonly used {link function} and loss functions in different boosting algorithms are listed below:
+The link function connects the regression function $F$ with the parameters of interest such as mean, probability odds, etc. 
+	Commonly used {link functions} and loss functions in different boosting algorithms are listed below:
 	\begin{itemize}
-		\item AdaBoost: $$C(y,F)=\exp(yF),  ~~ y\in\{-1,1\}$$
-		$$F(\bx)=\frac{1}{2}\log\left(\frac{\Pr[Y=1|\bx]}{\Pr[Y=-1|\bx]}\right)$$
-		\item LogitBoost: $$C(y,F)=\log_2(1+\exp(-2yF)), ~~ y\in\{-1,1\}$$
-		$$F(\bx)=\frac{1}{2}\log\left(\frac{\Pr[Y=1|\bx]}{\Pr[Y=-1|\bx]}\right)$$
+		\item AdaBoost: $$C(y,F)=\exp(yF),  ~~ y\in\{-1,1\},$$
+		$$F(\bx)=\frac{1}{2}\log\left(\frac{\Pr[Y=1|\bx]}{\Pr[Y=-1|\bx]}\right);$$
+		\item LogitBoost: $$C(y,F)=\log_2(1+\exp(-2yF)), ~~ y\in\{-1,1\},$$
+		$$F(\bx)=\frac{1}{2}\log\left(\frac{\Pr[Y=1|\bx]}{\Pr[Y=-1|\bx]}\right);$$
 		\item $L_2$Boost: 
 		\begin{equation}\label{l2}
-			C(y,F)=(y-F)^2/2, ~~ y\in \R
+			C(y,F)=(y-F)^2/2, ~~ y\in \R,
 		\end{equation}
-		$$F(\bx)=\E(Y|\bx)$$
+		$$F(\bx)=\E(Y|\bx).$$
 	\end{itemize}
 
 We follow \citet{buehlmann:2003} to review the generic functional gradient decent algorithm:
@@ -231,7 +251,7 @@ In the algorithm, weak learners are fitted to negative gradient $U$ rather than 
 
 \subsection{Expectation-Boosting algorithm}
 
-We denote the regression functions for the interested parameters $p,\mu,\phi$ by {$F,G,H$}. In the EB algorithm, we need to specify link functions and cost/loss functions, which determines negative gradient function.
+We denote the regression functions for the parameters of interest $p,\mu,\phi$ by {$F,G,H$}. In the EB algorithm, we need to specify link functions and cost/loss functions, which determines negative gradient function.
 For mixing probabilities $p$, we choose multiple logistic link function for mixing probabilities.	
 	\begin{equation}\label{logistic}
 		p_k(F(\bx))=\Pr(Z_k=1|\bx)=\frac{\exp{F_k(\bx)}}{\sum_{l=1}^{K}\exp{F_l(\bx)}},
