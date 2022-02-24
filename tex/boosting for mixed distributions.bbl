@@ -1,5 +1,11 @@
 \begin{thebibliography}{xx}
 
+\harvarditem[Breiman et~al.]{Breiman, Friedman, Olshen \harvardand\
+  Stone}{1983}{breiman1983classification}
+Breiman, L., Friedman, J.~H., Olshen, R.~A. \harvardand\ Stone, C.~J.
+  \harvardyearleft 1983\harvardyearright .
+\newblock {\em Classification and regression trees}, Wadsworth.
+
 \harvarditem{B{\"u}hlmann \harvardand\ Hothorn}{2007}{buhlmann2007boosting}
 B{\"u}hlmann, P. \harvardand\ Hothorn, T.  \harvardyearleft
   2007\harvardyearright .
@@ -53,6 +59,13 @@ Goldfeld, S.~M. \harvardand\ Quandt, R.~E.  \harvardyearleft
 \newblock A markov model for switching regressions, {\em Journal of
   econometrics} {\bf 1}(1):~3--15.
 
+\harvarditem[Hastie et~al.]{Hastie, Tibshirani, Friedman \harvardand\
+  Friedman}{2009}{hastie2009elements}
+Hastie, T., Tibshirani, R., Friedman, J.~H. \harvardand\ Friedman, J.~H.
+  \harvardyearleft 2009\harvardyearright .
+\newblock {\em The elements of statistical learning: data mining, inference,
+  and prediction}, Vol.~2, Springer.
+
 \harvarditem[Huang et~al.]{Huang, Li \harvardand\
   Wang}{2013}{huang2013nonparametric}
 Huang, M., Li, R. \harvardand\ Wang, S.  \harvardyearleft 2013\harvardyearright
@@ -78,6 +91,10 @@ Jiang, W. \harvardand\ Tanner, M.~A.  \harvardyearleft 1999\harvardyearright .
 \newblock Hierarchical mixtures-of-experts for exponential family regression
   models: approximation and maximum likelihood estimation, {\em The Annals of
   Statistics} {\bf 27}(3):~987--1011.
+
+\harvarditem{Jorgensen}{1997}{jorgensen:1997}
+Jorgensen, B.  \harvardyearleft 1997\harvardyearright .
+\newblock {\em The theory of dispersion models}, CRC Press.
 
 \harvarditem{Kasahara \harvardand\ Shimotsu}{2015}{kasahara2015testing}
 Kasahara, H. \harvardand\ Shimotsu, K.  \harvardyearleft 2015\harvardyearright

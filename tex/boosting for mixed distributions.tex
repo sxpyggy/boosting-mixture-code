@@ -228,22 +228,23 @@ The link function connects the regression function $F$ with the parameters of in
 We follow \citet{buehlmann:2003} to review the generic functional gradient decent algorithm:
 
 	\begin{enumerate}
-		\item Initialization: $\hat{F}^{[0]}(\bx;\hat{\theta}^{[0]}),$ where $\hat{\theta}^{[0]}$ are determined by $(y_i,\bx_i)_{i=1:n}$.
+		\item Initialization: Set a suitable initial value $\hat{F}^{[0]}(\bx).$ 
 		Let $m=0.$
 		\item Projection of gradient to weak learner:
 		Calculate \textit{negative gradient} $$u_i=\left.-\frac{\partial C(y_i,F)}{\partial F}\middle|_{F=\hat{F}^{[m]}(\bx_i)}\right., i=1,\ldots,n.$$
 		Data $(u_i,\bx_i)_{i=1:n}$ is used to calibrate a weak learner $\hat{f}^{[m+1]}(\bx;\hat{\theta}^{[m+1]})$ with \textit{loss function $L_2$} \eqref{l2}.
 	
 		\item One-dimensional optimization:
-		Solve an one-dimensional optimization  to find \textit{expansion coefficient} $\hat{\omega}^{[m+1]}$:
+		Solve a one-dimensional optimization  to find \textit{expansion coefficient} $\hat{\omega}^{[m+1]}$:
 		$$\hat{\omega}^{[m+1]}=\underset{\omega}{\arg\min}\sum_{i=1}^n C(y_i, \hat{F}^{[m]}(\bx_i)+\omega\hat{f}^{[m+1]}(\bx_i))$$
 		Update $$\hat{F}^{[m+1]}=\hat{F}^{[m]}+s\hat{\omega}^{[m+1]}\hat{f}^{[m+1]},$$
 		where $s$ is \textit{shrinkage factor} (learning rate).
 		\item Iteration: Let $m$ increase by 1, and repeat steps 2-3.
 			\end{enumerate}
-In the algorithm, weak learners are fitted to negative gradient $U$ rather than $Y$.
+In this algorithm, weak learners are fitted to negative gradient $U$ rather than $Y$.
 		 Loss function in weak learners is always $L_2$, independently with model loss function $C$. 
-		 If weak learners are trees, the algorithm is called \textit{gradient boosting decision tree (GBDT)}, and {calibration and variable selection} are performed simultaneously.
+		 If weak learners are decision trees \citep{breiman1983classification}, the algorithm is called \textit{gradient boosting decision tree (GBDT)}, where {calibration of decision trees and variable selection} are performed simultaneously.
+		 Please refer to \citet{hastie2009elements} for decision trees and the recursive partitioning algorithm.
 		\citet{buhlmann2007boosting} argue that step 3 of one-dimensional optimization seems unnecessary given learning rate $s$ is sufficiently small according to some empirical experiments.
 
 
@@ -251,84 +252,91 @@ In the algorithm, weak learners are fitted to negative gradient $U$ rather than 
 
 \subsection{Expectation-Boosting algorithm}
 
-We denote the regression functions for the parameters of interest $p,\mu,\phi$ by {$F,G,H$}. In the EB algorithm, we need to specify link functions and cost/loss functions, which determines negative gradient function.
-For mixing probabilities $p$, we choose multiple logistic link function for mixing probabilities.	
+We denote the regression functions for the parameters of interest $p,\mu,\phi$ by {$F,G,H$}. In the EB algorithm, we need to specify link functions and loss functions, which determines negative gradient function.
+For mixing probabilities $p$, we choose multiple logistic link function:	
 	\begin{equation}\label{logistic}
-		p_k(F(\bx))=\Pr(Z_k=1|\bx)=\frac{\exp{F_k(\bx)}}{\sum_{l=1}^{K}\exp{F_l(\bx)}},
+		p_k(F(\bx))=\Pr(Z_k=1|\bx)=\frac{\exp{F_k(\bx)}}{\sum_{l=1}^{K}\exp{F_l(\bx)}},~~k=1,\ldots,K
 	\end{equation}
 	or equivalently
 	\begin{equation}\label{inv-logistic}
 		F_k(\bx)=\log p_k(\bx)-\frac{1}{K}\sum_{l=1}^K\log p_l(\bx),~~k=1,\ldots,K.
 	\end{equation}
-We use the negative log-likelihood function as the cost function
+We use the negative log-likelihood function of multinomial distribution as the loss function
 \begin{equation}
 	\begin{aligned}
 		{C_{Z}(\bZ, F(\bx))}=& - \sum_{k=1}^K Z_k \log p_k(\bx).
 	\end{aligned}
 \end{equation}
-The negative gradient of the cost function w.r.t. $F_k$ is given by
+The negative gradient of the loss function w.r.t. $F_k$ is given by
 \begin{equation}
 	{U_k(\bZ,F(\bx))}=-\frac{\partial C_{Z}(\bZ,F(\bx))}{\partial F_k(\bx)}=
-	Z_k-p_k(\bx), ~~k=1,\ldots,K
+	Z_k-p_k(\bx), ~~k=1,\ldots,K.
 \end{equation}
 
-For component parameters $\mu$ and $\phi$, the link function and cost function (distribution) depend on the loss data.
-Commonly used link functions in component models are indicated as follows
+For component parameters $\mu$ and $\phi$, the link function and loss function  depend on the component models.
+Commonly used link functions in component models are listed as follows
 	\begin{itemize}
 		\item Component Gaussian model:
-		$$\mu_k(G_k(\bx))=G_k(\bx)$$
-		$$\phi_k(H_k(\bx))=\exp H_k(\bx)$$
+		$G_k=\mu_k, H_k=\log \phi_k;$
+		%$\mu_k(G_k(\bx))=G_k(\bx), ~\phi_k(H_k(\bx))=\exp H_k(\bx);$
 		\item Component Poisson model:
-		$$\mu_k(G_k(\bx))=\exp G_k(\bx)$$
+		$G_k=\log\mu_k;$
+		%$\mu_k(G_k(\bx))=\exp G_k(\bx);$
 		\item Component gamma model:
-		$$\mu_k(G_k(\bx))=\exp G_k(\bx)$$
-		$$\phi_k(H_k(\bx))=\exp H_k(\bx)$$
+				$G_k=\log \mu_k, H_k=\log \phi_k.$
+		%$\mu_k(G_k(\bx))=\exp G_k(\bx),~\phi_k(H_k(\bx))=\exp H_k(\bx).$
 	\end{itemize}
-Note that we slightly abuse function notations $p_k,\mu_k,\phi_k$ (i.e. the inverse link function); in Section \eqref{review:mix1} they define different functions.
-The negative log-likelihood function of each component model is used as its cost function:
+%Note that we slightly abuse function notations $p_k,\mu_k,\phi_k$ (i.e. the inverse link function); in Section \eqref{review:mix1} they define different functions.
+The negative log-likelihood function of each component model is used as its loss function:
 	\begin{equation}
 		\begin{aligned}
-			{C_k(Y,\bZ,G_k(\bx))}=& -Z_k\log f_k(Y;\mu_k(G_k(\bx)),\phi_k), ~ k=1:K.
+			{C_k(Y,\bZ,G_k(\bx))}=& -Z_k\log f_k(Y;\mu_k(\bx),\phi_k), ~ k=1,\ldots,K,
 		\end{aligned}
 	\end{equation}
+where $Z_k$ is treated as a weight multiplied to the usual negative log-likelihood function $-\log f_k$.
 	The negative gradient of $C_k$ w.r.t. $G_k$ is given by 
 	$${V_k(Y,\bZ,G_k(\bx))}=-\frac{\partial C_k(Y,\bZ,G_k(\bx))}{\partial G_k(\bx)}.$$
-	Note that we have assumed that dispersion $\phi_k$ is fixed among samples (not related to $\bx$) to avoid lengthy notations. The extension to dispersion modelling is straightforward; please refer to the real data analysis in Section ??.
-
+	Note that we have assumed that dispersion $\phi_k$ is fixed among samples (not related to $\bx$). 
+	%\blue{The extension to dispersion modelling is straightforward; please refer to the real data analysis in Section \ref{sec:third example}.}
 Upon the above defined notations, we are ready to introduce the proposed EB algorithm.
-We first summarize the proposed EB algorithm as follows, then we detail each step.
+We first summarize the proposed EB algorithm as follows:
 \begin{enumerate}
-	\item[1] Initialization of EB algorithm $\hat{p}^{[0]},\hat{\mu}^{[0]},\hat{\phi}^{[0]}$. Set $t=0$.
-	
-	\item[2] Calculating conditional expectation of latent variable $\hat{z}^{[t]}$ given $\hat{p}^{[t]},\hat{\mu}^{[t]},\hat{\phi}^{[t]}$.
-	
+	\item[1] Initialize $\hat{p}^{[0]},\hat{\mu}^{[0]},\hat{\phi}^{[0]}$. Set $t=0$.
+	\item[2] Calculate conditional expectation of latent variable $\hat{z}^{[t]}$ given $\hat{p}^{[t]},\hat{\mu}^{[t]},\hat{\phi}^{[t]}$.
 	\item[3.1]  Gradient boosting mixing probabilities $\hat{p}^{[t+1]}$  given latent variable $\hat{z}^{[t]}$.
-	\item[3.2] Gradient boosting component model parameters $\hat{\mu}^{[t+1]}$ given latent variable $\hat{z}^{[t]}$.
-	\item[4]  Calculate the MLE $\hat{\phi}^{[t+1]}$. Increase $t$ by 1. Repeat steps 2-3 until $t$ reaches to $T$.
-	
+	\item[3.2] Gradient boosting component parameters $\hat{\mu}^{[t+1]}$ given latent variable $\hat{z}^{[t]}$.
+	\item[4]  Calculate the MLE $\hat{\phi}^{[t+1]}$ given $\hat{\mu}^{[t]}$ and $\hat{z}^{[t]}$. Increase $t$ by 1. Repeat steps 2-3 until $t$ reaches to $T$.
 \end{enumerate}
-Note that we can perform steps 3.1 and 3.2 simultaneously by parallel computing which dramatically save running time.  Also note that  in the algorithm we have assumed that dispersion $\phi_k$ is fixed among samples (not related to $\bx$). The extension to dispersion modelling is straightforward by adding another gradient boosting step 3.3 for component model parameter $\phi$ and removing the MLE calculation in step 4.
-	
-In step 1 of initialization of EB algorithm, we neeed to initialize the following quantities.
+In this algorithm we have two loops: the outer EB iteration and the inner boosting iteration.
+The loop of inner boosting iteration is nested into the loop of outer EB iteration.
+Hence, the EB algorithm takes much more time than the EM algorithm which contains only one loop; see Table \ref{gaussian-summary}.
+In step 3.1, $K$ independent boosting algorithms are conducted for $F_k, k=1,\ldots,K$.
+In step 3.2,  another $K$ independent boosting algorithms are conducted for $G_k, k=1,\ldots,K$.
+Therefore, the EB algorithm can be accelerated significantly by performing those $2K$ boosting algorithms simultaneously; see Table \ref{gaussian-summary}.  
+Note that  in the algorithm we have assumed that dispersion $\phi_k$ is fixed among samples (not related to $\bx$). The extension to joint modeling of both mean and dispersion  is not straightforward since they are not independent; please refer to \citet{jorgensen:1997} for dispersion modeling.
+Joint modeling both mean and dispersion is not considered in this paper.
+% by adding another gradient boosting step 3.3 for component model parameter $\phi$ and removing the MLE calculation in step 4.
+
+We now detail each step of the EB algorithm.	
+In step 1 of initialization of EB algorithm, we initialize the following quantities.
 	\begin{enumerate}
 		\item[1.1] Initialize $\hat{p}_1^{[0]}, \ldots,\hat{p}_K^{[0]}$ and   $\hat{F}_1^{[0]}, \ldots, \hat{F}_{K}^{[0]}$:
 		
 		\begin{itemize}
-			\item 	$\hat{p}_k^{[0]}=\frac{1}{K}$
+			\item 	$\hat{p}_k^{[0]}=\frac{1}{K}$,
 			\item $\hat{F}_1^{[0]}, \ldots, \hat{F}_{K}^{[0]}$ are obtained by \eqref{inv-logistic}.
 		\end{itemize}
 		\item[1.2]
 		Initialize $\hat{\mu}_1^{[0]},\ldots,\hat{\mu}_K^{[0]}$ and  $\hat{G}_1^{[0]},\ldots,\hat{G}_K^{[0]}$:
-		
 		\begin{itemize}
-			\item $\hat{\mu}_k^{[0]}=\frac{\sum_{i=1}^nY_i}{n}$
-			\item $\hat{G}_k^{[0]}=\mu_k^{-1}(\hat{\mu}_k^{[0]})$
+			\item $\hat{\mu}_k^{[0]}=\frac{\sum_{i=1}^nY_i}{n}$,
+			\item $\hat{G}_k^{[0]}=\mu_k^{-1}(\hat{\mu}_k^{[0]}),$
 		\end{itemize}
-		\item[1.3] Initialize $\hat{\phi}_1^{[0]},\ldots, \hat{\phi}_K^{[0]}$ as the sample variance. (Assume that dispersion is independent with covariates.)
+	where $\mu^{-1}_k$ is the link function in the component model $k$.
+		\item[1.3] Initialize $\hat{\phi}_1^{[0]},\ldots, \hat{\phi}_K^{[0]}$ as the sample variance. We assume that dispersion is not related to covariates.
 		\item[1.4] 	Set $t=0$.
 	\end{enumerate}
-	
-
+Note that step 1 will not be repeated in the algorithm.	
 In step 2 of conditional expectation of latent variable, we set  $\hat{z}_{i,k}^{[t]}$ as
 	\begin{equation*}
 		\hat{z}_{i,k}^{[t]}=\frac{\hat{p}_{k}^{[t]}(\bx_i) f_{k}\left(y_i ; \hat{\mu}_{k}^{[t]}(\bx_i), \phi_k^{[t]} \right)}{\sum_{l=1}^{K} \hat{p}_{l}^{[t]}(\bx_i) f_{l}\left(y_i ; \hat{\mu}_{l}^{[t]}(\bx_i), \phi_l^{[t]}\right)},~~ k=1:K.
@@ -340,50 +348,54 @@ In step 3.1 of gradient boosting mixing probabilities, we implement a  multinomi
 		\item[3.1.1] Initialization. Set $\hat{p}_1^{[t,0]}, \ldots, \hat{p}_K^{[t,0]}$ and $\hat{F}_1^{[t,0]}, \ldots, \hat{F}_{K}^{[t,0]}$ as
 		\begin{equation}\label{ini-1}			
 		\hat{p}_k^{[t,0]}=\frac{1}{K},
-		~~\hat{F}_k(\bx)^{[t,0]}=\log \hat{p}_k^{[t,0]}-\frac{1}{K}\sum_{l=1}^K\log \hat{p}_l^{[t,0]}
+		~~\hat{F}_k^{[t,0]}=\log \hat{p}_k^{[t,0]}-\frac{1}{K}\sum_{l=1}^K\log \hat{p}_l^{[t,0]}.
 	\end{equation}
-		Set $m=0$.
-		\item[3.1.2] Projection of gradient to learner.
-		Compute the negative gradient sample $u_{1,k}^{[t,m]},\ldots,u_{n,k}^{[t,m]}$,  in which
+		Set $m=0$. In contrast to step 1, this initialization will be repeated for each outer EB iteration.
+		In the inner loop of boosting step 3.1, this initialization will not be repeated; see step 3.1.4. 
+		\item[3.1.2] Projection of gradient to weak learner.
+		Compute the negative gradient sample $u_{1,k}^{[t,m]},\ldots,u_{n,k}^{[t,m]}$ as
 		$$u_{i,k}^{[t,m]}=U_k(\hat{\bz}_{i}^{[t]},\hat{F}^{[t,m]}(\bx_i))=\hat{z}_{i,k}^{[t]}-\hat{p}_{i,k}^{[t,m]}.$$
-		For each $k$, the data $(u_{i,k}^{[t,m]},\bx_i)_{i=1:n}$ is used to calibrate a $L$-terminal node regression trees $\hat{f}_k^{[t,m+1]}\left(\bx;R^{[t,m+1]}_{l=1:L},\bar{u}^{[t,m+1]}_{l=1:L}\right)$ with $L_2$ loss,
-		where $R^{[t,m+1]}_{l=1:L}$ is the partition of covariate space and $\bar{u}^{[t,m+1]}_{l=1:L}$ contains the average gradient in each terminal node.
+		For each $k=1,\ldots, K$, the data $(u_{i,k}^{[t,m]},\bx_i)_{i=1:n}$ is used to calibrate a $L$-terminal node regression tree with $L_2$ loss $$\hat{f}_k^{[t,m+1]}\left(\bx;R^{[t,m+1]}_{k,l=1:L},\bar{u}^{[t,m+1]}_{k,l=1:L}\right),$$
+		where $R^{[t,m+1]}_{k,l=1:L}$ is the partition of covariate space and $\bar{u}^{[t,m+1]}_{k,l=1:L}$ contains the average gradient in each terminal node.
 		
 		
 	
-		\item[3.1.3]  The one-dimensional optimization for expansion coefficient leads to the following update \citep{friedman2001greedy}:
+		\item[3.1.3] One dimensional optimization and update. It turns out that  the one-dimensional optimization for expansion coefficient leads to the following update (see equation (32) in \citet{friedman2001greedy}):
 		
-		$$\hat{F}_k^{[t,m+1]}(\bx_i)=\hat{F}_k^{[t,m]}(\bx_i)+s\sum_{l=1}^L\gamma^{[t,m+1]}_l\mathbbm{1}(\bx\in R^{[t,m+1]}_l),~ k=1,\ldots,K$$
+		$$\hat{F}_k^{[t,m+1]}(\bx_i)=\hat{F}_k^{[t,m]}(\bx_i)+s\sum_{l=1}^L\gamma^{[t,m+1]}_{k,l}\mathbbm{1}_{R^{[t,m+1]}_{k,l}}(\bx_i),~ k=1,\ldots,K,$$
 		where
-		$$\gamma^{[t,m+1]}_l=\frac{K-1}{K}\frac{\sum_{\bx_i\in R_l^{[t,m+1]}}u_{i,k}^{[t,m]}}{\sum_{\bx_i\in R_l^{[t,m+1]}}|u_{i,k}^{[t,m]}|(1-|u_{i,k}^{[t,m]}|)}$$
-		We then derive the updated mixing probability $\hat{p}^{[t,m+1]}_{k=1:K}$  using \eqref{logistic}.
+		$$\gamma^{[t,m+1]}_{k,l}=\frac{K-1}{K}\frac{\sum_{\bx_i\in R_{k,l}^{[t,m+1]}}u_{i,k}^{[t,m]}}{\sum_{\bx_i\in R_{k,l}^{[t,m+1]}}\left|u_{i,k}^{[t,m]}\right|\left(1-\left|u_{i,k}^{[t,m]}\right|\right)}, ~k=1,\ldots,K, l=1,\ldots,L.$$
+		We then derive the updated mixing probability $\hat{p}^{[t,m+1]}_{i,k=1:K}$  using \eqref{logistic}.
 		
 		
 	
 		\item[3.1.4] Increase $m$ by 1, and repeat steps 3.1.2-3.1.3  until $m$ reaches to the pre-determined $M_p$.
-		Set $$\hat{F}_k^{[t+1]}=\hat{F}_k^{[t,M_p]},~~\hat{p}_k^{[t+1]}=\hat{p}_k^{[t,M_p]},$$
+		Set $$\hat{F}_k^{[t+1]}=\hat{F}_k^{[t,M_p]},~~\hat{p}_k^{[t+1]}=\hat{p}_k^{[t,M_p]}.$$
 	\end{enumerate}
-Note that  $K$ regression trees are fitted independently in step 3.1.2. We can accelerate this step by parallel computing.
+In step 3.1, $K$ independent boostings are performed for $F_k, k=1:K$. Hence, we can accelerate  step 3.1 by parallel computing.
+To the best of our knowledge, there is no available R package supporting a  multinomial logistic boosting with fractional response.
+So we code step 3.1 from bottom. Only the  R package {\bf rpart} is called to apply the recursive partition algorithm to calibrate the weak learner of decision trees.
 
-In step 3.2 of gradient boosting component models, we implement $K$ weighted boosting:
+In step 3.2 of gradient boosting component models, we implement another $K$ independent {\it weighted} boosting with weights $\hat{z}_{i,k}^{[t]}$:
 	\begin{enumerate}
-		\item[3.2.1] Initialization. Set $\hat{\mu}_1^{[t,0]},\ldots,\hat{\mu}_K^{[t,0]}$ and $\hat{G}_1^{[t,0]},\ldots,\hat{G}_K^{[t,0]}$:
+		\item[3.2.1] Initialization. Set $\hat{\mu}_1^{[t,0]},\ldots,\hat{\mu}_K^{[t,0]}$ and $\hat{G}_1^{[t,0]},\ldots,\hat{G}_K^{[t,0]}$ as:
 			\begin{equation}\label{ini-2}
-				\hat{\mu}_k^{[t,0]}=\frac{\sum_{i=1}^nY_i}{n}, \hat{G}_k^{[t,0]}=\mu_k^{-1}(\hat{\mu}_k^{[t,0]}).
-			\end{equation}
-		
+				\hat{\mu}_k^{[t,0]}=\frac{\sum_{i=1}^nY_i}{n},~ \hat{G}_k^{[t,0]}=\mu_k^{-1}(\hat{\mu}_k^{[t,0]}),
+					\end{equation}
+		where $\mu^{-1}_k$ is the link function in the component model $k$. 
 		Set $m=0$.
+		In contrast to step 1, this initialization will be repeated for each outer EB iteration.
+		In the inner loop of boosting step 3.2, this initialization will not be repeated; see step 3.2.5. 
 		\item[3.2.2] Projection of gradient to learner.
-		Compute the negative gradient samples $v_{1,k}^{[t,m]},\ldots,v_{n,k}^{[t,m]}$, in which
-		$$v_{i,k}^{[t,m]}=V_k(y_i,\hat{\bz}^{[t]}_{i},\hat{G}^{[t,m]}(\bx_i)),$$
-		For each $k$, the data $(v_{i,k}^{[t,m]},\bx_i)_{i=1:n}$ is used to calibrate a $L$-terminal node regression trees $\hat{g}_k^{[t,m+1]}\left(\bx;S^{[t,m+1]}_{l=1:L},\bar{v}^{[t,m+1]}_{l=1:L}\right)$ with $L_2$ loss, where $S^{[t,m+1]}_{l=1:L}$ is the partition of covariate space and $\bar{v}^{[t,m+1]}_{l=1:L}$ contains the average gradient in each terminal node.
+		Compute the negative gradient samples $v_{1,k}^{[t,m]},\ldots,v_{n,k}^{[t,m]}$: 
+		$$v_{i,k}^{[t,m]}=V_k(y_i,\hat{\bz}^{[t]}_{i},\hat{G}^{[t,m]}(\bx_i)),~ i=1,\ldots,n, ~k=1,\ldots,K.$$
+		For each $k=1,\ldots,K$, the data $(v_{i,k}^{[t,m]},\bx_i)_{i=1:n}$ is used to calibrate a $L$-terminal node regression trees with $L_2$ loss $$\hat{g}_k^{[t,m+1]}\left(\bx;S^{[t,m+1]}_{k,l=1:L},\bar{v}^{[t,m+1]}_{k,l=1:L}\right),$$
+		 where $S^{[t,m+1]}_{k,l=1:L}$ is the partition of covariate space and $\bar{v}^{[t,m+1]}_{k,l=1:L}$ contains the average gradient in each terminal node.
 		
-	
-	
 		\item[3.2.3]  Conduct the following $K$ independent one-dimensional optimizations to find the best expansion coefficients.
-		$$\hat{w}_{k}^{[t,m+1]}=\underset{w}{\arg\min}\sum_{i=1}^n C_{k}(y_i,\hat{\bz}_i^{[t]},\hat{G}_k^{[t,m]}(\bx_i)+w\hat{g}_k^{[t,m+1]}(\bx_i)).$$
+		$$\hat{w}_{k}^{[t,m+1]}=\underset{w}{\arg\min}\sum_{i=1}^n C_{k}(y_i,\hat{\bz}_i^{[t]},\hat{G}_k^{[t,m]}(\bx_i)+w\hat{g}_k^{[t,m+1]}(\bx_i)), ~ k=1,\ldots,K.$$
 		
-		\item[3.2.4]  For each $k$, compute the updates
+		\item[3.2.4]  For each $k=1,\ldots,K$, compute the updates
 		$$\hat{G}_k^{[t,m+1]}(\bx_i)=\hat{G}_k^{[t,m]}(\bx_i)+s\hat{w}_{k}^{[t,m+1]}\hat{g}_{k}^{[t,m+1]}(\bx_i),$$
 		$$\hat{\mu}_k^{[t,m+1]}(\bx_i)=\mu_k(\hat{G}_k^{[t,m+1]}(\bx_i)).$$
 		\seti
@@ -392,12 +404,14 @@ In step 3.2 of gradient boosting component models, we implement $K$ weighted boo
 		\item[3.2.5] Increase $m$ by 1, and repeat steps 3.2.2-3.2.4 until $m$ reaches to the pre-determined $M_\mu$. Set
 		$$\hat{G}_k^{[t+1]}=\hat{G}_k^{[t,M_\mu]},~~\hat{\mu}_k^{[t+1]}=\hat{\mu}_k^{[t,M_\mu]}.$$
 	\end{enumerate}
-Note that $K$ independent boosting are implemented in step 3.2, we can accelerate this step by parallel computing.
-	
+Note that $K$ independent weighted boostings are implemented in step 3.2, we can accelerate this step by parallel computing as in step 3.1.
+We rely on the R packages {\bf gbm} and {\bf mboost} in this step. 
+Those two packages can facilitate boosting with additional weights.
+
 In step 4, 
 %for parameters not related to covariate $\bx$, 
-compute the MLE $\hat{\phi}_k^{[t+1]}$ given all the other parameters $\hat{p}_k^{[t+1]}, \hat{\mu}_k^{[t+1]}$, then increase $t$ by 1 and repeat steps 2-3 until $t$
-		reaches to the pre-determined $T$.
+we calculate the MLE $\hat{\phi}_k^{[t+1]}$ given all the other parameters $\hat{p}_k^{[t+1]}, \hat{\mu}_k^{[t+1]}$, then increase $t$ by 1 and repeat steps 2-3 until $t$ reaches to the pre-determined $T$. Hence, we have an inner loop in step 
+
 		
 In the EB algorithm, we have the following tuning parameters and the corresponding tuning strategies are listed below:
 	\begin{itemize}
@@ -655,7 +669,7 @@ Furthermore, all the models can address the excess of zero claims since they are
 	\end{tabular}
 \end{table}
 
-\subsection{Third example: claims severity modelling}
+\subsection{Third example: claims severity modelling}\label{sec:third example}
 In this example, we study the claims amount data {\tt freMTPL2sev} from R package {\bf CASdatasets}, which contains $n=24,938$ samples. 
 We plot the histogram and the logged survival function of logged average claim  amount in Figure \ref{tail}, which shows three peaks and a heavy tail. 
 	\begin{figure}[h!]
