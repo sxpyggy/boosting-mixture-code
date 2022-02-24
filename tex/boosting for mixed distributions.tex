@@ -302,10 +302,10 @@ Upon the above defined notations, we are ready to introduce the proposed EB algo
 We first summarize the proposed EB algorithm as follows:
 \begin{enumerate}
 	\item[1] Initialize $\hat{p}^{[0]},\hat{\mu}^{[0]},\hat{\phi}^{[0]}$. Set $t=0$.
-	\item[2] Calculate conditional expectation of latent variable $\hat{z}^{[t]}$ given $\hat{p}^{[t]},\hat{\mu}^{[t]},\hat{\phi}^{[t]}$.
-	\item[3.1]  Gradient boosting mixing probabilities $\hat{p}^{[t+1]}$  given latent variable $\hat{z}^{[t]}$.
-	\item[3.2] Gradient boosting component parameters $\hat{\mu}^{[t+1]}$ given latent variable $\hat{z}^{[t]}$.
-	\item[4]  Calculate the MLE $\hat{\phi}^{[t+1]}$ given $\hat{\mu}^{[t]}$ and $\hat{z}^{[t]}$. Increase $t$ by 1. Repeat steps 2-3 until $t$ reaches to $T$.
+	\item[2] Calculate conditional expectation of latent variable $\hat{z}^{[t+1]}$ given $\hat{p}^{[t]},\hat{\mu}^{[t]},\hat{\phi}^{[t]}$.
+	\item[3.1]  Gradient boosting mixing probabilities $\hat{p}^{[t+1]}$  given latent variable $\hat{z}^{[t+1]}$.
+	\item[3.2] Gradient boosting component parameters $\hat{\mu}^{[t+1]}$ given latent variable $\hat{z}^{[t+1]}$.
+	\item[4]  Calculate the MLE $\hat{\phi}^{[t+1]}$ given $\hat{\mu}^{[t+1]}$ and $\hat{z}^{[t+1]}$. Increase $t$ by 1. Repeat steps 2-3 until $t$ reaches to $T$.
 \end{enumerate}
 In this algorithm we have two loops: the outer EB iteration and the inner boosting iteration.
 The loop of inner boosting iteration is nested into the loop of outer EB iteration.
@@ -318,7 +318,7 @@ Joint modeling both mean and dispersion is not considered in this paper.
 % by adding another gradient boosting step 3.3 for component model parameter $\phi$ and removing the MLE calculation in step 4.
 
 We now detail each step of the EB algorithm.	
-In step 1 of initialization of EB algorithm, we initialize the following quantities.
+In {\bf step 1} of initialization of EB algorithm, we initialize the following quantities.
 	\begin{enumerate}
 		\item[1.1] Initialize $\hat{p}_1^{[0]}, \ldots,\hat{p}_K^{[0]}$ and   $\hat{F}_1^{[0]}, \ldots, \hat{F}_{K}^{[0]}$:
 		
@@ -337,25 +337,25 @@ In step 1 of initialization of EB algorithm, we initialize the following quantit
 		\item[1.4] 	Set $t=0$.
 	\end{enumerate}
 Note that step 1 will not be repeated in the algorithm.	
-In step 2 of conditional expectation of latent variable, we set  $\hat{z}_{i,k}^{[t]}$ as
+In {\bf step 2} of conditional expectation of latent variable, we set  $\hat{z}_{i,k}^{[t+1]}$ as
 	\begin{equation*}
-		\hat{z}_{i,k}^{[t]}=\frac{\hat{p}_{k}^{[t]}(\bx_i) f_{k}\left(y_i ; \hat{\mu}_{k}^{[t]}(\bx_i), \phi_k^{[t]} \right)}{\sum_{l=1}^{K} \hat{p}_{l}^{[t]}(\bx_i) f_{l}\left(y_i ; \hat{\mu}_{l}^{[t]}(\bx_i), \phi_l^{[t]}\right)},~~ k=1:K.
+		\hat{z}_{i,k}^{[t+1]}=\frac{\hat{p}_{k}^{[t]}(\bx_i) f_{k}\left(y_i ; \hat{\mu}_{k}^{[t]}(\bx_i), \phi_k^{[t]} \right)}{\sum_{l=1}^{K} \hat{p}_{l}^{[t]}(\bx_i) f_{l}\left(y_i ; \hat{\mu}_{l}^{[t]}(\bx_i), \phi_l^{[t]}\right)},~~ k=1:K.
 	\end{equation*}
 
 
-In step 3.1 of gradient boosting mixing probabilities, we implement a  multinomial logistic classification boosting with fractional response: 
+In {\bf step 3.1} of gradient boosting mixing probabilities, we implement a  multinomial logistic classification boosting with fractional response: 
 	\begin{enumerate}
 		\item[3.1.1] Initialization. Set $\hat{p}_1^{[t,0]}, \ldots, \hat{p}_K^{[t,0]}$ and $\hat{F}_1^{[t,0]}, \ldots, \hat{F}_{K}^{[t,0]}$ as
 		\begin{equation}\label{ini-1}			
 		\hat{p}_k^{[t,0]}=\frac{1}{K},
 		~~\hat{F}_k^{[t,0]}=\log \hat{p}_k^{[t,0]}-\frac{1}{K}\sum_{l=1}^K\log \hat{p}_l^{[t,0]}.
 	\end{equation}
-		Set $m=0$. In contrast to step 1, this initialization will be repeated for each outer EB iteration.
+		Set $m=0$. In contrast to step 1, this initialization will be repeated for each outer EB iteration $t$.
 		In the inner loop of boosting step 3.1, this initialization will not be repeated; see step 3.1.4. 
 		\item[3.1.2] Projection of gradient to weak learner.
-		Compute the negative gradient sample $u_{1,k}^{[t,m]},\ldots,u_{n,k}^{[t,m]}$ as
-		$$u_{i,k}^{[t,m]}=U_k(\hat{\bz}_{i}^{[t]},\hat{F}^{[t,m]}(\bx_i))=\hat{z}_{i,k}^{[t]}-\hat{p}_{i,k}^{[t,m]}.$$
-		For each $k=1,\ldots, K$, the data $(u_{i,k}^{[t,m]},\bx_i)_{i=1:n}$ is used to calibrate a $L$-terminal node regression tree with $L_2$ loss $$\hat{f}_k^{[t,m+1]}\left(\bx;R^{[t,m+1]}_{k,l=1:L},\bar{u}^{[t,m+1]}_{k,l=1:L}\right),$$
+		Compute the negative gradient for each data point $i=1,\ldots,n$ as
+		$$u_{i,k}^{[t,m+1]}=U_k(\hat{\bz}_{i}^{[t+1]},\hat{F}^{[t,m]}(\bx_i))=\hat{z}_{i,k}^{[t+1]}-\hat{p}_{i,k}^{[t,m]}.$$
+		For each $k=1,\ldots, K$, the data $(u_{i,k}^{[t,m+1]},\bx_i)_{i=1:n}$ is used to calibrate a $L$-terminal node regression tree with $L_2$ loss $$\hat{f}_k^{[t,m+1]}\left(\bx;R^{[t,m+1]}_{k,l=1:L},\bar{u}^{[t,m+1]}_{k,l=1:L}\right),$$
 		where $R^{[t,m+1]}_{k,l=1:L}$ is the partition of covariate space and $\bar{u}^{[t,m+1]}_{k,l=1:L}$ contains the average gradient in each terminal node.
 		
 		
@@ -364,7 +364,7 @@ In step 3.1 of gradient boosting mixing probabilities, we implement a  multinomi
 		
 		$$\hat{F}_k^{[t,m+1]}(\bx_i)=\hat{F}_k^{[t,m]}(\bx_i)+s\sum_{l=1}^L\gamma^{[t,m+1]}_{k,l}\mathbbm{1}_{R^{[t,m+1]}_{k,l}}(\bx_i),~ k=1,\ldots,K,$$
 		where
-		$$\gamma^{[t,m+1]}_{k,l}=\frac{K-1}{K}\frac{\sum_{\bx_i\in R_{k,l}^{[t,m+1]}}u_{i,k}^{[t,m]}}{\sum_{\bx_i\in R_{k,l}^{[t,m+1]}}\left|u_{i,k}^{[t,m]}\right|\left(1-\left|u_{i,k}^{[t,m]}\right|\right)}, ~k=1,\ldots,K, l=1,\ldots,L.$$
+		$$\gamma^{[t,m+1]}_{k,l}=\frac{K-1}{K}\frac{\sum_{\bx_i\in R_{k,l}^{[t,m+1]}}u_{i,k}^{[t,m+1]}}{\sum_{\bx_i\in R_{k,l}^{[t,m+1]}}\left|u_{i,k}^{[t,m+1]}\right|\left(1-\left|u_{i,k}^{[t,m+1]}\right|\right)}, ~k=1,\ldots,K, l=1,\ldots,L.$$
 		We then derive the updated mixing probability $\hat{p}^{[t,m+1]}_{i,k=1:K}$  using \eqref{logistic}.
 		
 		
@@ -372,11 +372,11 @@ In step 3.1 of gradient boosting mixing probabilities, we implement a  multinomi
 		\item[3.1.4] Increase $m$ by 1, and repeat steps 3.1.2-3.1.3  until $m$ reaches to the pre-determined $M_p$.
 		Set $$\hat{F}_k^{[t+1]}=\hat{F}_k^{[t,M_p]},~~\hat{p}_k^{[t+1]}=\hat{p}_k^{[t,M_p]}.$$
 	\end{enumerate}
-In step 3.1, $K$ independent boostings are performed for $F_k, k=1:K$. Hence, we can accelerate  step 3.1 by parallel computing.
+In step 3.1, $K$ independent boostings are performed for $F_k, k=1,\ldots,K$. Hence, we can accelerate  step 3.1 by parallel computing.
 To the best of our knowledge, there is no available R package supporting a  multinomial logistic boosting with fractional response.
 So we code step 3.1 from bottom. Only the  R package {\bf rpart} is called to apply the recursive partition algorithm to calibrate the weak learner of decision trees.
 
-In step 3.2 of gradient boosting component models, we implement another $K$ independent {\it weighted} boosting with weights $\hat{z}_{i,k}^{[t]}$:
+In {\bf step 3.2} of gradient boosting component models, we implement another $K$ independent {\it weighted} boosting with weights $\hat{z}_{i,k}^{[t+1]}$:
 	\begin{enumerate}
 		\item[3.2.1] Initialization. Set $\hat{\mu}_1^{[t,0]},\ldots,\hat{\mu}_K^{[t,0]}$ and $\hat{G}_1^{[t,0]},\ldots,\hat{G}_K^{[t,0]}$ as:
 			\begin{equation}\label{ini-2}
@@ -387,13 +387,13 @@ In step 3.2 of gradient boosting component models, we implement another $K$ inde
 		In contrast to step 1, this initialization will be repeated for each outer EB iteration.
 		In the inner loop of boosting step 3.2, this initialization will not be repeated; see step 3.2.5. 
 		\item[3.2.2] Projection of gradient to learner.
-		Compute the negative gradient samples $v_{1,k}^{[t,m]},\ldots,v_{n,k}^{[t,m]}$: 
-		$$v_{i,k}^{[t,m]}=V_k(y_i,\hat{\bz}^{[t]}_{i},\hat{G}^{[t,m]}(\bx_i)),~ i=1,\ldots,n, ~k=1,\ldots,K.$$
-		For each $k=1,\ldots,K$, the data $(v_{i,k}^{[t,m]},\bx_i)_{i=1:n}$ is used to calibrate a $L$-terminal node regression trees with $L_2$ loss $$\hat{g}_k^{[t,m+1]}\left(\bx;S^{[t,m+1]}_{k,l=1:L},\bar{v}^{[t,m+1]}_{k,l=1:L}\right),$$
+		Compute the negative gradient for each data point $i=1,\ldots,n$ as 
+		$$v_{i,k}^{[t,m+1]}=V_k(y_i,\hat{\bz}^{[t+1]}_{i},\hat{G}^{[t,m]}(\bx_i)),~ i=1,\ldots,n, ~k=1,\ldots,K.$$
+		For each $k=1,\ldots,K$, the data $(v_{i,k}^{[t,m+1]},\bx_i)_{i=1:n}$ is used to calibrate a $L$-terminal node regression trees with $L_2$ loss $$\hat{g}_k^{[t,m+1]}\left(\bx;S^{[t,m+1]}_{k,l=1:L},\bar{v}^{[t,m+1]}_{k,l=1:L}\right),$$
 		 where $S^{[t,m+1]}_{k,l=1:L}$ is the partition of covariate space and $\bar{v}^{[t,m+1]}_{k,l=1:L}$ contains the average gradient in each terminal node.
 		
 		\item[3.2.3]  Conduct the following $K$ independent one-dimensional optimizations to find the best expansion coefficients.
-		$$\hat{w}_{k}^{[t,m+1]}=\underset{w}{\arg\min}\sum_{i=1}^n C_{k}(y_i,\hat{\bz}_i^{[t]},\hat{G}_k^{[t,m]}(\bx_i)+w\hat{g}_k^{[t,m+1]}(\bx_i)), ~ k=1,\ldots,K.$$
+		$$\hat{w}_{k}^{[t,m+1]}=\underset{w}{\arg\min}\sum_{i=1}^n C_{k}(y_i,\hat{\bz}_i^{[t+1]},\hat{G}_k^{[t,m]}(\bx_i)+w\hat{g}_k^{[t,m+1]}(\bx_i)), ~ k=1,\ldots,K.$$
 		
 		\item[3.2.4]  For each $k=1,\ldots,K$, compute the updates
 		$$\hat{G}_k^{[t,m+1]}(\bx_i)=\hat{G}_k^{[t,m]}(\bx_i)+s\hat{w}_{k}^{[t,m+1]}\hat{g}_{k}^{[t,m+1]}(\bx_i),$$
@@ -408,26 +408,30 @@ Note that $K$ independent weighted boostings are implemented in step 3.2, we can
 We rely on the R packages {\bf gbm} and {\bf mboost} in this step. 
 Those two packages can facilitate boosting with additional weights.
 
-In step 4, 
+In {\bf step 4}, 
 %for parameters not related to covariate $\bx$, 
-we calculate the MLE $\hat{\phi}_k^{[t+1]}$ given all the other parameters $\hat{p}_k^{[t+1]}, \hat{\mu}_k^{[t+1]}$, then increase $t$ by 1 and repeat steps 2-3 until $t$ reaches to the pre-determined $T$. Hence, we have an inner loop in step 
-
+we calculate the MLE $\hat{\phi}_k^{[t+1]}$ given all the other parameters $\hat{p}_k^{[t+1]}, \hat{\mu}_k^{[t+1]}$, then increase $t$ by 1 and repeat steps 2-3 until $t$ reaches to the pre-determined $T$.
+In summary, $(M_p+M_\mu)\times K\times T$ weak learners  are calibrated in the EB algorithm. In each EB iteration $t$, $2K$ independent boosting algorithms are performed. Thus, the EB algorithm can be accelerated by conducting those boosting algorithms simultaneously in each EB iteration $t$. 
 		
 In the EB algorithm, we have the following tuning parameters and the corresponding tuning strategies are listed below:
 	\begin{itemize}
-		\item Number of EB iterations {$T$} (iterations in outer loop). This can be determined by screening the trace plot of loss.
-		\item Number of iterations in boosting {$M_p,M_\mu$} (iterations in inner loops). We can specify a sufficiently large $M_p,M_\mu$ and use  early stop according to validation loss.
+		\item Number of EB iterations {$T$} (iterations in outer loop). This can be determined by screening the trace plot of loss. 
+		\item Number of iterations {$M_p,M_\mu$} in boosting algorithm  (iterations in inner loops). We can specify a sufficiently large $M_p,M_\mu$ and use  early stop on the validation loss.
 		\item Learning rate {$s$}. Smaller learning rate tends to lead to a better fitting and predictive performance but requiring more inner iterations.
-		\item Tuning parameters in base learner tree: complexity parameter, maximum depth, number of terminal nodes. Those parameters can be tuned as in typical decision trees.
-	\end{itemize}
+		\item Tuning parameters in decision trees: complexity parameter, maximum depth, number of terminal nodes, etc.
+		Those parameters can be tuned as in typical decision trees. Please refer to \citet{hastie2009elements} for more details.
+ 	\end{itemize}
 
-		
-{\bf Remarks.}
-	In initialization of boosting steps 3.1.1 and 3.2.1, we initialize parameters {independently} with the previously boosting estimates $\hat{p}_k^{[t-1]}, \hat{\mu}_k^{[t-1]}$; see equations \eqref{ini-1} and \eqref{ini-2}. We call this as independent boosting.
-	In contrast, we might initialize parameters as the previously boosted estimates $$\hat{p}_k^{[t,0]}=\hat{p}_k^{[t-1]}, \hat{\mu}_k^{[t,0]}=\hat{\mu}_k^{[t-1]}.$$
-		This would lead a {smaller} required inner boosting iterations $M$ (or a {earlier} stop on validation loss). 
+	In steps 3.1.1 and 3.2.1 for the initialization of boosting, 
+	we initialize parameters in iteration $t+1$ {independently} with the previously boosted estimates $\hat{p}_k^{[t]}, \hat{\mu}_k^{[t]}$; see equations \eqref{ini-1} and \eqref{ini-2}. 
+	We call this as uncorrelated boosting.
+	However, please note that boosting in iteration $t+1$ is not independent with boosting in iteration $t$ since boosting in iteration $t+1$ is based on $\hat{\bz}^{[t+1]}$ which depends on boosting in iteration $t$. The gains from boosting are passed to  the boosting in the next EB iteration via the conditional expectation $\hat{\bz}$. 
+	
+	
+	We might initialize parameters in the iteration $t+1$ as the previously boosted estimates $$\hat{p}_k^{[t,0]}=\hat{p}_k^{[t]}, \hat{\mu}_k^{[t,0]}=\hat{\mu}_k^{[t]}.$$
+This would lead a {smaller} required inner boosting iterations $M$ (or a {earlier} stop on validation loss) since the boosting starts from better initial values.
 	We call this as forward boosting. 
-	However, with forward boosting, it is difficult to predict for new data due to the {iterative initialization}. One solution is to apply an additional boosting with default initialization \eqref{ini-1} and \eqref{ini-2} given the {last expected hidden variables $\hat{\bz}_i^{[T]}$}. In the following applications, we only implement the independent boosting.
+	However, with forward boosting, it is difficult to predict for new data due to the {iterative initialization}. One solution is to apply an additional boosting step with default initialization \eqref{ini-1} and \eqref{ini-2} given the {last conditional expected hidden variables $\hat{\bz}^{[T]}$}. In the following applications, we only implement the uncorrelated boosting.
 			
 \section{Applications}\label{sec:application}
 
