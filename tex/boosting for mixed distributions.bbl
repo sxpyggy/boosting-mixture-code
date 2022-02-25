@@ -33,6 +33,13 @@ Dempster, A.~P., Laird, N.~M. \harvardand\ Rubin, D.~B.  \harvardyearleft
   Journal of the Royal Statistical Society: Series B (Methodological)} {\bf
   39}(1):~1--22.
 
+\harvarditem[Embrechts et~al.]{Embrechts, Kl{\"u}ppelberg \harvardand\
+  Mikosch}{2013}{embrechts2013modelling}
+Embrechts, P., Kl{\"u}ppelberg, C. \harvardand\ Mikosch, T.  \harvardyearleft
+  2013\harvardyearright .
+\newblock {\em Modelling extremal events: for insurance and finance}, Vol.~33,
+  Springer Science \& Business Media.
+
 \harvarditem{Friedman}{2001}{friedman2001greedy}
 Friedman, J.~H.  \harvardyearleft 2001\harvardyearright .
 \newblock Greedy function approximation: a gradient boosting machine, {\em
@@ -154,8 +161,9 @@ Verbelen, R., Gong, L., Antonio, K., Badescu, A. \harvardand\ Lin, S.
   em algorithm, {\em ASTIN Bulletin: The Journal of the IAA} {\bf
   45}(3):~729--758.
 
-\harvarditem{Wuthrich \harvardand\ Merz}{2022}{wuthrich2022statistical}
-Wuthrich, M.~V. \harvardand\ Merz, M.  \harvardyearleft 2022\harvardyearright .
+\harvarditem{W\"uthrich \harvardand\ Merz}{2022}{wuthrich2022statistical}
+W\"uthrich, M.~V. \harvardand\ Merz, M.  \harvardyearleft 2022\harvardyearright
+  .
 \newblock Statistical foundations of actuarial learning and its applications,
   {\em Available at SSRN 3822407} .
 

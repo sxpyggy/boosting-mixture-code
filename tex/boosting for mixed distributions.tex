@@ -35,8 +35,8 @@
 \usepackage{url}%For ref url
 %\bibliographystyle{plain}
 %opening
-\title{Insurance loss modeling with gradient tree-boosted mixture models.}
-\author{Guangyuan Gao \and Jiahong Li}
+\title{Insurance loss modeling with gradient tree-boosted mixture models}
+\author{Guangyuan Gao \footnote{Center for Applied Statistics and School of Statistics, Renmin University of China, 100872 Beijing, China.} \and Jiahong Li \footnote{School of Mathematical Sciences, Peking University, 100871 Beijing, China.} }
 
 
 \begin{document}
@@ -59,12 +59,12 @@ An empirical analysis of the claims amounts data is illustrated for the proposed
 
 \end{abstract}
 
-{\bf Keywords:} Mixture models; EM algorithm; Gradient boosting.
+{\bf Keywords:} Insurance loss; Mixture models; EM algorithm; Gradient boosting; Parallel computing; Finite mixture of regressions; Zero-inflated Poisson model. .
 
 
 \section{Introduction}
 
-Insurance loss data always cannot be well modelled by a single distribution.
+Insurance loss data sometimes cannot be well modelled by a single distribution.
 For claim count data, it may have an excess of zero claims, so a Poisson distribution may not be the best option.
 For claim amount data, its probability density function may be multimodal or heavy tailed, so a gamma distribution is not enough to describe the entire data.
 One solution to such issues is to apply mixture of distributions.
@@ -112,7 +112,7 @@ The out-of-sample prediction is more important than the goodness-of-fitting in o
 The resting of paper is structured as follows. 
 Section \ref{sec:review} reviews mixture models and the EM algorithm. 
 Section \ref{sec:EB} proposes the EB algorithm. Initialization, tuning parameters and parallel computing are discussed.   
-Section \ref{sec:application} studies two simulated data and a real data to illustrate the proposed methodology. Section \ref{sec:conclusions} concludes the paper with several important findings.  
+Section \ref{sec:application} studies two simulated data and a real data to illustrate the proposed methodology. Section \ref{sec:conclusions} concludes the paper with several important findings.  The R code is uploaded to \url{https://github.com/sxpyggy/boosting-mixture-code}.
 
 
 \section{Review: mixture of models and the EM algorithm}\label{sec:review}
@@ -689,41 +689,50 @@ We early stop the inner boosting iteration according to validation loss and stop
 
 \subsection{Third example: claims severity modelling}\label{sec:third example}
 In this example, we study the claims amount data {\tt freMTPL2sev} from R package {\bf CASdatasets}, which contains risk features and  claim amounts from $n=24,938$ motor third-part liabilities policies (after data cleaning). 
-We plot the histogram and the logged survival function of logged average claim  amount in Figure \ref{tail}, which shows three peaks and a heavy tail. Please refer to \citet{wuthrich2022statistical} for more discussions on this data.
+We plot the histogram and the cumulative distribution function of logged average claim  amount in Figure \ref{hist}, which shows three peaks and a heavy tail. 
 	\begin{figure}[h!]
 		\centering
-		\includegraphics[width=0.45\linewidth]{../plots/sev/hist.png}
-		\includegraphics[width=0.45\linewidth]{../plots/sev/log-log.png}
-		\caption{Histogram and logged survival function of logged average claims.}\label{tail}
+		\includegraphics[width=0.4\linewidth]{../plots/sev/hist.png}
+		\includegraphics[width=0.4\linewidth]{../plots/sev/cdf.png}
+		\caption{Histogram and the cumulative distribution function of logged average claims.}\label{hist}
 	\end{figure}
-
 An intuitive choice of component distributions is that 
 three peaks are modelled by three gamma distributions, respectively, the resting non-tail part by a forth gamma distribution, and the tail part by a Pareto distribution.
 Therefore, the probability density function (of the null model) is given by
 \begin{equation}\label{sev-0}
-	f(y|\bx;p,\mu,\phi,\alpha)=\sum_{k=1}^4p_kf_{G}(y;\mu_k,\phi_k)+p_5f_{P}(y;\alpha,M)
+	f(y|\bx;p,\mu,\phi,\alpha)=\sum_{k=1}^4p_kf_{G}(y;\mu_k,\phi_k)+p_5f_{P}(y;\alpha,M),
 \end{equation}
-	where $\mu,\phi$ are mean and dispersion parameter of gamma distribution, and $\alpha, M$ are tail index and threshold of Pareto distribution. The threshold is selected as $8158.13$ according to Hill plot \citep{resnick1997heavy}.
+	where $\mu,\phi$ are mean and dispersion parameter of gamma distribution, and $\alpha, M$ are tail index and threshold of Pareto distribution. 
+	The logged survival function for logged average claims as shown in Figure \ref{tail} indicates a regularly varying  tail at infinity \citep{embrechts2013modelling}.
+	The threshold of Pareto distribution is selected as $M=8158.13$ according to the Hill plot \citep{resnick1997heavy} as shown in Figure \ref{tail}. Please refer to \citet{wuthrich2022statistical} for more discussions on this data.
 	
-	Figure \ref{tail} indicates a way to initialize the hidden variable:
+\begin{figure}[h!]
+	\centering
+	\includegraphics[width=0.4\linewidth]{../plots/sev/log-log.png}
+	\includegraphics[width=0.4\linewidth]{../plots/sev/hill.png}
+	\caption{The logged survival function and the Hill plot for logged average claims.}\label{tail}
+\end{figure}
+	
+	The three peaks as shown in Figure \ref{hist} imply a way of initialization through the hidden component indicator variable:
 	\begin{equation}
 		\begin{aligned}
 			\hat{\bz}^{[0]}_i&=(\hat{z}^{[0]}_{i,1},\hat{z}^{[0]}_{i,2},\hat{z}^{[0]}_{i,3},\hat{z}^{[0]}_{i,4},\hat{z}^{[0]}_{i,5})\\
-			&=(\mathbbm{1}_{(0,500]}y_i,\mathbbm{1}_{(500, 1000]}y_i,\mathbbm{1}_{(1000,1200]}y_i,\mathbbm{1}_{(1200,8158.13]}y_i,\mathbbm{1}_{(8158.13,\infty)}y_i)
+			&=(\mathbbm{1}_{(0,500]}y_i,\mathbbm{1}_{(500, 1000]}y_i,\mathbbm{1}_{(1000,1200]}y_i,\mathbbm{1}_{(1200,8158.13]}y_i,\mathbbm{1}_{(8158.13,\infty)}y_i).
 		\end{aligned}
 	\end{equation}
-	Other parameters can be initialized as the MLE based on the full likelihood function.
-We first fit a null model \eqref{sev-0} to the data via the EM algorithm. 
-The trace of learning loss is shown in Figure \ref{null_sev}.
+	Component parameters $\mu,\phi,\alpha$ can be initialized as the MLEs in a homogeneous model for the full information $(y_i,\hat{\bz}_i^{[0]},\bx_i)_{i=1:n}$, i.e., the MLEs of parameters in gamma/Pareto distribution fitted to the partial samples in five intervals $(0,500], (500,1000], (1000,1200],(1200,8158.13],(8158.13,\infty)$, respectively.
+	
+We first fit a mixture of distributions \eqref{sev-0} to the data via the EM algorithm. 
+The trace of learning loss is shown in Figure \ref{null_sev}, implying a convergence after 80 iterations.
 	\begin{figure}[h!]
 		\centering
-		\includegraphics[width=0.5\linewidth]{../plots/sev/null_trace}
-		\caption{Learning loss of mixture of distributions.}\label{null_sev}
+		\includegraphics[width=0.4\linewidth]{../plots/sev/null_trace}
+		\caption{The trace plot the learning loss for the homogeneous model \eqref{sev-0} during the EM iterations.}\label{null_sev}
 	\end{figure}
-The estimated parameters are listed in Table \ref{null-gamma}. We observe that three peaks are captured by the first three component gamma distributions.
+The estimated component parameters are listed in Table \ref{null-gamma}. We observe that the three peaks are captured by the first three component gamma distributions.
 	\begin{table}[h!]
 		\centering
-		\caption{MLE of four component gamma distributions. Tail index is estimated as $\hat{\alpha}=1.0773$.}\label{null-gamma}
+		\caption{The MLEs of component parameters in the homogeneous model \eqref{sev-0}. Tail index is estimated as $\hat{\alpha}=1.0773$.}\label{null-gamma}
 		\begin{tabular}{crrrr}
 			\hline
 			component $k$ & \multicolumn{1}{c}{$\mu_k$} & \multicolumn{1}{c}{shape $(1/\phi_k)$} & \multicolumn{1}{c}{scale} & \multicolumn{1}{c}{rate} \\ \hline
@@ -733,47 +742,52 @@ The estimated parameters are listed in Table \ref{null-gamma}. We observe that t
 			4         & 1534.5143              & 1.0377                    & 1478.7768                 & 7e-04                    \\ \hline
 		\end{tabular}
 	\end{table}
-	Those large shape parameters (small dispersion) implies the  difficulties with {gamma mean modeling}. The test loss is calculated as 7.5815.
+	The first three large shape parameters (small dispersion) imply the  difficulties with {mean modeling} in the first three component models.
+	 The test loss is calculated as 7.5815. The mixing probabilities are estimated as $\hat{p}_1=0.0409,~ \hat{p}_2=0.0300, ~\hat{p}_3=0.4100,~ \hat{p}_4=0.4973$ and $\hat{p}_5=0.0218.$
 
-Next we model the mixing probabilities by boosting algorithm:
+Next we fit a mixture of distributions with heterogeneous mixing probabilities by the proposed EB algorithm:
 \begin{equation}\label{sev-bst-p}
-f(Y|\bx;p,\mu,\phi,\alpha)=\sum_{k=1}^4p_k(\bx)f_{G}(Y;\mu_k,\phi_k)+p_5(\bx)f_{P}(Y;\alpha,M).
+f(y|\bx;p,\mu,\phi,\alpha)=\sum_{k=1}^4p_k(\bx)f_{G}(y;\mu_k,\phi_k)+p_5(\bx)f_{P}(y;\alpha,M).
 \end{equation}
-We draw the boxplot of the mixing probabilities in Figure \ref{bx-bst-p}, which implies that the mixing probabilities of third and forth components $p_3$ and $p_4$ are more related with the covariates.
+We draw the boxplot of the mixing probabilities in Figure \ref{bx-bst-p}.
+We observe that the mixing probabilities for the third and forth components $p_3$ and $p_4$ are more related with the covariates.
 The test loss is calculated as 7.5588 smaller than the null model.
 	\begin{figure}[htp!]
 		\centering
 		\includegraphics[width=0.35\linewidth]{../plots/sev/bst_p}
-		\caption{Boxplot of estimated mixing probabilities.}\label{bx-bst-p}
+		\caption{The boxplot of the estimated mixing probabilities in Model \eqref{sev-bst-p}.}\label{bx-bst-p}
 	\end{figure}
 
 
-The small shape parameter of the forth component as shown in Table \ref{null-gamma} indicates a possible improvement by boosting the forth component  mean.
-Therefore, we fit the following model:
+Finally, the small shape parameter of the forth component as shown in Table \ref{null-gamma} indicates a possible improvement by boosting the forth component  mean.
+Therefore, we fit the following mixture model:
 	$$
 	\begin{aligned}
-		f(Y|\bx;p,\mu,\phi,\alpha)=&\sum_{k=1}^3p_k(\bx)f_{G}(Y;\mu_k,\phi_k)+ \\
-		&p_4(\bx)f_{G}(Y|\bx;\mu_4(\bx),\phi_4)+ p_5(\bx)f_{P}(Y;\alpha,M).
+		f(y|\bx;p,\mu,\phi,\alpha)=&\sum_{k=1}^3p_k(\bx)f_{G}(y;\mu_k,\phi_k)+ \\
+		&p_4(\bx)f_{G}(y|\bx;\mu_4(\bx),\phi_4)+ p_5(\bx)f_{P}(y;\alpha,M).
 	\end{aligned}
 	$$
-	Test loss is calculated as 7.5573 smaller than that of model \eqref{sev-bst-p}. 
+	The test loss is calculated as 7.5573 slightly smaller than that for model \eqref{sev-bst-p}. 
 
 
 \section{Conclusions}\label{sec:conclusions}
 Insurance loss data sometimes cannot be sufficiently modelled by a single distribution.
-Those data is usually modelled by mixture of models.
-The traditional estimation method for mixture of models is the EM algorithm.
-However, thee EM algorithm is not quite useful when the component model is supposed to be non-parametric.
-In this paper, we propose an Expectation-Boosting (EB) algorithm for mixture of models, where both the mixing probabilities and the component models are supposed to be modelled non-parametrically. 
+Those data is usually modelled by mixture models.
+The traditional estimation method for mixture models is the EM algorithm.
+However, the EM algorithm normally requires parametric component models, which limits the flexibility of mixture models.
+In this paper, we propose an Expectation-Boosting (EB) algorithm for mixture models, where both the mixing probabilities and the component models are modelled non-parametrically. 
 The proposed algorithm replaces the maximization step of the EM algorithm by a generic functional gradient descent algorithm.
-There are several advantages of EB algorithm over the EM algorithm. 
+There are several advantages of the EB algorithm over the EM algorithm. 
 First, boosting algorithm is a flexible non-parametric regression facilitating both {non-linear effects and interaction}.  
-There is no need for specifying the form of component regression functions and performing covariate transformation, which is difficult in the mixture of models.
-Second, boosting algorithm is {overfitting-sensitive}, we can perform {variable selection} simultaneously during the EB algorithm.
-In this paper, we do not discuss the model interpretation, which is quite similar to those in normal boosting algorithm, such as variable importance, ice curve, etc. 
-We discuss number of components selection ad hoc rather than systematically.
-One may refer to ?? for more details.
+There is no need for specifying the form of component regression functions.
+Automated feature engineering is performed during the EB algorithm.
+Second, boosting algorithm is {overfitting-sensitive}, and {variable selection} is conducted simultaneously during the EB algorithm.
+The cost of more flexibility is more computing time than the EM algorithm since there are several inner boosting loops in each EB iteration.
+We can accelerate the EB algorithm by conducting all the inner boosting loops simultaneously since they are independent given the component indicator variable $z$.
+%In this paper, although we do not discuss model interpretation, the interpretation method in usual boosting algorithm can be implemented directly for mixture models such as variable importance, partial dependent plot, etc.
 
+	\section*{Acknowledgment}
+Guangyuan Gao gratefully acknowledges the financial support from the National Natural Science Foundation of China (71901207). 
 
 \bibliography{boosting}
 \bibliographystyle{boosting}
