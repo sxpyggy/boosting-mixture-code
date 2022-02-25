@@ -133,6 +133,11 @@ Naik, P.~A., Shi, P. \harvardand\ Tsai, C.-L.  \harvardyearleft
 Peel, D. \harvardand\ MacLahlan, G.  \harvardyearleft 2000\harvardyearright .
 \newblock Finite mixture models, {\em John \& Sons} .
 
+\harvarditem{Resnick}{1997}{resnick1997heavy}
+Resnick, S.~I.  \harvardyearleft 1997\harvardyearright .
+\newblock Heavy tail modeling and teletraffic data: special invited paper, {\em
+  The Annals of Statistics} {\bf 25}(5):~1805--1869.
+
 \harvarditem[Tseung et~al.]{Tseung, Badescu, Fung \harvardand\
   Lin}{2021}{tseung2021lrmoe}
 Tseung, S.~C., Badescu, A.~L., Fung, T.~C. \harvardand\ Lin, X.~S.
@@ -148,6 +153,11 @@ Verbelen, R., Gong, L., Antonio, K., Badescu, A. \harvardand\ Lin, S.
 \newblock Fitting mixtures of erlangs to censored and truncated data using the
   em algorithm, {\em ASTIN Bulletin: The Journal of the IAA} {\bf
   45}(3):~729--758.
+
+\harvarditem{Wuthrich \harvardand\ Merz}{2022}{wuthrich2022statistical}
+Wuthrich, M.~V. \harvardand\ Merz, M.  \harvardyearleft 2022\harvardyearright .
+\newblock Statistical foundations of actuarial learning and its applications,
+  {\em Available at SSRN 3822407} .
 
 \harvarditem[Zhang et~al.]{Zhang, Calderin, Li \harvardand\
   Wu}{2020}{zhang2020type}
