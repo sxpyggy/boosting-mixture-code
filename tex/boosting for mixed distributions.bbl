@@ -1,10 +1,11 @@
 \begin{thebibliography}{xx}
 
-\harvarditem[Breiman et~al.]{Breiman, Friedman, Olshen \harvardand\
-  Stone}{1983}{breiman1983classification}
-Breiman, L., Friedman, J.~H., Olshen, R.~A. \harvardand\ Stone, C.~J.
-  \harvardyearleft 1983\harvardyearright .
-\newblock {\em Classification and regression trees}, Wadsworth.
+\harvarditem[Breiman et~al.]{Breiman, H, Olshen \harvardand\
+  Stone}{1984}{breiman1983classification}
+Breiman, Leo, F., H, J., Olshen, R.~A. \harvardand\ Stone, C.~J.
+  \harvardyearleft 1984\harvardyearright .
+\newblock {\em Classification and Regression Trees}, Wadsworth
+  Statistics/Probability Series.
 
 \harvarditem{B{\"u}hlmann \harvardand\ Hothorn}{2007}{buhlmann2007boosting}
 B{\"u}hlmann, P. \harvardand\ Hothorn, T.  \harvardyearleft
@@ -14,7 +15,7 @@ B{\"u}hlmann, P. \harvardand\ Hothorn, T.  \harvardyearleft
 
 \harvarditem{B{\"u}hlmann \harvardand\ Yu}{2003}{buehlmann:2003}
 B{\"u}hlmann, P. \harvardand\ Yu, B.  \harvardyearleft 2003\harvardyearright .
-\newblock Boosting with the {L2} loss: regression and classification, {\em
+\newblock Boosting with the $l_{2}$ loss: regression and classification, {\em
   Journal of the American Statistical Association} {\bf 98}(462):~324--339.
 
 \harvarditem[Delong et~al.]{Delong, Lindholm \harvardand\
@@ -34,11 +35,10 @@ Dempster, A.~P., Laird, N.~M. \harvardand\ Rubin, D.~B.  \harvardyearleft
   39}(1):~1--22.
 
 \harvarditem[Embrechts et~al.]{Embrechts, Kl{\"u}ppelberg \harvardand\
-  Mikosch}{2013}{embrechts2013modelling}
+  Mikosch}{1997}{embrechts2013modelling}
 Embrechts, P., Kl{\"u}ppelberg, C. \harvardand\ Mikosch, T.  \harvardyearleft
-  2013\harvardyearright .
-\newblock {\em Modelling extremal events: for insurance and finance}, Vol.~33,
-  Springer Science \& Business Media.
+  1997\harvardyearright .
+\newblock {\em Modelling Extremal Events for Insurance and Finance}, Springer.
 
 \harvarditem{Friedman}{2001}{friedman2001greedy}
 Friedman, J.~H.  \harvardyearleft 2001\harvardyearright .
@@ -66,12 +66,12 @@ Goldfeld, S.~M. \harvardand\ Quandt, R.~E.  \harvardyearleft
 \newblock A markov model for switching regressions, {\em Journal of
   econometrics} {\bf 1}(1):~3--15.
 
-\harvarditem[Hastie et~al.]{Hastie, Tibshirani, Friedman \harvardand\
+\harvarditem[Hastie et~al.]{Hastie, Tibshirani \harvardand\
   Friedman}{2009}{hastie2009elements}
-Hastie, T., Tibshirani, R., Friedman, J.~H. \harvardand\ Friedman, J.~H.
-  \harvardyearleft 2009\harvardyearright .
-\newblock {\em The elements of statistical learning: data mining, inference,
-  and prediction}, Vol.~2, Springer.
+Hastie, T., Tibshirani, R. \harvardand\ Friedman, J.~H.  \harvardyearleft
+  2009\harvardyearright .
+\newblock {\em The Elements of Statistical Learning: Data Mining, Inference,
+  and Prediction 2nd Edition}, Springer.
 
 \harvarditem[Huang et~al.]{Huang, Li \harvardand\
   Wang}{2013}{huang2013nonparametric}
@@ -101,7 +101,7 @@ Jiang, W. \harvardand\ Tanner, M.~A.  \harvardyearleft 1999\harvardyearright .
 
 \harvarditem{Jorgensen}{1997}{jorgensen:1997}
 Jorgensen, B.  \harvardyearleft 1997\harvardyearright .
-\newblock {\em The theory of dispersion models}, CRC Press.
+\newblock {\em The Theory of Dispersion Models}, CRC Press.
 
 \harvarditem{Kasahara \harvardand\ Shimotsu}{2015}{kasahara2015testing}
 Kasahara, H. \harvardand\ Shimotsu, K.  \harvardyearleft 2015\harvardyearright
@@ -127,7 +127,11 @@ Lee, S.~C. \harvardand\ Lin, X.~S.  \harvardyearleft 2012\harvardyearright .
 
 \harvarditem{Lindsay}{1995}{lindsay1995mixture}
 Lindsay, B.~G.  \harvardyearleft 1995\harvardyearright .
-\newblock Mixture models: theory, geometry, and applications, Ims.
+\newblock Mixture models: Theory, geometry, and applications, IMS.
+
+\harvarditem{MacLahlan \harvardand\ Peel}{2000}{peel2000finite}
+MacLahlan, G. \harvardand\ Peel, D.  \harvardyearleft 2000\harvardyearright .
+\newblock Finite mixture models, {\em John \& Sons} .
 
 \harvarditem[Naik et~al.]{Naik, Shi \harvardand\ Tsai}{2007}{naik2007extending}
 Naik, P.~A., Shi, P. \harvardand\ Tsai, C.-L.  \harvardyearleft
@@ -135,10 +139,6 @@ Naik, P.~A., Shi, P. \harvardand\ Tsai, C.-L.  \harvardyearleft
 \newblock Extending the akaike information criterion to mixture regression
   models, {\em Journal of the American Statistical Association} {\bf
   102}(477):~244--254.
-
-\harvarditem{Peel \harvardand\ MacLahlan}{2000}{peel2000finite}
-Peel, D. \harvardand\ MacLahlan, G.  \harvardyearleft 2000\harvardyearright .
-\newblock Finite mixture models, {\em John \& Sons} .
 
 \harvarditem{Resnick}{1997}{resnick1997heavy}
 Resnick, S.~I.  \harvardyearleft 1997\harvardyearright .
@@ -171,9 +171,9 @@ W\"uthrich, M.~V. \harvardand\ Merz, M.  \harvardyearleft 2022\harvardyearright
   Wu}{2020}{zhang2020type}
 Zhang, P., Calderin, E., Li, S. \harvardand\ Wu, X.  \harvardyearleft
   2020\harvardyearright .
-\newblock On the type i multivariate zero-truncated hurdle model with
-  applications in health insurance, {\em Insurance: Mathematics and Economics}
-  {\bf 90}:~35--45.
+\newblock On the type \uppercase\expandafter{\romannumeral1} multivariate
+  zero-truncated hurdle model with applications in health insurance, {\em
+  Insurance: Mathematics and Economics} {\bf 90}:~35--45.
 
 \harvarditem[Zhang et~al.]{Zhang, Pitt \harvardand\ Wu}{2022}{zhang2022new}
 Zhang, P., Pitt, D. \harvardand\ Wu, X.  \harvardyearleft 2022\harvardyearright

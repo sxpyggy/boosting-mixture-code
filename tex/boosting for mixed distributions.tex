@@ -23,6 +23,9 @@
 \def\bx{\boldsymbol{x}}
 \def\bm{\boldsymbol{m}}
 \def\by{\boldsymbol{y}}
+\def\bp{\boldsymbol{p}}
+\def\bmu{\boldsymbol{\mu}}
+\def\bphi{\boldsymbol{\phi}}
 \def\bZ{\boldsymbol{Z}}
 \def\bz{\boldsymbol{z}}
 
@@ -36,7 +39,7 @@
 %\bibliographystyle{plain}
 %opening
 \title{Insurance loss modeling with gradient tree-boosted mixture models}
-\author{Guangyuan Gao \footnote{Center for Applied Statistics and School of Statistics, Renmin University of China, 100872 Beijing, China.} \and Jiahong Li \footnote{School of Mathematical Sciences, Peking University, 100871 Beijing, China.} }
+\author{ Yanxi Hou \and Jiahong Li \footnote{School of Mathematical Sciences, Peking University, 100871 Beijing, China.} \and Guangyuan Gao \footnote{Center for Applied Statistics and School of Statistics, Renmin University of China, 100872 Beijing, China.}}
 
 
 \begin{document}
@@ -50,7 +53,7 @@ The Expectation-Maximization (EM) algorithm is usually applied for parameter est
 Feature engineering and variable selection are challenging for mixture of models due to several component models involving. 
 Overfitting is also a concern when predicting future loss. 
 To address those issues, we propose an Expectation-Boosting (EB) algorithm, 
-which replaces the maximization step in the EM algorithm by a gradient boosting with decision trees. 
+which replaces the maximization step in the EM algorithm by gradient boosting machines with decision trees. 
 The boosting algorithm estimates the regression functions in component models non-paramerically and overfitting-sensitively. 
 The EB algorithm performs automated feature engineering, model fitting and variable selection simultaneously, 
 fully exploring the predictive power of covariate space.
@@ -59,12 +62,12 @@ An empirical analysis of the claims amounts data is illustrated for the proposed
 
 \end{abstract}
 
-{\bf Keywords:} Insurance loss; Mixture models; EM algorithm; Gradient boosting; Parallel computing; Finite mixture of regressions; Zero-inflated Poisson model. .
+{\bf Keywords:} Insurance loss; Mixture models; EM algorithm; Gradient boosting; Parallel computing; Finite mixture of regressions; Zero-inflated Poisson model. 
 
 
 \section{Introduction}
 
-Insurance loss data sometimes cannot be well modelled by a single distribution.
+Insurance loss data sometimes cannot be well modeled by a single distribution.
 For claim count data, it may have an excess of zero claims, so a Poisson distribution may not be the best option.
 For claim amount data, its probability density function may be multimodal or heavy tailed, so a gamma distribution is not enough to describe the entire data.
 One solution to such issues is to apply mixture of distributions.
@@ -75,8 +78,8 @@ In machine learning applications, mixture models are also called as mixture of e
 
 Mixture models have been used for insurance loss modeling frequently.
 \citet{zhang2020type, zhang2022new} developed a multivariate zero-inflated hurdle model to describe multivariate count data with extra zeros.
-\citet{delong2021gamma} propose a mixture of neural networks with gamma loss to model insurance claim amounts.
-\citet{verbelen2015fitting} and \citet{lee2010modeling} used mixture of Erlangs to model insurance claim amounts including censored and truncated data.
+\citet{delong2021gamma} proposed a mixture of neural networks with gamma loss to model insurance claim amounts.
+\citet{lee2010modeling} and \citet{verbelen2015fitting} used mixture of Erlangs to model insurance claim amounts including censored and truncated data.
 \citet{lee2012modeling} developed the multivariate version of mixture Erlangs.
 \citet{fung2019class}, \citet{fung2019class2} and \citet{tseung2021lrmoe} proposed a so called logit-weighted reduced mixture of experts models for multivariate claim frequencies or severities distributions.
 To the best of our knowledge, the existing studies always impose a linearity constraint on the regression function, i.e., under a generalized linear model framework.
@@ -86,7 +89,7 @@ Parameter estimation in mixture models is challenging since component parameters
 The Expectation-Maximization (EM) algorithm proposed by \citet{dempster1977maximum} is an iterative method to estimate component parameters and (hidden) component indicator variable. 
 Variable selection and feature engineering in mixture models  is also challenging since the relationship between covariates and response vary from one component to another.  
 \citet{khalili2007variable} introduced a penalized likelihood approach for variable selection.
-\citet{huang2013nonparametric} and \citet{huang2012mixture} proposed non-parametric mixture of regression to relax the linearity assumption on the regression function.
+\citet{huang2012mixture} and \citet{huang2013nonparametric} proposed non-parametric mixture of regression to relax the linearity assumption on the regression function.
 Selecting the number of components is another challenging problem.
 \citet{naik2007extending} derived a new information criterion for selection of component numbers and variables.
 \citet{kasahara2015testing} proposed a likelihood-based test to contrast mixture models with different numbers of components. 
@@ -127,7 +130,7 @@ The exponential distribution family is normally sufficient to fit to most insura
 
 	Suppose a random variable $y$ follows the $k$-th {\it component distribution} from a collection of distributions
 	$$\{f_1(y;\mu_1,\phi_1),\ldots,f_K(y;\mu_K,\phi_K)\}$$
-	with \textit{mixing probability} $p_k, k=1,\ldots,K$,
+	with \textit{mixing probability} $p_k, k=1,\ldots,K$($K \geqslant 1$),
 	then the probability density function for $y$ is given by 
 	$$f(y)=\sum_{k=1}^Kp_kf_k(y;\mu_k,\phi_k).$$
 
@@ -163,11 +166,11 @@ The exponential distribution family is normally sufficient to fit to most insura
 	The joint distribution function for full information (one sample) is given by
 	$$f(y,\bz|
 	\bx) = \prod_{k=1}^K\left[p_k(\bx)f_k(y|\bx;\mu_k(\bx),\phi_k(\bx))\right]^{z_k}.$$
-	Thus, the {log-likelihood function} is derived as
+	Thus, the {complete log-likelihood function} is derived as
 	\begin{equation}\label{full-L}
 		l(p,\mu,\phi|y,\bz,\bx)=\sum_{k=1}^K z_k\left[\log p_k(\bx) + \log f_k(y|\bx;\mu_k(\bx),\phi_k(\bx))\right].
 	\end{equation}
-	Given a data set $(y_i,\bz_i,\bx_i)_{i=1:n}$, the regression coefficients $\theta_p, \theta_\mu, \theta_\phi$ in $p,\mu,\phi$ can be estimated by the following $K+1$ {independent optimizations:}
+	Given a data set $\{(y_i,\bz_i,\bx_i)\}_{i=1:n}$, the regression coefficients $\theta_p, \theta_\mu, \theta_\phi$ in $p,\mu,\phi$ can be estimated by the following $K+1$ {independent optimizations:}
 	\begin{equation}\label{p-reg}
 		\hat{\theta}_p=\underset{\theta_p}{\arg\max}\sum_{i=1}^n\sum_{k=1}^Kz_{i,k}\log p_k(\bx_i;\theta_p)
 	\end{equation}
@@ -188,7 +191,7 @@ In practice we do not have full information  $(Y,\bZ,\bx)$ but only the incomple
 	Based on the following log-likelihood function for full information, calculate the MLE of regression coefficients  $\theta_p, \theta_\mu, \theta_\phi$.
 	\begin{equation}
 		\begin{aligned}
-			&l(p,\mu,\phi|y,\hat{z},\bx)\\
+			&l(\bp,\bmu,\bphi|\by,\hat{\bz},\bx)\\
 			=&\sum_{i=1}^n\sum_{k=1}^K \hat{z}_{i,k}\left[\log p_k(\bx_i;\theta_p) + \log f_k\left(y_i;\mu_k\left(\bx_i;\theta_\mu^{(k)}\right),\phi_k\left(\bx_i;\theta_\phi^{(k)}\right)\right)\right]\\
 			=&\sum_{i=1}^n\sum_{k=1}^K \hat{z}_{i,k}\log p_k(\bx_i;\theta_p) + \sum_{i=1}^n\sum_{k=1}^K \hat{z}_{i,k}\log f_k\left(y_i;\mu_k\left(\bx_i;\theta_\mu^{(k)}\right),\phi_k\left(\bx_i;\theta_\phi^{(k)}\right)\right).
 		\end{aligned}
@@ -209,8 +212,8 @@ So we first review generic functional gradient descent algorithm, then describe 
 	Suppose a {non-parametric regression function} as $F:\R^P\rightarrow\R$. Our purpose is to  estimate $F$ to minimize the expected loss $$\hat{F}=\underset{F}{\arg\min}\E\left[C(Y,F(\bx))\right],$$
 	where $C:\R\times\R\rightarrow\R_+$ is the \textit{loss function}.
 	We always replace the expected loss by sample average loss:
-	$$\hat{F}=\underset{F}{\arg\min} \frac{1}{n}\sum_{i=1}^nC(y_i,F(\bx_i))$$
-	We choose the \textit{negative log-likelihood} function as the loss function. Hence, minimizing the loss function is equivalent to maximizing the likelihood function.
+	$$\hat{F}=\underset{F}{\arg\min}\frac{1}{n}\sum_{i=1}^nC(y_i,F(\bx_i))$$
+	We choose the \textit{negative log-likelihood} function as the loss function. Hence, minimizing the loss function is equivalent to maximizing the log-likelihood.
 The link function connects the regression function $F$ with the parameters of interest such as mean, probability odds, etc. 
 	Commonly used {link functions} and loss functions in different boosting algorithms are listed below:
 	\begin{itemize}
@@ -697,7 +700,7 @@ We plot the histogram and the cumulative distribution function of logged average
 		\caption{Histogram and the cumulative distribution function of logged average claims.}\label{hist}
 	\end{figure}
 An intuitive choice of component distributions is that 
-three peaks are modelled by three gamma distributions, respectively, the resting non-tail part by a forth gamma distribution, and the tail part by a Pareto distribution.
+three peaks are modeled by three gamma distributions, respectively, the resting non-tail part by a forth gamma distribution, and the tail part by a Pareto distribution.
 Therefore, the probability density function (of the null model) is given by
 \begin{equation}\label{sev-0}
 	f(y|\bx;p,\mu,\phi,\alpha)=\sum_{k=1}^4p_kf_{G}(y;\mu_k,\phi_k)+p_5f_{P}(y;\alpha,M),
@@ -771,11 +774,11 @@ Therefore, we fit the following mixture model:
 
 
 \section{Conclusions}\label{sec:conclusions}
-Insurance loss data sometimes cannot be sufficiently modelled by a single distribution.
-Those data is usually modelled by mixture models.
+Insurance loss data sometimes cannot be sufficiently modeled by a single distribution.
+Those data is usually modeled by mixture models.
 The traditional estimation method for mixture models is the EM algorithm.
 However, the EM algorithm normally requires parametric component models, which limits the flexibility of mixture models.
-In this paper, we propose an Expectation-Boosting (EB) algorithm for mixture models, where both the mixing probabilities and the component models are modelled non-parametrically. 
+In this paper, we propose an Expectation-Boosting (EB) algorithm for mixture models, where both the mixing probabilities and the component models are modeled non-parametrically. 
 The proposed algorithm replaces the maximization step of the EM algorithm by a generic functional gradient descent algorithm.
 There are several advantages of the EB algorithm over the EM algorithm. 
 First, boosting algorithm is a flexible non-parametric regression facilitating both {non-linear effects and interaction}.  
