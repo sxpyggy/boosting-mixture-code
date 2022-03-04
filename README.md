@@ -1,4 +1,4 @@
-# The R code for the paper ``Insurance loss modeling with gradient tree-boosted mixture models''
+# The R code for the paper "Insurance loss modeling with gradient tree-boosted mixture models"
 
 - 0_###.R contains the bottom functions used in .Rmd. These functions will be loaded automatically.
 
