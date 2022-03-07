@@ -167,7 +167,9 @@ Suppose a random variable $y$ follows a finite mixture of distributions with the
 	\begin{equation}\label{full-L}
 		l(p,\mu,\phi|y,\bz,\bx)=\sum_{k=1}^K z_k\left[\log p_k(\bx) + \log f_k(y|\bx;\mu_k(\bx),\phi_k(\bx))\right].
 	\end{equation}
-	 Given a data set $\{(y_i,\bz_i,\bx_i)\}_{i=1:n}$, we assume the parametric models of $p=(p_1,\ldots,p_K),\mu_k,\phi_k$ such that $p(\bx)=(p_1(\bx;\theta_p),\ldots,p_K(\bx;\theta_p))$, $\mu_k(\bx)=\mu_k(\bx;\theta_\mu^{(k)})$ and $\phi_k(\bx)=\phi_k(\bx;\theta_\phi^{(k)})$, where $\theta_p, (\theta_\mu^{(k)})_{k=1:K}, (\theta_\phi^{(k)})_{k=1:K}$ are the unknown parameters. Then, the regression coefficients can be estimated by the following $K+1$ {independent optimizations:}
+	 Given a data set $\{(y_i,\bz_i,\bx_i)\}_{i=1:n}$, we assume the parametric models of $p=(p_1,\ldots,p_K),\mu_k,\phi_k$ such that $p(\bx)=(p_1(\bx;\theta_p),\ldots,p_K(\bx;\theta_p))$, $\mu_k(\bx)=\mu_k(\bx;\theta_\mu^{(k)})$ and $\phi_k(\bx)=\phi_k(\bx;\theta_\phi^{(k)})$, where $\theta_p, (\theta_\mu^{(k)})_{k=1:K}, (\theta_\phi^{(k)})_{k=1:K}$ are the unknown parameters. Note that $\theta_p$ does not have a superscript since it corresponds to coefficients in a multinomial logistic classification while $\theta_\mu^{(k)},\theta_\phi^{(k)}$ can be considered in separate component models; see below.
+	 
+	 The regression coefficients can be estimated by the following $K+1$ {independent optimizations:}
 	\begin{equation}\label{p-reg}
 		\hat{\theta}_p=\underset{\theta_p}{\arg\max}\sum_{i=1}^n\sum_{k=1}^Kz_{i,k}\log p_k(\bx_i;\theta_p)
 	\end{equation}
@@ -186,7 +188,7 @@ In practice we do not have the full information  $(Y,\bZ,\bx)$, but only the inc
 
 \paragraph{Maximization step.}
 	Based on the log-likelihood function for full information
-	\begin{equation}
+	\begin{equation}\label{likelihood}
 		\begin{aligned}
 			&l(p,\mu,\phi|\by,\hat{\bz},\bx)\\
 			=&\sum_{i=1}^n\sum_{k=1}^K \hat{z}_{i,k}\left[\log p_k(\bx_i;\theta_p) + \log f_k\left(y_i;\mu_k\left(\bx_i;\theta_\mu^{(k)}\right),\phi_k\left(\bx_i;\theta_\phi^{(k)}\right)\right)\right]\\
@@ -215,7 +217,7 @@ We first describe generic functional gradient descent algorithm, then propose th
 
 \subsection{Generic functional gradient descent algorithm}
 
-	Suppose a (to-be-boosted) {non-parametric regression function} as $F:\R^P\rightarrow\R$. In boosting algorithm, the goal is to  estimate $F$ to minimize the expected loss $$\hat{F}=\underset{F}{\arg\min}\E\left[C(Y,F(\bx))\right],$$
+	Suppose a to-be-boosted {non-parametric regression function} as $F:\R^P\rightarrow\R$. In boosting algorithm, the goal is to  estimate $F$ to minimize the expected loss $$\hat{F}=\underset{F}{\arg\min}\E\left[C(Y,F(\bx))\right],$$
 	where $C:\R\times\R\rightarrow\R_+$ is the \textit{loss function}.
 	The expected loss is always replaced by sample average loss:
 	$$\hat{F}=\underset{F}{\arg\min}\frac{1}{n}\sum_{i=1}^nC(y_i,F(\bx_i)).$$
@@ -234,7 +236,7 @@ In $L_2$Boost, the loss function is negative normal log-likelihood
 where $F(\bx)=\E(Y|\bx).$
 
 In the GLM framework, the link function connects the linear predictor with the parameters of interest such as mean, probability odds, etc.
-Here, we apply the same terminology where the link function connects the non-parametric regression function $F$ with the parameters of interest.
+Here, we apply the same terminology where the link function connects the  non-parametric regression function $F$ with the parameters of interest.
 In LogitBoost, equation \eqref{logit-link} implies a half logged probability odds link function $g:\R_+\rightarrow\R$ 
 $$g(\text{odds})=\frac{1}{2}\log(\text{odds})=\frac{1}{2}\log\left(\frac{\Pr[Y=1|\bx]}{\Pr[Y=-1|\bx]}\right)=F(\bx).$$
 In $L_2$Boost, we have an identify link function $g:\R\rightarrow\R$
@@ -303,48 +305,40 @@ In the algorithm, weak learners are fitted to negative gradient $U$ rather than 
 
 \subsection{Expectation-Boosting algorithm}
 
-%We denote the parameters of $p,\mu,\phi$ as functions {$F,G,H$}, respectively. 
-To apply a boosting algorithm, all we need to specify are the likelihood function and the link function.
-In mixture models, the likelihood function is already given by \eqref{mix-gen}.
-Therefore, we only need to specify the link functions for mixing probabilities, means and dispersions, respectively.
+%We denote the parameters of $p,\mu,\phi$ as functions {$F,G,H$}, respectively.
+In the EB algorithm, we follow the exact same expectation step as in the EM algorithm and replace the maximization step by boosting.
+Therefore, the boosting algorithm is applied to estimate mixing probabilities and component parameters given the conditional expectation of latent component indicator variables $\hat{z}_{i,k}$.
+To apply a boosting algorithm, we need to specify the likelihood function and the link function.
+In mixture models, the log-likelihood function is already given by \eqref{likelihood}.
+Therefore, we only need to specify the link functions for mixing probabilities, component means and component dispersions, respectively.
 %In the EB algorithm, we need to specify link functions and loss functions, which determines negative gradient function.
+
 For mixing probabilities, we connect the mixing probabilities $p_1,\ldots,p_K$ with the to-be-boosted regression functions $F_1,\ldots,F_K$ by the multiple logistic link function $g_k:(0,1)^K\rightarrow \R$: {\color{blue}[Using $p(\bx;F(\bx))$ or $p(F(\bx))$? They are different. Similarly for other functions.]}	
 	\begin{equation}\label{inv-logistic}
 		g_k(p_1,\ldots,p_K)=\log p_k(\bx)-\frac{1}{K}\sum_{l=1}^K\log p_l(\bx)=F_k(\bx),~~k=1,\ldots,K.
 \end{equation}
 or equivalently
 	\begin{equation}\label{logistic}
-		p_k(\bx)=\frac{\exp{F_k(\bx)}}{\sum_{l=1}^{K}\exp{F_l(\bx)}},~~k=1,\ldots,K.
+	g_k^{-1}(F_1,\ldots,F_K)=\frac{\exp{F_k(\bx)}}{\sum_{l=1}^{K}\exp{F_l(\bx)}}=	p_k(\bx),~~k=1,\ldots,K.
 	\end{equation}
 	 {\color{blue}[It is not clear the difference between $p$ or $p_k$, $F$ and $F_k$. Similarly for other functions. Need definition of notions?]}
 {\color{blue}[$p_k(\bx)$ appears. The notions are not consistent. Similarly for other functions]}
-Given the negative log-likelihood function \eqref{p-reg2} of multinomial distribution, we derive the loss function as
+With the negative log-likelihood function \eqref{p-reg2} of multinomial distribution, we derive the loss function as
 \begin{equation}
 	\begin{aligned}
-		{C_{Z}(\bZ, F(\bx))}=& - \sum_{k=1}^K Z_k \log p_k(\bx).
+		{C_{Z}\left((Z_k, F_k(\bx))_{k=1:K}\right)}=& - \sum_{k=1}^K Z_k \log p_k(\bx).
 	\end{aligned}
 \end{equation}
 The negative gradient of the loss function w.r.t. $F_k$ is given by
 \begin{equation}
-	{U_k(\bZ,F(\bx))}=-\frac{\partial C_{Z}(\bZ,F(\bx))}{\partial F_k(\bx)}=
+	{U_k\left((Z_k, F_k(\bx))_{k=1:K}\right)}=-\frac{\partial C_{Z}\left((Z_k, F_k(\bx))_{k=1:K}\right)}{\partial F_k(\bx)}=
 	Z_k-p_k(\bx), ~~k=1,\ldots,K.
 \end{equation}
 
-For component parameters $\mu$ and $\phi$, the link function and loss function  depend on the component models.
-Commonly used link functions in component models are listed as follows {\color{blue}[$G,H$ should be the parameter function of $\mu,\phi$?]}
-	\begin{itemize}
-		\item Component Gaussian model:
-		$G_k=\mu_k, H_k=\log \phi_k;$
-		%$\mu_k(G_k(\bx))=G_k(\bx), ~\phi_k(H_k(\bx))=\exp H_k(\bx);$
-		\item Component Poisson model:
-		$G_k=\log\mu_k;$
-		%$\mu_k(G_k(\bx))=\exp G_k(\bx);$
-		\item Component gamma model:
-				$G_k=\log \mu_k, H_k=\log \phi_k.$
-		%$\mu_k(G_k(\bx))=\exp G_k(\bx),~\phi_k(H_k(\bx))=\exp H_k(\bx).$
-	\end{itemize}
+For component parameters $\mu$ and $\phi$,  we denote the to-be-boosted regression functions by $G$ and $H$, respectively. 
+The link functions depend on the component models.  For example, in component Gaussian model we assume $G_k=\mu_k, H_k=\log \phi_k$; in component Poisson model $G_k=\log\mu_k$; in component gamma model $G_k=\log \mu_k, H_k=\log \phi_k.$
 %Note that we slightly abuse function notations $p_k,\mu_k,\phi_k$ (i.e. the inverse link function); in Section \eqref{review:mix1} they define different functions.
-The negative log-likelihood function of each component model is used as its loss function:
+With the negative log-likelihood function \eqref{comp-reg2}, we derive the loss function as
 	\begin{equation}
 		\begin{aligned}
 			{C_k(Y,\bZ,G_k(\bx))}=& -Z_k\log f_k(Y;\mu_k(\bx),\phi_k), ~ k=1,\ldots,K,
