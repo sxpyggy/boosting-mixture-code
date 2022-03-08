@@ -56,7 +56,7 @@ Although the Expectation-Maximization (EM) algorithm usually plays an important 
 For example, the feature engineering and variable selection are two important modelling issues, which are challenging for mixture models due to several component models involving. 
 Moreover, to avoid overfitting is another technical concern of the modelling method for prediction of future losses. 
 To address those issues, we propose an Expectation-Boosting (EB) algorithm, 
-which replaces the maximization step in the EM algorithm by gradient boosting machines with decision trees. 
+which replaces the maximization step in the EM algorithm by gradient boosting machines with regression trees. 
 Our proposed EB algorithm can estimate the component regression functions non-paramerically and overfitting-sensitively, as well as
 perform automated feature engineering, model fitting and variable selection simultaneously, which
 fully explores the predictive power of feature space.
@@ -506,37 +506,50 @@ The MLE $\hat{\phi}_k^{[t]}$ is derived given the conditional expectation $\hat{
 		\hat{\phi}_k^{[t]}=\underset{\phi_k}{\arg\max} \sum_{i=1}^n-\hat{z}_{i,k}^{[t]}\log f_k(y_i;\hat{\mu}_k^{[t]}(\bx_i),\phi_k), ~ k=1,\ldots,K.
 \end{equation}
 
-In summary, a total of $(M_p+M_\mu)\times K\times T$ weak learners are calibrated in the EB algorithm. In the loop 6-9  the $K$ weak learners can be calibrated simultaneously, and in the loop 14-20 the $K$ boosting algorithms can be conducted simultaneously. Such a parallel computing will accelerate the EB algorithm significantly; see Table \ref{gaussian-summary}.
+In summary, a total of $(M_p+M_\mu)\times K\times T$ weak learners are calibrated in the EB algorithm. 
+In the loop 6-9  the $K$ weak learners can be calibrated simultaneously, 
+and in the loop 14-20 the $K$ boosting algorithms can be conducted simultaneously. 
+Such a parallel computing will accelerate the EB algorithm significantly; see Table \ref{gaussian-summary}.
+{\bf \color{blue} Weak learners of regression trees}
 
-\subsection{Tuning parameters and initialization in the EB algorithm}
-The EB algorithms have four types of tuning parameters: number of EB iterations $T$, numbers of boosting iterations $M_p$ and $M_\mu$, learning rates $s_p$ and $s_\mu$, and tuning parameters in weak learners. 
-The number of EB iterations $T$ can be determined by screening the trace plot of the likelihood at each iteration $t$:
-$$\prod_{i=1}^{n}\sum_{k=1}^K\hat{p}_k^{[t]}(\bx_i)f_k(y_i;\hat{\mu}_k^{[t]}(\bx_i),\phi_k^{[t]}),$$
-if no obvious improvement is observed, the EB algorithm can stop.
-For the numbers of boosting iterations  {$M_p,M_\mu$}, we specify a sufficiently large $M_p,M_\mu$ and stop early if there is no obvious improvement on the loss:
-$$\sum_{i=1}^n\sum_{k=1}^K \hat{z}_{i,k}^{[t]}\log \hat{p}_k^{[t,m]}(\bx_i)$$
-or 
-$$\sum_{i=1}^n\sum_{k=1}^K \hat{z}^{[t]}_{i,k}\log f_k\left(y_i;\hat{\mu}_k^{[t,m]}\left(\bx_i\right),\hat{\phi}_k^{[t]}\right).$$
 
-In the EB algorithm, we have the following tuning parameters and the corresponding tuning strategies are listed below:{\color{blue}[For tuning parameters, shall we write it into a subsection solely with descriptions of validation? The list below is descriptive not very clear to readers I think. For example, using some minimization formulas to describe the way. Moreover, for tuning parameters in different inner and outer loops, the order of doing them is important. Currently cannot see the order of tuning parameters in the algorithm.]}
-	\begin{itemize}
-		\item Number of EB iterations {$T$} (iterations in outer loop). This can be determined by screening the trace plot of loss. 
-		\item Number of iterations {$M_p,M_\mu$} in boosting algorithm  (iterations in inner loops). We can specify a sufficiently large $M_p,M_\mu$ and use  early stop on the validation loss.
-		\item Learning rate {$s$}. Smaller learning rate tends to lead to a better fitting and predictive performance but requiring more inner iterations.
-		\item Tuning parameters in decision trees: complexity parameter, maximum depth, number of terminal nodes, etc.
-		Those parameters can be tuned as in typical decision trees. Please refer to \citet{hastie2009elements} for more details.
- 	\end{itemize}
+\subsection{Hyperparameters tuning and initialization in the EB algorithm}
+The EB algorithms have four types of hyperparameters: number of EB iterations $T$, numbers of boosting iterations $M_p$ and $M_\mu$, learning rates $s_p$ and $s_\mu$, and hyperparameters in weak learners. 
+We denote the index of training data by $\mathcal{I}_\text{train}=\{1,\ldots,n\}$, the index of validation data by $\mathcal{I}_\text{val}$ and the index of test data by $\mathcal{I}_\text{test}$. They are mutually exclusive.
+The number of EB iterations $T$ can be determined by screening the trace plot of the likelihood on $\mathcal{I}_\text{train}\cup\mathcal{I}_\text{val}$ at each iteration $t$:
+$$\prod_{i\in\mathcal{I}_\text{train}\cup\mathcal{I}_\text{val}}\sum_{k=1}^K\hat{p}_k^{[t]}(\bx_i)f_k(y_i;\hat{\mu}_k^{[t]}(\bx_i),\phi_k^{[t]}).$$
+If no obvious improvement is observed, the EB algorithm converges.
+For the numbers of boosting iterations  {$M_p,M_\mu$}, we specify a sufficiently large $M_p,M_\mu$ and calculate the validation loss on $\mathcal{I}_\text{val}$ at each iteration $m$:
+\begin{equation}\label{loss-p}
+\sum_{i\in\mathcal{I}_\text{val}}\sum_{k=1}^K \hat{z}_{i,k}^{[t]}\log \hat{p}_k^{[t,m]}(\bx_i),
+\end{equation}
+\begin{equation}\label{loss-mu}
+\sum_{i\in\mathcal{I}_\text{val}} \hat{z}^{[t]}_{i,k}\log f_k\left(y_i;\hat{\mu}_k^{[t,m]}\left(\bx_i\right),\hat{\phi}_k^{[t]}\right), ~ k=1,\ldots,K.
+\end{equation}
+If there is no obvious improvement of the validation loss, the corresponding boosting can stop early before reaching $M_p$ or $M_\mu$.  
+For the learning rates {$s_p$} and $s_\mu$, smaller learning rates tend to lead to a better fitting and predictive performance but requiring more boosting iterations.
+We adjust the learning rates by monitoring the validation loss \eqref{loss-p} and \eqref{loss-mu}, respectively.
+Note that we can specify different learning rates $s_\mu$ for different component means.
+The hyperparameters in weak learners of regression trees include complexity parameter, maximum depth, number of terminal nodes, etc.
+Those hyperparameters can be tuned as in typical regression trees. Please refer to \citet{hastie2009elements} for more details.
+Although there are methods to systematically tune  hyperparameters such as grid research, Bayesian optimization, etc.
+In many cases, hyperparameter tuning is more of an art than a science.
+In the following applications, we particularly focus on two hyperparameters, learning rates and maximum depth. 
 
-	In steps 3.1.1 and 3.2.1 for the initialization of boosting, 
-	we initialize parameters in iteration $t+1$ {independently} with the previously boosted estimates $\hat{p}_k^{[t]}, \hat{\mu}_k^{[t]}$; see equations \eqref{ini-1} and \eqref{ini-2}. 
+In steps 4 and 13 for the initialization of boosting, 
+we initialize parameters at iteration $t$ {independently} with the previously boosted estimates $\hat{p}_k^{[t-1]}, \hat{\mu}_k^{[t-1]}$; 
+	see equations \eqref{ini-1} and \eqref{ini-2}. 
 	We call this as uncorrelated boosting.
-	However, please note that boosting in iteration $t+1$ is not independent with boosting in iteration $t$ since boosting in iteration $t+1$ is based on $\hat{\bz}^{[t+1]}$ which depends on boosting in iteration $t$. The gains from boosting are passed to  the boosting in the next EB iteration via the conditional expectation $\hat{\bz}$. 
+	However, please note that boosting at iteration $t$ is not independent with boosting at iteration $t-1$ 
+since boosting at iteration $t$ is based on $\hat{\bz}_i^{[t]}$ which depends on the boosted results at iteration $t-1$. 
+The gains from the boosting at iteration $t-1$ are passed to  the boosting at iteration $t$ via the conditional expectation $\hat{\bz}_i^{[t]}$. 
 	
-	
-	We might initialize parameters in the iteration $t+1$ as the previously boosted estimates $$\hat{p}_k^{[t,0]}=\hat{p}_k^{[t]}, \hat{\mu}_k^{[t,0]}=\hat{\mu}_k^{[t]}.$$
-This would lead a {smaller} required inner boosting iterations $M$ (or a {earlier} stop on validation loss) since the boosting starts from better initial values.
+	We might initialize parameters at iteration $t$ as the previously boosted estimates $$\hat{p}_k^{[t,0]}=\hat{p}_k^{[t-1]}, \hat{\mu}_k^{[t,0]}=\hat{\mu}_k^{[t-1]}.$$
+This would lead a {smaller} required inner boosting iterations (i.e., an {earlier} stop on the validation loss) since the boosting starts from better initial values.
 	We call this as forward boosting. 
-	However, with forward boosting, it is difficult to predict for new data due to the {iterative initialization}. One solution is to apply an additional boosting step with default initialization \eqref{ini-1} and \eqref{ini-2} given the {last conditional expected hidden variables $\hat{\bz}^{[T]}$}. In the following applications, we only implement the uncorrelated boosting.
+	However, with forward boosting, it is difficult to predict for new data due to the {iterative initialization}. 
+	One solution is to apply an additional boosting step with default initialization \eqref{ini-1} and \eqref{ini-2} given the {last conditional expectations of the latent variables $\hat{\bz}^{[T]}_i$}. 
+	In the following applications, we only implement the uncorrelated boosting.
 
 {\color{blue}[As mentioned in the introduction, boosting algorithms possess good properties to deal with some issues like variable selection, feature engineering and overfitting problems. Currently there is no discussion about these topics in this section and no illustration in the next simulation or real data analysis. It is better to address these aspects of EB algorithm and add some results in the next section. For example, variable importance plots and partial dependence plots. These are very useful for the interpretation of real data analyses.]}
 
