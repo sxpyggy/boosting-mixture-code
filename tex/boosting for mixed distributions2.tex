@@ -50,7 +50,7 @@
 
 \begin{abstract}
 %Insurance loss data always cannot be well modeled by a single distribution.
-\noindent 
+
 In actuarial practice, mixture models {\color{blue}[mixture models or mixture of models? both appear in the paper]} is one widely applied statistical method to model the insurance loss data. 
 Although the Expectation-Maximization (EM) algorithm usually plays an important tool for the parameter estimation of mixture  models, it suffers from other issues which cause unstable predictions. 
 For example, the feature engineering and variable selection are two important modelling issues, which are challenging for mixture models due to several component models involving. 
@@ -213,7 +213,7 @@ To make component models more flexible, we replace the maximization step in the 
 Boosting algorithm estimates the regression functions non-parametrically and facilitates more flexible shapes of regression function.
 With negative log-likelihood function as the loss function in boosting algorithm, the boosting step increases the likelihood at each iteration, but overfitting-sensitively.
 The boosting step follows a generic functional gradient descent algorithm.
-We first describe generic functional gradient descent algorithm, then propose the EB algorithm, finally discuss the tuning parameters and initialization in the EB algorithm. {\color{blue}[why not put the review of generic functional gradient descent algorithm in Section 2.]}
+We first describe generic functional gradient descent algorithm, then propose the EB algorithm, finally discuss interpretation, hyperparameter tuning and initialization in the EB algorithm. {\color{blue}[why not put the review of generic functional gradient descent algorithm in Section 2.]}
 
 \subsection{Generic functional gradient descent algorithm}
 
@@ -319,7 +319,7 @@ For mixing probabilities, we connect the mixing probabilities $p_1(\bx),\ldots,p
 \end{equation}
 or equivalently
 	\begin{equation}\label{logistic}
-	g_k^{-1}(F_1(\bx),\ldots,F_K(\bx))=\frac{\exp{F_k(\bx)}}{\sum_{l=1}^{K}\exp{F_l(\bx)}}=	p_k(\bx),~~k=1,\ldots,K.
+	g_k^{-1}(F_1(\bx),\ldots,F_K(\bx))=\frac{\exp\left(F_k(\bx)\right)}{\sum_{l=1}^{K}\exp\left(F_l(\bx)\right)}=	p_k(\bx),~~k=1,\ldots,K.
 	\end{equation}
 	 {\color{blue}[It is not clear the difference between $p$ or $p_k$, $F$ and $F_k$. Similarly for other functions. Need definition of notions?]}
 {\color{blue}[$p_k(\bx)$ appears. The notions are not consistent. Similarly for other functions]}
@@ -462,7 +462,7 @@ Please refer to equation (32) in \citet{friedman2001greedy}.
 
 {\bf 10. Return $\hat{p}_k^{[t,m]}$ according to \eqref{logistic}, $k=1,\ldots,K$.}
 The mixing probabilities are updated as
-$$\hat{p}_k^{[t,m]}=\frac{\exp{\hat{F}^{[t,m]}_k(\bx)}}{\sum_{l=1}^{K}\exp{\hat{F}^{[t,m]}_l(\bx)}},~~k=1,\ldots,K.$$
+$$\hat{p}_k^{[t,m]}=\frac{\exp\left(\hat{F}^{[t,m]}_k(\bx)\right)}{\sum_{l=1}^{K}\exp\left(\hat{F}^{[t,m]}_l(\bx)\right)},~~k=1,\ldots,K.$$
 
 
 In the loop 6-9, $K$ independent boostings are performed for $F_k, k=1,\ldots,K$. Hence, we can accelerate the loop 6-9 by parallel computing.
@@ -507,13 +507,57 @@ The MLE $\hat{\phi}_k^{[t]}$ is derived given the conditional expectation $\hat{
 \end{equation}
 
 In summary, a total of $(M_p+M_\mu)\times K\times T$ weak learners are calibrated in the EB algorithm. 
-In the loop 6-9  the $K$ weak learners can be calibrated simultaneously, 
-and in the loop 14-20 the $K$ boosting algorithms can be conducted simultaneously. 
+In the loop 6-9  the $K$ weak learners can be calibrated simultaneously at each $m$, 
+and in the loop 14-20 the $K$ boosting algorithms can be conducted simultaneously at each $t$. 
 Such a parallel computing will accelerate the EB algorithm significantly; see Table \ref{gaussian-summary}.
-{\bf \color{blue} Weak learners of regression trees}
+
+Gradient boosting with regression trees inherit the desirable features of trees.
+One of the advantages  is automated feature engineering with regard to non-linearity, variable transformation and interaction. 
+First, a tree produces a piecewise constant function facilitating non-linear effects of covariate.
+Second, trees are invariant under monotone transformations of the individual covariate. 
+For example, using $x_j,\log x_j, \exp x_j$ as the $j$-th covariate leads to the same result.
+So there is no need for considering individual variable transformation.
+Third, a tree with $L$ terminal nodes produces a function with interaction order at most $L-1$.
+Another advantage of trees is internal variable selection. Trees tend to be robust against irrelevant covariates.
+Moreover, trees are overfitting-sensitive given a suitable complexity parameter, i.e., any split not sufficiently improving the fit will not be attempted. 
+
+The boosting also mitigates many undesirable features of single tree model. 
+For small trees, they are inaccuracy due to the coarse nature of the piecewise constant functions. While for large trees, they are not stable due to high-order interaction involved.
+All of these are mitigated by boosting, which produces much finer piecewise constant functions and enhances stability by using small trees and by the effect of averaging over many of them.
+One remarkable feature of boosting is the resistance to overfitting, which owes to  overfitting-sensitive split in trees and two regularization hyperparameters of the learning rate $s$ and the number of iterations $M$.
+We normally specify a large $M$ and early stop iterating by minimizing the validation loss before reaching $M$.
+For a sufficiently small learning rate, we usually do not observe a typical tick shape of validation loss but a leveling-off pattern; see Figure 1 in \cite{friedman2001greedy}.
+
+\subsection{Interpretation, hyperparameters tuning and initialization in the EB algorithm}
+A particular useful interpretative tool for boosting is relative importance proposed by \cite{breiman1983classification}.
+In mixture models, we consider the relative importance of covariates in each component and the overall relative importance.
+In the weak learner of tree $\hat{f}_k^{[T,m]}$,  the relative importance of covariate $x_j$ is
+\begin{equation}\label{influence}
+	I_j(\hat{f}_k^{[T,m]})=\sum_{l=1}^{L-1}{e}_l\mathbbm{1}_{d_l}(j),
+\end{equation}
+where the summation is over the nonterminal nodes $l$ of the $L$-terminal node tree $\hat{f}^{[T,m]}_k$, $d_l$ is the splitting variable associated with node $l$, and $e_l$ is the corresponding empirical improvement in squared error as a result of the split given by 
+$$e_l=\frac{c_lc_r}{c_l+c_r}(\bar{a}_l-\bar{a}_l)^2.$$
+Here, $\bar{a}_l,\bar{a}_r$ are the left and right split gradient means respectively, and $c_l$ and $c_r$ are the corresponding sums of the weights.
+For a collection of trees $(\hat{f}^{[T,m]}_k)_{m=1:M_p}$ for the $k$-th component, \eqref{influence} can be generalized by its average over all of the trees
+\begin{equation}
+	IP_{j,k}=\frac{1}{M_p}\sum_{m=1}^{M_p} I_j(\hat{f}_k^{[T,m]}),
+\end{equation}
+which is interpreted as the relative importance of $x_j$ in separating component $k$ from the other components.
+The overall relative importance of $x_j$ is obtained by averaging over all components:
+$$
+IP_{j}=\frac{1}{K}\sum_{k=1}^K IP_{j,k}.
+$$
+The above formulae are about relative importance of covariates in mixing probabilities. Similarly, we can obtain the relative importance of covariates in each component mean as
+\begin{equation}
+	IM_{j,k}=\frac{1}{M_\mu}\sum_{m=1}^{M_\mu} I_j(\hat{g}_k^{[T,m]}),~~ k=1,\ldots,K,
+\end{equation}
+and the overall relative importance of covariates in means as
+$$
+IM_{j}=\frac{1}{K}\sum_{k=1}^K IM_{j,k}.
+$$
 
 
-\subsection{Hyperparameters tuning and initialization in the EB algorithm}
+
 The EB algorithms have four types of hyperparameters: number of EB iterations $T$, numbers of boosting iterations $M_p$ and $M_\mu$, learning rates $s_p$ and $s_\mu$, and hyperparameters in weak learners. 
 We denote the index of training data by $\mathcal{I}_\text{train}=\{1,\ldots,n\}$, the index of validation data by $\mathcal{I}_\text{val}$ and the index of test data by $\mathcal{I}_\text{test}$. They are mutually exclusive.
 The number of EB iterations $T$ can be determined by screening the trace plot of the likelihood on $\mathcal{I}_\text{train}\cup\mathcal{I}_\text{val}$ at each iteration $t$:
@@ -526,7 +570,7 @@ For the numbers of boosting iterations  {$M_p,M_\mu$}, we specify a sufficiently
 \begin{equation}\label{loss-mu}
 \sum_{i\in\mathcal{I}_\text{val}} \hat{z}^{[t]}_{i,k}\log f_k\left(y_i;\hat{\mu}_k^{[t,m]}\left(\bx_i\right),\hat{\phi}_k^{[t]}\right), ~ k=1,\ldots,K.
 \end{equation}
-If there is no obvious improvement of the validation loss, the corresponding boosting can stop early before reaching $M_p$ or $M_\mu$.  
+If there is no obvious improvement of the validation loss, the corresponding boosting can be early stopped before reaching $M_p$ or $M_\mu$.  
 For the learning rates {$s_p$} and $s_\mu$, smaller learning rates tend to lead to a better fitting and predictive performance but requiring more boosting iterations.
 We adjust the learning rates by monitoring the validation loss \eqref{loss-p} and \eqref{loss-mu}, respectively.
 Note that we can specify different learning rates $s_\mu$ for different component means.
@@ -534,7 +578,7 @@ The hyperparameters in weak learners of regression trees include complexity para
 Those hyperparameters can be tuned as in typical regression trees. Please refer to \citet{hastie2009elements} for more details.
 Although there are methods to systematically tune  hyperparameters such as grid research, Bayesian optimization, etc.
 In many cases, hyperparameter tuning is more of an art than a science.
-In the following applications, we particularly focus on two hyperparameters, learning rates and maximum depth. 
+%In the following applications, we particularly focus on two hyperparameters, learning rates and maximum depth. 
 
 In steps 4 and 13 for the initialization of boosting, 
 we initialize parameters at iteration $t$ {independently} with the previously boosted estimates $\hat{p}_k^{[t-1]}, \hat{\mu}_k^{[t-1]}$; 
@@ -582,8 +626,8 @@ $$f_\text{ZIP}(N;\lambda,\pi_0)= \pi_0\mathbbm{1}_{0}(N) +
 (1-\pi_0)\frac{e^{-\lambda}\lambda^N}{N!}.$$
 Suppose that five covariates $\bx=(x_1,\ldots,x_5)$ have systematic effects on both $\pi_0$ and $\lambda$: {\color{blue}[It is better to give brackets for the exp function. Similarly for those in the rest of paper]}
 \begin{equation}
-	\pi_0(\bx)=\frac{\exp F(\bx)}{1+\exp F(\bx)}, ~~
-	\lambda(\bx)=\exp G(\bx), 
+	\pi_0(\bx)=\frac{\exp \left(F(\bx)\right)}{1+\exp\left( F(\bx)\right)}, ~~
+	\lambda(\bx)=\exp\left( G(\bx)\right), 
 \end{equation}
 where
 \begin{equation}
@@ -690,7 +734,7 @@ f(y|\bx; \mu,\sigma,p)=p_1(\bx)f_N(y;\mu_1,\sigma_1)+p_2(\bx)f_N(y;\mu_2,\sigma_
 where $f_N(\cdot;\mu,\sigma)$ is the probability density function of a Gaussian distribution with mean $\mu$ and standard deviation $\sigma$.
 We assume that the mixing probabilities depend on the covariates vector $\bx=(x_1,x_2,x_3,x_4)$ via the following equations
 \begin{equation}\label{logistic-ex}
-	p_k(\bx)=\frac{\exp{F_k(\bx)}}{\sum_{l=1}^{3}\exp{F_l(\bx)}}, \text{ for } k=1,2,3,
+	p_k(\bx)=\frac{\exp\left(F_k(\bx)\right)}{\sum_{l=1}^{3}\exp\left(F_l(\bx)\right)}, \text{ for } k=1,2,3,
 \end{equation}
 and 
 \begin{align*}
@@ -730,7 +774,7 @@ where
 \end{equation}
 where
 \begin{equation}\label{linear-p}
-	p_k(\bx)=\frac{\exp{F_k(\bx)}}{\sum_{l=1}^{3}\exp{F_l(\bx)}}, \text{ for } k=1,2,3,
+	p_k(\bx)=\frac{\exp\left(F_k(\bx)\right)}{\sum_{l=1}^{3}\exp\left(F_l(\bx)\right)}, \text{ for } k=1,2,3,
 \end{equation}
 and 
 \begin{equation}\label{linear-p2}
@@ -758,7 +802,7 @@ where $\mu_1,\mu_2,\mu_3$ are estimated non-parametrically via the boosting algo
 \end{equation}
 where
 \begin{equation}\label{bst-p}
-	p_k(\bx)=\frac{\exp{F_k(\bx)}}{\sum_{l=1}^{3}\exp{F_l(\bx)}}, \text{ for } k=1,2,3.
+	p_k(\bx)=\frac{\exp\left(F_k(\bx)\right)}{\sum_{l=1}^{3}\exp\left(F_l(\bx)\right)}, \text{ for } k=1,2,3.
 \end{equation}
 Here $F_1,F_2,F_3$ are estimated non-parametrically via boosting algorithm. This model is comparable to model \eqref{gaussian-glm-p}.
 
