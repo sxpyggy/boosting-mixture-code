@@ -412,7 +412,7 @@ EB_gaussian <-
       }
       if (trace == T) {
         print(paste(
-          "iteration:",
+          "EB-iteration:",
           m,
           "; ",
           "train_loss:",

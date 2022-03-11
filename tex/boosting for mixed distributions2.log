@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.23 (TeX Live 2021/W32TeX) (preloaded format=pdflatex 2021.9.15)  10 MAR 2022 15:22
+This is pdfTeX, Version 3.141592653-2.6-1.40.23 (TeX Live 2021/W32TeX) (preloaded format=pdflatex 2021.9.15)  11 MAR 2022 17:17
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -316,33 +316,66 @@ LaTeX Font Info:    Trying to load font information for U+bbm on input line 161
 File: ubbm.fd 1999/03/15 V 1.2 Font definition for bbm font - TH
 ) [4] [5] [6]
 [7] [8] [9] [10] [11] [12] [13] [14] [15] [16] [17] [18] [19]
-<../plots/sev/hist.png, id=89, 481.8pt x 481.8pt>
+<../plots/three_gaussians/loss-bst-both.png, id=89, 481.8pt x 481.8pt>
+File: ../plots/three_gaussians/loss-bst-both.png Graphic file (type png)
+<use ../plots/three_gaussians/loss-bst-both.png>
+Package pdftex.def Info: ../plots/three_gaussians/loss-bst-both.png  used on in
+put line 844.
+(pdftex.def)             Requested size: 182.09485pt x 182.09341pt.
+<../plots/three_gaussians/loss-bst-both-p.png, id=90, 481.8pt x 481.8pt>
+File: ../plots/three_gaussians/loss-bst-both-p.png Graphic file (type png)
+<use ../plots/three_gaussians/loss-bst-both-p.png>
+Package pdftex.def Info: ../plots/three_gaussians/loss-bst-both-p.png  used on 
+input line 845.
+(pdftex.def)             Requested size: 182.09485pt x 182.09341pt.
+<../plots/three_gaussians/loss-bst-both-1.png, id=91, 481.8pt x 481.8pt>
+File: ../plots/three_gaussians/loss-bst-both-1.png Graphic file (type png)
+<use ../plots/three_gaussians/loss-bst-both-1.png>
+Package pdftex.def Info: ../plots/three_gaussians/loss-bst-both-1.png  used on 
+input line 850.
+(pdftex.def)             Requested size: 136.5746pt x 136.5719pt.
+<../plots/three_gaussians/loss-bst-both-2.png, id=92, 481.8pt x 481.8pt>
+File: ../plots/three_gaussians/loss-bst-both-2.png Graphic file (type png)
+<use ../plots/three_gaussians/loss-bst-both-2.png>
+Package pdftex.def Info: ../plots/three_gaussians/loss-bst-both-2.png  used on 
+input line 851.
+(pdftex.def)             Requested size: 136.5746pt x 136.5719pt.
+<../plots/three_gaussians/loss-bst-both-3.png, id=93, 481.8pt x 481.8pt>
+File: ../plots/three_gaussians/loss-bst-both-3.png Graphic file (type png)
+<use ../plots/three_gaussians/loss-bst-both-3.png>
+Package pdftex.def Info: ../plots/three_gaussians/loss-bst-both-3.png  used on 
+input line 852.
+(pdftex.def)             Requested size: 136.5746pt x 136.5719pt.
+ [20 <../plots/three_gaussians/loss-bst-both.png> <../plots/three_gaussians/los
+s-bst-both-p.png>] [21 <../plots/three_gaussians/loss-bst-both-1.png> <../plots
+/three_gaussians/loss-bst-both-2.png> <../plots/three_gaussians/loss-bst-both-3
+.png>]
+<../plots/sev/hist.png, id=105, 481.8pt x 481.8pt>
 File: ../plots/sev/hist.png Graphic file (type png)
 <use ../plots/sev/hist.png>
-Package pdftex.def Info: ../plots/sev/hist.png  used on input line 862.
+Package pdftex.def Info: ../plots/sev/hist.png  used on input line 895.
 (pdftex.def)             Requested size: 182.09485pt x 182.09341pt.
-<../plots/sev/cdf.png, id=90, 481.8pt x 481.8pt>
+<../plots/sev/cdf.png, id=106, 481.8pt x 481.8pt>
 File: ../plots/sev/cdf.png Graphic file (type png)
 <use ../plots/sev/cdf.png>
-Package pdftex.def Info: ../plots/sev/cdf.png  used on input line 863.
+Package pdftex.def Info: ../plots/sev/cdf.png  used on input line 896.
+(pdftex.def)             Requested size: 182.09485pt x 182.09341pt.
+<../plots/sev/log-log.png, id=107, 481.8pt x 481.8pt>
+File: ../plots/sev/log-log.png Graphic file (type png)
+<use ../plots/sev/log-log.png>
+Package pdftex.def Info: ../plots/sev/log-log.png  used on input line 911.
+(pdftex.def)             Requested size: 182.09485pt x 182.09341pt.
+<../plots/sev/hill.png, id=108, 481.8pt x 481.8pt>
+File: ../plots/sev/hill.png Graphic file (type png)
+<use ../plots/sev/hill.png>
+Package pdftex.def Info: ../plots/sev/hill.png  used on input line 912.
 (pdftex.def)             Requested size: 182.09485pt x 182.09341pt.
 
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
-[20]
-<../plots/sev/log-log.png, id=94, 481.8pt x 481.8pt>
-File: ../plots/sev/log-log.png Graphic file (type png)
-<use ../plots/sev/log-log.png>
-Package pdftex.def Info: ../plots/sev/log-log.png  used on input line 878.
-(pdftex.def)             Requested size: 182.09485pt x 182.09341pt.
-<../plots/sev/hill.png, id=95, 481.8pt x 481.8pt>
-File: ../plots/sev/hill.png Graphic file (type png)
-<use ../plots/sev/hill.png>
-Package pdftex.def Info: ../plots/sev/hill.png  used on input line 879.
-(pdftex.def)             Requested size: 182.09485pt x 182.09341pt.
 
-Overfull \hbox (14.63292pt too wide) in paragraph at lines 889--891
+Overfull \hbox (14.63292pt too wide) in paragraph at lines 922--924
 \OT1/cmr/m/n/10.95 to the par-tial sam-ples in five in-ter-vals $(0\OML/cmm/m/i
 t/10.95 ; \OT1/cmr/m/n/10.95 500]\OML/cmm/m/it/10.95 ; \OT1/cmr/m/n/10.95 (500\
 OML/cmm/m/it/10.95 ; \OT1/cmr/m/n/10.95 1000]\OML/cmm/m/it/10.95 ; \OT1/cmr/m/n
@@ -353,59 +386,63 @@ m/it/10.95 :\OT1/cmr/m/n/10.95 13]\OML/cmm/m/it/10.95 ; \OT1/cmr/m/n/10.95 (815
 10.95 1\OT1/cmr/m/n/10.95 )$,
  []
 
-[21 <../plots/sev/hist.png> <../plots/sev/cdf.png> <../plots/sev/log-log.png> <
-../plots/sev/hill.png>]
-<../plots/sev/null_trace.png, id=103, 481.8pt x 481.8pt>
+[22 <../plots/sev/hist.png> <../plots/sev/cdf.png>]
+<../plots/sev/null_trace.png, id=114, 481.8pt x 481.8pt>
 File: ../plots/sev/null_trace.png Graphic file (type png)
 <use ../plots/sev/null_trace.png>
-Package pdftex.def Info: ../plots/sev/null_trace.png  used on input line 896.
+Package pdftex.def Info: ../plots/sev/null_trace.png  used on input line 929.
 (pdftex.def)             Requested size: 182.09485pt x 182.09341pt.
-<../plots/sev/bst_p.png, id=104, 481.8pt x 481.8pt>
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+[23 <../plots/sev/log-log.png> <../plots/sev/hill.png> <../plots/sev/null_trace
+.png>]
+<../plots/sev/bst_p.png, id=121, 481.8pt x 481.8pt>
 File: ../plots/sev/bst_p.png Graphic file (type png)
 <use ../plots/sev/bst_p.png>
-Package pdftex.def Info: ../plots/sev/bst_p.png  used on input line 924.
+Package pdftex.def Info: ../plots/sev/bst_p.png  used on input line 957.
 (pdftex.def)             Requested size: 159.3382pt x 159.33266pt.
- [22 <../plots/sev/null_trace.png>] [23 <../plots/sev/bst_p.png>] (./boosting f
-or mixed distributions2.bbl [24]) [25]
-(./boosting for mixed distributions2.aux) ) 
+ [24 <../plots/sev/bst_p.png>] (./boosting for mixed distributions2.bbl
+[25] [26]) [27] (./boosting for mixed distributions2.aux) ) 
 Here is how much of TeX's memory you used:
- 5044 strings out of 480050
- 70267 string characters out of 5890936
+ 5104 strings out of 480050
+ 72864 string characters out of 5890936
  564179 words of memory out of 5000000
- 22618 multiletter control sequences out of 15000+600000
+ 22672 multiletter control sequences out of 15000+600000
  418030 words of font info for 82 fonts, out of 8000000 for 9000
  319 hyphenation exceptions out of 8191
- 57i,14n,66p,1036b,597s stack positions out of 5000i,500n,10000p,200000b,80000s
- <c:/Users/Guangyuan/.texlive2021/te
-xmf-var/fonts/pk/ljfour/public/bbm/bbm10.657pk>{f:/texlive/2021/texmf-dist/font
-s/enc/dvips/cm-super/cm-super-ts1.enc}<f:/texlive/2021/texmf-dist/fonts/type1/p
-ublic/amsfonts/cm/cmbx10.pfb><f:/texlive/2021/texmf-dist/fonts/type1/public/ams
-fonts/cm/cmbx12.pfb><f:/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/
-cmex10.pfb><f:/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cmextra/cmex
-8.pfb><f:/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb><f:
-/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi6.pfb><f:/texlive/2
-021/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb><f:/texlive/2021/texmf-
-dist/fonts/type1/public/amsfonts/cm/cmmib10.pfb><f:/texlive/2021/texmf-dist/fon
-ts/type1/public/amsfonts/cmextra/cmmib8.pfb><f:/texlive/2021/texmf-dist/fonts/t
-ype1/public/amsfonts/cm/cmr10.pfb><f:/texlive/2021/texmf-dist/fonts/type1/publi
-c/amsfonts/cm/cmr12.pfb><f:/texlive/2021/texmf-dist/fonts/type1/public/amsfonts
-/cm/cmr17.pfb><f:/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmr6.p
-fb><f:/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb><f:/texl
-ive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb><f:/texlive/2021/te
-xmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb><f:/texlive/2021/texmf-dist/
-fonts/type1/public/amsfonts/cm/cmsy6.pfb><f:/texlive/2021/texmf-dist/fonts/type
-1/public/amsfonts/cm/cmsy8.pfb><f:/texlive/2021/texmf-dist/fonts/type1/public/a
-msfonts/cm/cmti10.pfb><f:/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/c
-m/cmtt10.pfb><f:/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/symbols/ms
-am10.pfb><f:/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10
-.pfb><f:/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfrm0600.pfb><f:/t
-exlive/2021/texmf-dist/fonts/type1/public/cm-super/sfrm0800.pfb><f:/texlive/202
-1/texmf-dist/fonts/type1/public/cm-super/sfrm1095.pfb>
-Output written on "boosting for mixed distributions2.pdf" (25 pages, 441539 byt
+ 57i,14n,66p,1128b,597s stack positions out of 5000i,500n,10000p,200000b,80000s
+ <c:/Users/Guangyuan
+/.texlive2021/texmf-var/fonts/pk/ljfour/public/bbm/bbm10.657pk>{f:/texlive/2021
+/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc}<f:/texlive/2021/texmf-di
+st/fonts/type1/public/amsfonts/cm/cmbx10.pfb><f:/texlive/2021/texmf-dist/fonts/
+type1/public/amsfonts/cm/cmbx12.pfb><f:/texlive/2021/texmf-dist/fonts/type1/pub
+lic/amsfonts/cm/cmex10.pfb><f:/texlive/2021/texmf-dist/fonts/type1/public/amsfo
+nts/cmextra/cmex8.pfb><f:/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/c
+m/cmmi10.pfb><f:/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi6.p
+fb><f:/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb><f:/tex
+live/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmmib10.pfb><f:/texlive/202
+1/texmf-dist/fonts/type1/public/amsfonts/cmextra/cmmib8.pfb><f:/texlive/2021/te
+xmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb><f:/texlive/2021/texmf-dist/f
+onts/type1/public/amsfonts/cm/cmr12.pfb><f:/texlive/2021/texmf-dist/fonts/type1
+/public/amsfonts/cm/cmr17.pfb><f:/texlive/2021/texmf-dist/fonts/type1/public/am
+sfonts/cm/cmr6.pfb><f:/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/c
+mr8.pfb><f:/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb><f:
+/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb><f:/texlive/
+2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy6.pfb><f:/texlive/2021/texmf
+-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb><f:/texlive/2021/texmf-dist/font
+s/type1/public/amsfonts/cm/cmti10.pfb><f:/texlive/2021/texmf-dist/fonts/type1/p
+ublic/amsfonts/cm/cmtt10.pfb><f:/texlive/2021/texmf-dist/fonts/type1/public/ams
+fonts/symbols/msam10.pfb><f:/texlive/2021/texmf-dist/fonts/type1/public/amsfont
+s/symbols/msbm10.pfb><f:/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sf
+rm0600.pfb><f:/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfrm0800.pfb
+><f:/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfrm1095.pfb>
+Output written on "boosting for mixed distributions2.pdf" (27 pages, 464575 byt
 es).
 PDF statistics:
- 229 PDF objects out of 1000 (max. 8388607)
- 137 compressed objects within 2 object streams
+ 245 PDF objects out of 1000 (max. 8388607)
+ 141 compressed objects within 2 object streams
  0 named destinations out of 1000 (max. 500000)
- 31 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 56 words of extra memory for PDF output out of 10000 (max. 10000000)
 

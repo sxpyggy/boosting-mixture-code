@@ -108,6 +108,7 @@ fit_tree <- function(k){
     )
   fit_party <- as.party(tree)
   tree_save[[k]] <- fit_party
+  tree_0[[k]]<-tree
   fitted_node <-
     fitted(fit_party) # node and responses in the node
   names(fitted_node) = c("node", "response")
@@ -129,7 +130,8 @@ fit_tree <- function(k){
       }
     }
   }
-  return(list(dat_bst=dat_bst,val_bst=val_bst,tree_save=tree_save))
+  return(list(dat_bst=dat_bst,val_bst=val_bst,tree_save=tree_save,
+              tree_0=tree_0))
 }
 
 BST <- function(X, Y, Pinit, Xval, Yval, Pvalinit,
@@ -161,11 +163,13 @@ BST <- function(X, Y, Pinit, Xval, Yval, Pvalinit,
   Valid_impT<-NULL
   Valid_impT[1]<-T
   Tree_save <- list()
+  Tree_0 <- list()
 
   # boosting
   for (m in 1:M) {
     dat_bst[, Ind_y] <- Y - dat_bst[, Ind_p]
     tree_save<-list()
+    tree_0<-list()
     for (k in 1:K) {
       fit_tree <-
         rpart(
@@ -174,9 +178,9 @@ BST <- function(X, Y, Pinit, Xval, Yval, Pvalinit,
             #minsplit = 20,
             #minbucket = round(20 / 3),
             cp = cp,
-            maxcompete = 4,
+            maxcompete = 0,
             maxsurrogate = 0,
-            usesurrogate = 2,
+            usesurrogate = 0,
             xval = 0,
             surrogatestyle = 0,
             maxdepth = maxdepth
@@ -186,6 +190,8 @@ BST <- function(X, Y, Pinit, Xval, Yval, Pvalinit,
         )
       fit_party <- as.party(fit_tree)
       tree_save[[k]] <- fit_party
+      tree_0[[k]] <- fit_tree
+
       fitted_node <-
         fitted(fit_party) # node and responses in the node
       names(fitted_node) = c("node", "response")
@@ -221,6 +227,7 @@ BST <- function(X, Y, Pinit, Xval, Yval, Pvalinit,
       Valid_impT[m]<- Valid_imp[m]>10^-4
     }
     Tree_save[[m]]<- tree_save
+    Tree_0[[m]]<-tree_0
 
     if(is.null(Yval)!=TRUE&trace==T){
     print(paste("iteration:",round(m,0),"; ","train loss:",
@@ -243,7 +250,9 @@ BST <- function(X, Y, Pinit, Xval, Yval, Pvalinit,
   list(Train_loss=Train_loss, Valid_loss=Valid_loss,
        fitted=dat_bst,
        valid=val_bst,
-       Tree_save=Tree_save, lr=lr)
+       Tree_save=Tree_save,
+       Tree_0=Tree_0,
+       lr=lr)
 }
 
 
@@ -277,15 +286,16 @@ BST_parallel <- function(X, Y, Pinit, Xval, Yval, Pvalinit,
   Valid_impT<-NULL
   Valid_impT[1]<-T
   Tree_save <- list()
-
+  Tree_0<-list()
   # boosting
   for (m in 1:M) {
     dat_bst[, Ind_y] <- Y - dat_bst[, Ind_p]
     tree_save<-list()
+    tree_0<-list()
     #载入变量
     clusterExport(c1, varlist=c("X","maxdepth","cp","lr","M","patience","Pinit","Xval",
                                 "Yval","node_pre","dat_bst","val_bst","Ind_y","Ind_f",
-                                "tree_save","K"),envir=environment())
+                                "tree_save","tree_0","K"),envir=environment())
     #启动并行
     res <- clusterApply(c1,1:K,fit_tree)
     #res_mat <- as.matrix(do.call('rbind',res))
@@ -293,6 +303,9 @@ BST_parallel <- function(X, Y, Pinit, Xval, Yval, Pvalinit,
     tree_save[[1]]=res[[1]][["tree_save"]][[1]]
     tree_save[[2]]=res[[2]][["tree_save"]][[2]]
     tree_save[[3]]=res[[3]][["tree_save"]][[3]]
+    tree_0[[1]]=res[[1]][["tree_0"]][[1]]
+    tree_0[[2]]=res[[2]][["tree_0"]][[2]]
+    tree_0[[3]]=res[[3]][["tree_0"]][[3]]
     dat_bst[,Ind_f[1]]<- res[[1]][["dat_bst"]][,Ind_f[1]]
     dat_bst[,Ind_f[2]]<- res[[2]][["dat_bst"]][,Ind_f[2]]
     dat_bst[,Ind_f[3]]<- res[[3]][["dat_bst"]][,Ind_f[3]]
@@ -313,6 +326,7 @@ BST_parallel <- function(X, Y, Pinit, Xval, Yval, Pvalinit,
       Valid_impT[m]<- Valid_imp[m]>10^-4
     }
     Tree_save[[m]]<- tree_save
+    Tree_0[[m]]<- tree_0
 
     if(is.null(Yval)!=TRUE&trace==T){
       print(paste("iteration:",round(m,0),"; ","train loss:",
@@ -335,7 +349,9 @@ BST_parallel <- function(X, Y, Pinit, Xval, Yval, Pvalinit,
   list(Train_loss=Train_loss, Valid_loss=Valid_loss,
        fitted=dat_bst,
        valid=val_bst,
-       Tree_save=Tree_save, lr=lr)
+       Tree_save=Tree_save,
+       Tree_0=Tree_0,
+       lr=lr)
 }
 
 predict_BST <- function(X, bst, Pinit, M_best,type) {
