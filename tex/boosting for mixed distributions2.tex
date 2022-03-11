@@ -829,32 +829,9 @@ All three models with linear predictors  \eqref{gaussian-glm-mu}, \eqref{gaussia
 than their counterpart boosted models \eqref{gaussian-bst-mu}, \eqref{gaussian-bst-p} and \eqref{gaussian-bst-b} 
 since they cannot capture non-linear effects and interactions of covariates.
 %Thus, when there are complicated effects of covariates on the parameters, the EB algorithm is better than the EM algorithm.
-The two models with both heterogeneous means and mixing probabilities \eqref{gaussian-glm-b} and \eqref{gaussian-bst-b}  have no obvious better out-of-sample performance than the two models with only heterogeneous probabilities \eqref{gaussian-glm-p} and \eqref{gaussian-bst-p}, respectively.
-It seems that the component means are not related to covariates.
+The two models with both heterogeneous means and mixing probabilities \eqref{gaussian-glm-b} and \eqref{gaussian-bst-b}  have no obvious better out-of-sample performance than the two models with only heterogeneous probabilities \eqref{gaussian-glm-p} and \eqref{gaussian-bst-p}, respectively,
+indicating that the component means are not quite related to the covariates.
 
-For Model \eqref{gaussian-bst-b}, we draw the trace plot of the loss during the EB iterations $t=1,\ldots,T$ in Figure \ref{gaussian-trace}.
-It shows that the EB algorithm converges after around 10 iterations. 
-At the last EB iteration $T$, we draw the trace plot of the loss during the boosting iterations $m=1,\ldots,M_p$ for mixing probabilities in Figure \ref{gaussian-trace}.
-It shows that the boosting is robust against overfitting.
-At the last EB iteration $T$, we also draw the trace plot of the loss during the boosting iterations $m=1,\ldots,M_\mu$ for each component mean in Figure \ref{gaussian-comp}.
-It shows that the boosting cannot find heterogeneity in component means and the boosting stops early at very beginning. 
-We calculate the overall relative importance of $x_1,x_2,x_3,x_4$ in mixing probabilities as $48.23,34.51,17.00,0.25$, which is align to the underlying model.
-\begin{figure}[htp!]
-		\centering
-	\includegraphics[width=0.4\linewidth]{../plots/three_gaussians/loss-bst-both}
-		\includegraphics[width=0.4\linewidth]{../plots/three_gaussians/loss-bst-both-p}
-\caption{Left: The trace plot of loss during the EB iterations. Right: The trace plot of loss during the boosting iterations for mixing probabilities at last EB iteration $T$.}\label{gaussian-trace}
-\end{figure} 
-\begin{figure}[htp!]
-	\centering
-	\includegraphics[width=0.3\linewidth]{../plots/three_gaussians/loss-bst-both-1}
-	\includegraphics[width=0.3\linewidth]{../plots/three_gaussians/loss-bst-both-2}
-	\includegraphics[width=0.3\linewidth]{../plots/three_gaussians/loss-bst-both-3}
-	\caption{The trace plot of loss during the boosting iterations for component means  at last EB iteration $T$.}\label{gaussian-comp}
-\end{figure} 
-%while the two models with only heterogeneous mixing probabilities \eqref{gaussian-glm-p} and \eqref{gaussian-bst-p} have a much better out-of-sample performance than the null model \eqref{gaussian-0}.
-
-%Thus, we conclude that an appropriate mixing structure is heterogeneous mixing probabilities with homogeneous means. 
 
 \begin{table}[htp!]
 	\caption{Comparison of different models in terms of test loss and running time. Note that Models \eqref{gaussian-0}, \eqref{gaussian-glm-mu}, \eqref{gaussian-glm-p} and \eqref{gaussian-glm-b} are estimated via the EM algorithm, while Models \eqref{gaussian-bst-mu}, \eqref{gaussian-bst-p} and \eqref{gaussian-bst-b} are estimated via the EB algorithm.  {\color{blue}[Not easy to distinguish the results between EM and EB]}}\label{gaussian-summary}
@@ -874,10 +851,38 @@ We calculate the overall relative importance of $x_1,x_2,x_3,x_4$ in mixing prob
 	\end{tabular}
 \end{table}
 
-Comparison of the running times without parallel computing for models \eqref{gaussian-bst-mu} and \eqref{gaussian-bst-p} implies that the boosting of mixing probabilities takes much more time than the boosting of component means does.
-Indeed, the boosting iteration of component means stop early while the boosting iteration of mixing probabilities takes more time to discover the heterogeneity; see the underlying model \eqref{gaussian-true}. 
-We accelerate the EB algorithm by applying parallel computing for the boosting of mixing probabilities, i.e., in loop 6-9 of Algorithm \ref{EB} we fit $K$ trees simultaneously.
-It shows that parallel computing accelerates the EB algorithm significantly.   
+For Model \eqref{gaussian-bst-b}, we draw the trace plot of the loss during the EB iterations $t=1,\ldots,T$ in Figure \ref{gaussian-trace}.
+It shows that the EB algorithm converges after around 10 iterations. 
+At the last EB iteration $T$, we draw the trace plot of the loss during the boosting iterations $m=1,\ldots,M_p$ for mixing probabilities in Figure \ref{gaussian-trace}.
+It shows that the boosting is robust against overfitting.
+At the last EB iteration $T$, we also draw the trace plot of the loss during the boosting iterations $m=1,\ldots,M_\mu$ for each component mean in Figure \ref{gaussian-comp}.
+It shows that the boosting cannot find heterogeneity in component means and the boostings stop early at very beginning. 
+We calculate the overall relative importance (scaled to sum 100) of $x_1,x_2,x_3,x_4$ in mixing probabilities as $48.23,34.51,17.00,0.25$, which aligns with the underlying model.
+
+\begin{figure}[htp!]
+		\centering
+	\includegraphics[width=0.4\linewidth]{../plots/three_gaussians/loss-bst-both}
+		\includegraphics[width=0.4\linewidth]{../plots/three_gaussians/loss-bst-both-p}
+\caption{Left: The trace plot of loss during the EB iterations. Right: The trace plot of loss during the boosting iterations for mixing probabilities at last EB iteration $T$.}\label{gaussian-trace}
+\end{figure} 
+
+\begin{figure}[htp!]
+	\centering
+	\includegraphics[width=0.3\linewidth]{../plots/three_gaussians/loss-bst-both-1}
+	\includegraphics[width=0.3\linewidth]{../plots/three_gaussians/loss-bst-both-2}
+	\includegraphics[width=0.3\linewidth]{../plots/three_gaussians/loss-bst-both-3}
+	\caption{The trace plots of the loss during the boosting iterations for component means  at last EB iteration $T$.}\label{gaussian-comp}
+\end{figure} 
+%while the two models with only heterogeneous mixing probabilities \eqref{gaussian-glm-p} and \eqref{gaussian-bst-p} have a much better out-of-sample performance than the null model \eqref{gaussian-0}.
+
+%Thus, we conclude that an appropriate mixing structure is heterogeneous mixing probabilities with homogeneous means. 
+
+
+Comparison of the running times for models \eqref{gaussian-bst-mu} and \eqref{gaussian-bst-p} without parallel computing implies that 
+the boosting of mixing probabilities takes much more time than the boosting of component means does.
+One reason is that the boosting of component means stops early while the boosting of mixing probabilities takes more time to discover the heterogeneity; see Figures \ref{gaussian-trace} and \ref{gaussian-comp}. 
+We accelerate the EB algorithm by applying parallel computing in the boosting of mixing probabilities, i.e., in loop 6-9 of Algorithm \ref{EB} we fit $K$ trees simultaneously.
+It turns out that parallel computing accelerates the EB algorithm significantly.   
 
 
 %In the EB algorithm, we need to determine when to stop inner boosting loop and when to stop outer EB loop.
@@ -902,7 +907,7 @@ Therefore, the probability density function (of the null model) is given by
 \begin{equation}\label{sev-0}
 	f(y|\bx;p,\mu,\phi,\alpha)=\sum_{k=1}^4p_kf_{G}(y;\mu_k,\phi_k)+p_5f_{P}(y;\alpha,M),
 \end{equation}
-	where $\mu,\phi$ are mean and dispersion parameter of gamma distribution, and $\alpha, M$ are tail index and threshold of Pareto distribution. 
+	where $\mu,\phi$ are mean and dispersion parameters of gamma distribution, and $\alpha, M$ are tail index and threshold of Pareto distribution. 
 	The logged survival function for logged average claims as shown in Figure \ref{tail} indicates a regularly varying  tail at infinity \citep{embrechts2013modelling}.
 	The threshold of Pareto distribution is selected as $M=8158.13$ according to the Hill plot \citep{resnick1997heavy} as shown in Figure \ref{tail}. Please refer to \citet{wuthrich2022statistical} for more discussions on this data.
 	
@@ -913,22 +918,24 @@ Therefore, the probability density function (of the null model) is given by
 	\caption{The logged survival function and the Hill plot for logged average claims.}\label{tail}
 \end{figure}
 	
-	The three peaks as shown in Figure \ref{hist} imply a way of initialization through the hidden component indicator variable:
+	The three peaks as shown in Figure \ref{hist} imply a way of initialization through the latent component indicator variable:
 	\begin{equation}
 		\begin{aligned}
 			\hat{\bz}^{[0]}_i&=(\hat{z}^{[0]}_{i,1},\hat{z}^{[0]}_{i,2},\hat{z}^{[0]}_{i,3},\hat{z}^{[0]}_{i,4},\hat{z}^{[0]}_{i,5})\\
 			&=(\mathbbm{1}_{(0,500]}y_i,\mathbbm{1}_{(500, 1000]}y_i,\mathbbm{1}_{(1000,1200]}y_i,\mathbbm{1}_{(1200,8158.13]}y_i,\mathbbm{1}_{(8158.13,\infty)}y_i).
 		\end{aligned}
 	\end{equation}
-	Component parameters $\mu,\phi,\alpha$ can be initialized as the MLEs in a homogeneous model for the full information $(y_i,\hat{\bz}_i^{[0]},\bx_i)_{i=1:n}$, i.e., the MLEs of parameters in gamma/Pareto distribution fitted to the partial samples in five intervals $(0,500], (500,1000], (1000,1200],(1200,8158.13],(8158.13,\infty)$, respectively.
+Given the latent component indicator variable $\hat{\bz}^{[0]}_{i=1:n}$, the parameters $p,\mu,\phi,\alpha$ can be initialized as the MLEs in the homogeneous model on the full information $(y_i,\hat{\bz}_i^{[0]},\bx_i)_{i=1:n}$.
+%, i.e., the MLEs of parameters in gamma/Pareto distribution fitted to the partial samples in five intervals $(0,500], (500,1000], (1000,1200],(1200,8158.13],(8158.13,\infty)$, respectively.
+We split the data into a training data set, a validation data set and a test data set by a ratio of 3:1:1. 
 	
 We first fit a mixture of distributions \eqref{sev-0} to the data via the EM algorithm. 
-The trace of learning loss is shown in Figure \ref{null_sev}, implying a convergence after 80 iterations.
-	\begin{figure}[h!]
-		\centering
-		\includegraphics[width=0.4\linewidth]{../plots/sev/null_trace}
-		\caption{The trace plot the learning loss for the homogeneous model \eqref{sev-0} during the EM iterations.}\label{null_sev}
-	\end{figure}
+%The trace of learning loss is shown in Figure \ref{null_sev}, implying a convergence after 80 iterations.
+%	\begin{figure}[h!]
+%		\centering
+%		\includegraphics[width=0.4\linewidth]{../plots/sev/null_trace}
+%		\caption{The trace plot the learning loss for the homogeneous model \eqref{sev-0} during the EM iterations.}\label{null_sev}
+%	\end{figure}
 The estimated component parameters are listed in Table \ref{null-gamma}. We observe that the three peaks are captured by the first three component gamma distributions.
 	\begin{table}[h!]
 		\centering
@@ -945,21 +952,21 @@ The estimated component parameters are listed in Table \ref{null-gamma}. We obse
 	The first three large shape parameters (small dispersion) imply the  difficulties with {mean modelling} in the first three component models.
 	 The test loss is calculated as 7.5815. The mixing probabilities are estimated as $\hat{p}_1=0.0409,~ \hat{p}_2=0.0300, ~\hat{p}_3=0.4100,~ \hat{p}_4=0.4973$ and $\hat{p}_5=0.0218.$
 
-Next we fit a mixture of distributions with heterogeneous mixing probabilities by the proposed EB algorithm:
+Next we fit a mixture of distributions with heterogeneous mixing probabilities to the data via the proposed EB algorithm:
 \begin{equation}\label{sev-bst-p}
 f(y|\bx;p,\mu,\phi,\alpha)=\sum_{k=1}^4p_k(\bx)f_{G}(y;\mu_k,\phi_k)+p_5(\bx)f_{P}(y;\alpha,M).
 \end{equation}
 We draw the boxplot of the mixing probabilities in Figure \ref{bx-bst-p}.
-We observe that the mixing probabilities for the third and forth components $p_3$ and $p_4$ are more related with the covariates.
-The test loss is calculated as 7.5588 smaller than the null model.
+We observe that the mixing probabilities for the third and forth components $p_3$ and $p_4$ are more related with the covariates than $p_1,p_2,p_5$.
+The test loss is  7.5588 smaller than the null model.
 	\begin{figure}[htp!]
 		\centering
-		\includegraphics[width=0.35\linewidth]{../plots/sev/bst_p}
+		\includegraphics[width=0.4\linewidth]{../plots/sev/bst_p}
 		\caption{The boxplot of the estimated mixing probabilities in Model \eqref{sev-bst-p}.}\label{bx-bst-p}
 	\end{figure}
 
 
-Finally, the small shape parameter of the forth component as shown in Table \ref{null-gamma} indicates a possible improvement by boosting the forth component  mean.
+Finally, we observe that the small shape parameter in the forth component as shown in Table \ref{null-gamma} might indicates a possible improvement by boosting the forth component  mean.
 Therefore, we fit the following mixture model:
 	$$
 	\begin{aligned}
@@ -968,6 +975,7 @@ Therefore, we fit the following mixture model:
 	\end{aligned}
 	$$
 	The test loss is calculated as 7.5573 slightly smaller than that for model \eqref{sev-bst-p}. 
+For this model, we calculate the relative importance of covariates.
 
 
 \section{Conclusions}\label{sec:conclusions}

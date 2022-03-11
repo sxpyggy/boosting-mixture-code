@@ -500,7 +500,7 @@ variables_name<-c("VehPower","VehAge","DrivAge","BonusMalus","VehBrandOrd","VehG
 for(i in 1:J){
 
   # MLE of p (given Z)
-  bst_p<- BST(X=dat_train[,variables_name], Y=z_hat_train, Pinit=NULL, Xval = dat_valid[,variables_name], Yval=z_hat_valid, Pvalinit = NULL, M=50, cp=0.001, maxdepth = 4, lr=0.2, trace = T, patience = 2)
+  bst_p<- BST_parallel(X=dat_train[,variables_name], Y=z_hat_train, Pinit=NULL, Xval = dat_valid[,variables_name], Yval=z_hat_valid, Pvalinit = NULL, M=50, cp=0.001, maxdepth = 4, lr=0.2, trace = T, patience = 2)
   
   p_hat_mat_train<-bst_p$fitted[,c("BST_p1","BST_p2","BST_p3","BST_p4","BST_p5")]
   p_hat_mat_valid<-bst_p$valid[,c("BST_p1","BST_p2","BST_p3","BST_p4","BST_p5")]
@@ -567,6 +567,46 @@ z_hat_bst_V<-z_hat_valid
 p_test_bst<-p_hat_mat_test
 ```
 
+```{r}
+
+vi<-array(0,dim=c(K=5,length(bst_p$Tree_0),9))
+for (k in 1:5){
+  for (m in 1: length(bst_p$Tree_0)){
+    VI<-bst_p$Tree_0[[m]][[k]]$variable.importance
+    if (length(VI)>0){
+    for (i in 1:length(VI)){
+      for (v in 1:length(variables_name)){
+        if (names(VI)[i]==variables_name[v]){
+        vi[k,m,v]<-VI[i]
+      }
+      
+    }
+    }
+  }
+}
+}
+
+var_imp<-data.frame(var_name=c("VehP","VehA","DrivA","BM","VehB","VehG","Area","Dens","Region"),p1=NA,p2=NA,p3=NA,p4=NA,p5=NA,total=NA)
+
+for (k in 1:K){
+  var_imp[,k+1]<-apply(vi[k,,],2,sum)
+  }
+var_imp[,7]<-apply(var_imp[,2:6],1,sum)
+var_imp
+
+par(mfrow=c(3,2))
+# png("./plots/sev/loss-bst-both-varimp.png")
+for (k in 1:5){
+barplot(var_imp[,k+1], names.arg = var_imp$var_name,ylab="relative importance",main="relative importance of covariates",ylim=range(var_imp[,-c(1,7)]))
+box()
+}
+barplot(var_imp[,7], names.arg = var_imp$var_name,ylab="relative importance",main="relative importance of covariates")
+box()
+# dev.off()
+
+```
+
+
 
 ## p and mu
 
@@ -598,7 +638,7 @@ variables_name<-c("VehPower","VehAge","DrivAge","BonusMalus","VehBrandOrd","VehG
 
 for (i in 1:J) {
   # MLE of p (given Z)
-  bst_p<- BST(X=dat_learn[,variables_name], Y=z_hat, Pinit=NULL, Xval = dat_learn[,variables_name], Yval=z_hat, Pvalinit = NULL, M=50, cp=0.001, maxdepth = 4, lr=0.2, trace = T, patience = 2)
+  bst_p<- BST_parallel(X=dat_learn[,variables_name], Y=z_hat, Pinit=NULL, Xval = dat_learn[,variables_name], Yval=z_hat, Pvalinit = NULL, M=50, cp=0.001, maxdepth = 4, lr=0.2, trace = T, patience = 2)
   p_hat_mat<-bst_p$fitted[,c("BST_p1","BST_p2","BST_p3","BST_p4","BST_p5")]
   p_hat_mat_test<-predict_BST(X=dat_test[,variables_name], bst_p, Pinit=NULL, M_best = NULL, type="response")
   

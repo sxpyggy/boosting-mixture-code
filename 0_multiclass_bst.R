@@ -300,18 +300,12 @@ BST_parallel <- function(X, Y, Pinit, Xval, Yval, Pvalinit,
     res <- clusterApply(c1,1:K,fit_tree)
     #res_mat <- as.matrix(do.call('rbind',res))
     #把并行结果输出
-    tree_save[[1]]=res[[1]][["tree_save"]][[1]]
-    tree_save[[2]]=res[[2]][["tree_save"]][[2]]
-    tree_save[[3]]=res[[3]][["tree_save"]][[3]]
-    tree_0[[1]]=res[[1]][["tree_0"]][[1]]
-    tree_0[[2]]=res[[2]][["tree_0"]][[2]]
-    tree_0[[3]]=res[[3]][["tree_0"]][[3]]
-    dat_bst[,Ind_f[1]]<- res[[1]][["dat_bst"]][,Ind_f[1]]
-    dat_bst[,Ind_f[2]]<- res[[2]][["dat_bst"]][,Ind_f[2]]
-    dat_bst[,Ind_f[3]]<- res[[3]][["dat_bst"]][,Ind_f[3]]
-    val_bst[,Ind_f[1]]<- res[[1]][["val_bst"]][,Ind_f[1]]
-    val_bst[,Ind_f[2]]<- res[[2]][["val_bst"]][,Ind_f[2]]
-    val_bst[,Ind_f[3]]<- res[[3]][["val_bst"]][,Ind_f[3]]
+    for (k in 1:K){
+      tree_save[[k]]=res[[k]][["tree_save"]][[k]]
+      tree_0[[k]]=res[[k]][["tree_0"]][[k]]
+      dat_bst[,Ind_f[k]]<- res[[k]][["dat_bst"]][,Ind_f[k]]
+      val_bst[,Ind_f[k]]<- res[[k]][["val_bst"]][,Ind_f[k]]
+    }
 
     dat_bst[, Ind_p] <- FtoP(dat_bst[, Ind_f])
     if(is.null(Yval)!=TRUE){
