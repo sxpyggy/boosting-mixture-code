@@ -567,6 +567,8 @@ z_hat_bst_V<-z_hat_valid
 p_test_bst<-p_hat_mat_test
 ```
 
+#### variable importance
+
 ```{r}
 
 vi<-array(0,dim=c(K=5,length(bst_p$Tree_0),9))
@@ -588,25 +590,27 @@ for (k in 1:5){
 
 var_imp<-data.frame(var_name=c("VehP","VehA","DrivA","BM","VehB","VehG","Area","Dens","Region"),p1=NA,p2=NA,p3=NA,p4=NA,p5=NA,total=NA)
 
+
 for (k in 1:K){
   var_imp[,k+1]<-apply(vi[k,,],2,sum)
   }
 var_imp[,7]<-apply(var_imp[,2:6],1,sum)
-var_imp
+var_imp<-var_imp[c(7,8,9,1,2,5,6,3,4),]
 
 par(mfrow=c(3,2))
 # png("./plots/sev/loss-bst-both-varimp.png")
 for (k in 1:5){
-barplot(var_imp[,k+1], names.arg = var_imp$var_name,ylab="relative importance",main="relative importance of covariates",ylim=range(var_imp[,-c(1,7)]))
+  png(paste(c("./plots/sev/sev"),k,c(".png"),sep=""))
+barplot(var_imp[,k+1], names.arg = var_imp$var_name,ylab="relative importance",main=paste(c("relative importance in p",k,sep="")),ylim=range(var_imp[,-c(1,7)]))
 box()
+dev.off()
 }
-barplot(var_imp[,7], names.arg = var_imp$var_name,ylab="relative importance",main="relative importance of covariates")
+png(paste(c("./plots/sev/sev0.png")))
+barplot(var_imp[,7], names.arg = var_imp$var_name,ylab="relative importance",main="overall relative importance ")
 box()
-# dev.off()
+dev.off()
 
 ```
-
-
 
 ## p and mu
 
