@@ -559,7 +559,8 @@ p_hat_mat_test<-predict_BST(X=dat_test[,variables_name], bst_p, Pinit=NULL, M_be
 glm_loss
 null_loss
 # png("./plots/sev/bst_p.png")
-boxplot(p_hat_mat_test,xlab="component distribution",ylab="p")
+names(p_hat_mat_test)<-c("p1","p2","p3","p4","p5")
+boxplot(p_hat_mat_test,xlab="mixing probabilities",ylab="p(x)",main="boxplot of the mixing probabilities")
 lines(p_hat,lty=2)
 # dev.off()
 z_hat_bst_T<-z_hat_train
@@ -570,7 +571,6 @@ p_test_bst<-p_hat_mat_test
 #### variable importance
 
 ```{r}
-
 vi<-array(0,dim=c(K=5,length(bst_p$Tree_0),9))
 for (k in 1:5){
   for (m in 1: length(bst_p$Tree_0)){
@@ -588,8 +588,8 @@ for (k in 1:5){
 }
 }
 
-var_imp<-data.frame(var_name=c("VehP","VehA","DrivA","BM","VehB","VehG","Area","Dens","Region"),p1=NA,p2=NA,p3=NA,p4=NA,p5=NA,total=NA)
-
+variables_name
+var_imp<-data.frame(var_name=c("VehP","VehA","DrivA","BM","VehB","VehG","Area","Dens","Reg"),p1=NA,p2=NA,p3=NA,p4=NA,p5=NA,total=NA)
 
 for (k in 1:K){
   var_imp[,k+1]<-apply(vi[k,,],2,sum)
@@ -601,7 +601,7 @@ par(mfrow=c(3,2))
 # png("./plots/sev/loss-bst-both-varimp.png")
 for (k in 1:5){
   png(paste(c("./plots/sev/sev"),k,c(".png"),sep=""))
-barplot(var_imp[,k+1], names.arg = var_imp$var_name,ylab="relative importance",main=paste(c("relative importance in p",k,sep="")),ylim=range(var_imp[,-c(1,7)]))
+barplot(var_imp[,k+1], names.arg = var_imp$var_name,ylab="relative importance",main=paste("relative importance in p",k,sep=""),ylim=range(var_imp[,-c(1,7)]))
 box()
 dev.off()
 }
@@ -746,7 +746,7 @@ glm_loss_both
 glm_loss
 null_loss
 
-(test_loss<-data.frame(model=c("null","glm-p","bst-p","glm-p-mu","bst-p-mu"),loss=c(7.581538, 7.558955, 7.558401,7.578587, 7.557301)))
+(test_loss<-data.frame(model=c("null","glm-p","bst-p","glm-p-mu","bst-p-mu"),loss=c(7.581538, 7.558955,  7.557977, 7.578587, 7.557301)))
 
 # write.csv(test_loss,"./plots/sev/sev_loss.csv")
 ```

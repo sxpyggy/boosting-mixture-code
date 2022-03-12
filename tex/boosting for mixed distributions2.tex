@@ -51,13 +51,13 @@
 \begin{abstract}
 %Insurance loss data always cannot be well modeled by a single distribution.
 
-In actuarial practice, mixture models {\color{blue}[mixture models or mixture of models? both appear in the paper]} is one widely applied statistical method to model the insurance loss data. 
+In actuarial practice, mixture model {\color{blue}[mixture models or mixture of models? both appear in the paper]} is one widely applied statistical method to model the insurance loss data. 
 Although the Expectation-Maximization (EM) algorithm usually plays an important tool for the parameter estimation of mixture  models, it suffers from other issues which cause unstable predictions. 
-For example, the feature engineering and variable selection are two important modelling issues, which are challenging for mixture models due to several component models involving. 
+For example, feature engineering and variable selection are two important modelling issues, which are challenging for mixture models due to several component models involving. 
 Moreover, to avoid overfitting is another technical concern of the modelling method for prediction of future losses. 
 To address those issues, we propose an Expectation-Boosting (EB) algorithm, 
 which replaces the maximization step in the EM algorithm by gradient boosting machines with regression trees. 
-Our proposed EB algorithm can estimate the component regression functions non-paramerically and overfitting-sensitively, as well as
+Our proposed EB algorithm can estimate the mixing probabilities and the component regression functions non-parametrically and overfitting-sensitively, as well as
 perform automated feature engineering, model fitting and variable selection simultaneously, which
 fully explores the predictive power of feature space.
 We also conduct two simulation studies to show the good performance of the proposed algorithm and an empirical analysis of the claims amounts data for illustration. 
@@ -66,7 +66,7 @@ We also conduct two simulation studies to show the good performance of the propo
 
 {\bf Keywords:} Insurance loss; Mixture models; EM algorithm; Gradient boosting; Parallel computing; Finite mixture of regressions; Zero-inflated Poisson model. 
 
-
+\newpage
 \section{Introduction}
 
 It is well known that insurance loss data sometimes cannot be well modeled by a single distribution due to its complex data structures.
@@ -857,7 +857,7 @@ At the last EB iteration $T$, we draw the trace plot of the loss during the boos
 It shows that the boosting is robust against overfitting.
 At the last EB iteration $T$, we also draw the trace plot of the loss during the boosting iterations $m=1,\ldots,M_\mu$ for each component mean in Figure \ref{gaussian-comp}.
 It shows that the boosting cannot find heterogeneity in component means and the boostings stop early at very beginning. 
-We calculate the overall relative importance (scaled to sum 100) of $x_1,x_2,x_3,x_4$ in mixing probabilities as $48.23,34.51,17.00,0.25$, which aligns with the underlying model.
+We calculate the overall relative importance (scaled to sum 100) of $x_1,x_2,x_3,x_4$ in mixing probabilities $(IP_j)_{j=1:4}$ as $48.23,34.51,17.00,0.25$, which aligns with the underlying model.
 
 \begin{figure}[htp!]
 		\centering
@@ -894,14 +894,19 @@ It turns out that parallel computing accelerates the EB algorithm significantly.
 
 {\color{blue}[Is it necessary to separate the simulation and real data analysis into two subsections? Instead of saying the real data analysis the third example]}
 In this example, we study the claims amount data {\tt freMTPL2sev} from R package {\it CASdatasets}, which contains risk features and  claim amounts from $n=24,938$ motor third-part liabilities policies (after data cleaning). 
-There are 7 risk features: 
-We plot the histogram and the cumulative distribution function of logged average claim  amount in Figure \ref{hist}, which shows three peaks and a heavy tail. 
-	\begin{figure}[h!]
-		\centering
-		\includegraphics[width=0.4\linewidth]{../plots/sev/hist.png}
-		\includegraphics[width=0.4\linewidth]{../plots/sev/cdf.png}
-		\caption{Histogram and the cumulative distribution function of logged average claims.}\label{hist}
-	\end{figure}
+The claims severities are calculated as the ratio of the totoal claims amount to the number of claims for each policy.
+
+There are 9 risk features available. 
+Location related features include the region in France {\tt Reg}, the density of the city community {\tt Area} and the density of inhabitants {\tt Dens}.
+Vehicle related features include the power of the car {\tt VehP}, the vehicle age {\tt VehA}, the vehilce brand {\tt VehB} and the car gas {\tt VehG}.
+Driver related feature is the driver age {\tt DrivA}. 
+Claims history related feature is the bonus-malus score  {\tt BM}.  
+In the boosting algorithm, we replace the two categorical variables {\tt Reg} and {\tt VehB} by the means of claims severities in each categorical level.
+There is a strong linearity between {\tt Area} and {\tt Dens} and a heavy tail in {\tt Dens}. 
+In the GLM, we typically need to remove one of {\tt Area} and {\tt Dens}, and take logarithm of {\tt Dens}.
+However, in the boosting, there is no need of such feature engineering.
+
+We plot the histogram and the cumulative distribution function of logged claims severities in Figure \ref{hist}, which shows three peaks and a heavy tail. 
 An intuitive choice of component distributions is that 
 three peaks are modeled by three gamma distributions, respectively, the resting non-tail part by a forth gamma distribution, and the tail part by a Pareto distribution.
 Therefore, the probability density function (of the null model) is given by
@@ -909,14 +914,22 @@ Therefore, the probability density function (of the null model) is given by
 	f(y|\bx;p,\mu,\phi,\alpha)=\sum_{k=1}^4p_kf_{G}(y;\mu_k,\phi_k)+p_5f_{P}(y;\alpha,M),
 \end{equation}
 	where $\mu,\phi$ are mean and dispersion parameters of gamma distribution, and $\alpha, M$ are tail index and threshold of Pareto distribution. 
-	The logged survival function for logged average claims as shown in Figure \ref{tail} indicates a regularly varying  tail at infinity \citep{embrechts2013modelling}.
+\begin{figure}[h!]
+	\centering
+	\includegraphics[width=0.4\linewidth]{../plots/sev/hist.png}
+	\includegraphics[width=0.4\linewidth]{../plots/sev/cdf.png}
+	\caption{The histogram and the cumulative distribution function of logged claims severities.}\label{hist}
+\end{figure}
+
+	The logged survival function for logged claims severities as shown in Figure \ref{tail} indicates a regularly varying  tail at infinity \citep{embrechts2013modelling}.
 	The threshold of Pareto distribution is selected as $M=8158.13$ according to the Hill plot \citep{resnick1997heavy} as shown in Figure \ref{tail}. Please refer to \citet{wuthrich2022statistical} for more discussions on this data.
+	
 	
 \begin{figure}[h!]
 	\centering
 	\includegraphics[width=0.4\linewidth]{../plots/sev/log-log.png}
 	\includegraphics[width=0.4\linewidth]{../plots/sev/hill.png}
-	\caption{The logged survival function and the Hill plot for logged average claims.}\label{tail}
+	\caption{The logged survival function and the Hill plot for logged claims severities.}\label{tail}
 \end{figure}
 	
 	The three peaks as shown in Figure \ref{hist} imply a way of initialization through the latent component indicator variable:
@@ -957,40 +970,65 @@ Next we fit a mixture of distributions with heterogeneous mixing probabilities t
 \begin{equation}\label{sev-bst-p}
 f(y|\bx;p,\mu,\phi,\alpha)=\sum_{k=1}^4p_k(\bx)f_{G}(y;\mu_k,\phi_k)+p_5(\bx)f_{P}(y;\alpha,M).
 \end{equation}
-We draw the boxplot of the mixing probabilities in Figure \ref{bx-bst-p}.
+For the last EB iteration, we draw the trace plot of the multiclass logistic loss during the boosting of mixing probablities in Figure \ref{bx-bst-p}, which shows that the boosting is quite robust against overfitting.
+We draw the boxplot of the estimated mixing probabilities in Figure \ref{bx-bst-p}.
 We observe that the mixing probabilities for the third and forth components $p_3$ and $p_4$ are more related with the covariates than $p_1,p_2,p_5$.
-The test loss is  7.5588 smaller than the null model.
+The test loss is  7.5580 smaller than the null model.
 	\begin{figure}[htp!]
 		\centering
+				\includegraphics[width=0.4\linewidth]{../plots/sev/bst_p_trace}
 		\includegraphics[width=0.4\linewidth]{../plots/sev/bst_p}
-		\caption{The boxplot of the estimated mixing probabilities in Model \eqref{sev-bst-p}.}\label{bx-bst-p}
+		\caption{Left: The trace plot of the loss during the boosting of mixing probabilities. Right: The boxplot of the estimated mixing probabilities in Model \eqref{sev-bst-p}.}\label{bx-bst-p}
 	\end{figure}
 
+We calculate the relative importance of risk features in each mixing probability, respectively. 
+The unscaled relative importance $(IP_{j,k})_{j=1:9,k=1:5}$ shown in Figure \eqref{sev-var-imp} indicates that the risk features have much stronger systematic effects on $p_3,p_4$ than $p_1,p_2,p_5$, which is consistent with the observation in Figure \eqref{bx-bst-p}.
+The overall relative importance $(IP_{j})_{j=1:9}$ is shown in the last plot of Figure \ref{sev-var-imp}.
+The bonus-malus score and the driver age are the most important risk features in predicting claims severity.   
+The vehicle age and brand are two important vehicle related features, while the vehicle power and gas are not important in predicting claims severity.
+All region related risk features are important. Since {\tt Area} has a strong colinearity with {\tt Dens}, we do not need the first risk feature if the second one is in the model.
+	\begin{figure}[htp!]
+	\centering
 
-Finally, we observe that the small shape parameter in the forth component as shown in Table \ref{null-gamma} might indicates a possible improvement by boosting the forth component  mean.
-Therefore, we fit the following mixture model:
-	$$
-	\begin{aligned}
-		f(y|\bx;p,\mu,\phi,\alpha)=&\sum_{k=1}^3p_k(\bx)f_{G}(y;\mu_k,\phi_k)+ \\
-		&p_4(\bx)f_{G}(y|\bx;\mu_4(\bx),\phi_4)+ p_5(\bx)f_{P}(y;\alpha,M).
-	\end{aligned}
-	$$
-	The test loss is calculated as 7.5573 slightly smaller than that for model \eqref{sev-bst-p}. 
-For this model, we calculate the relative importance of covariates.
+	\includegraphics[width=0.4\linewidth]{../plots/sev/sev1}
+	\includegraphics[width=0.4\linewidth]{../plots/sev/sev2}
+	\includegraphics[width=0.4\linewidth]{../plots/sev/sev3}
+	\includegraphics[width=0.4\linewidth]{../plots/sev/sev4}
+		\includegraphics[width=0.4\linewidth]{../plots/sev/sev5}
+							\includegraphics[width=0.4\linewidth]{../plots/sev/sev0}
+	\caption{The relative importance of risk features in the mixing probabilities.}\label{sev-var-imp}
+\end{figure}
+
+%Finally, we observe that the small shape parameter in the forth component as shown in Table \ref{null-gamma} might indicates a possible improvement by boosting the forth component  mean.
+%Therefore, we fit the following mixture model:
+%	$$
+%	\begin{aligned}
+%		f(y|\bx;p,\mu,\phi,\alpha)=&\sum_{k=1}^3p_k(\bx)f_{G}(y;\mu_k,\phi_k)+ \\
+%		&p_4(\bx)f_{G}(y|\bx;\mu_4(\bx),\phi_4)+ p_5(\bx)f_{P}(y;\alpha,M).
+%	\end{aligned}
+%	$$
+%	The test loss is calculated as 7.5573 slightly smaller than that for model \eqref{sev-bst-p}. 
+%For this model, we calculate the relative importance of covariates.
 
 
 \section{Conclusions}\label{sec:conclusions}
-Insurance loss data sometimes cannot be sufficiently modeled by a single distribution, so a mixture of models is usually more preferred. Since there are multiple component models in a mixture of models, the parameter estimation problems is one key issue for data analysis. Thus, the EM algorithm is one critical estimation method for mixture models in the literature.
+Insurance loss data sometimes cannot be sufficiently modeled by a single distribution, 
+so a mixture model is usually more preferred. 
+Since there are multiple component models in a mixture model, 
+the parameter estimation problems is one key issue for data analysis. 
+Thus, the EM algorithm is one critical estimation method for mixture models in the literature.
 However, the EM algorithm usually requires parametric form of the component models, which limits the practical flexibility of mixture models.
-In this paper, we propose an Expectation-Boosting (EB) algorithm for mixture models, where both the mixing probabilities and the component models can be modeled non-parametrically. 
+In this paper, we propose an Expectation-Boosting (EB) algorithm for mixture models, 
+where both the mixing probabilities and the component models can be modeled non-parametrically. 
+
 The core of the proposed algorithm is to replace the maximization step of the EM algorithm with a generic functional gradient descent algorithm.
 There are several advantages of the EB algorithm over the EM algorithm. 
 First, boosting algorithm is a flexible non-parametric regression facilitating both {non-linear effects and interaction}.  
 There is no need for specifying the form of component regression functions.
 Automated feature engineering is performed during the EB algorithm.
 Second, boosting algorithm is {overfitting-sensitive}, and {variable selection} is conducted simultaneously during the EB algorithm.
-The cost of more flexibility is more computing time than the EM algorithm since there are several inner boosting loops in each EB iteration.{\color{blue}[I don't understand this sentence]}
-We can accelerate the EB algorithm by conducting all the inner boosting loops simultaneously since they are independent given the component indicator variable $z$.
+The cost of more flexibility is more required computing time than the EM algorithm, since the boosting iterations are embedded into each EB iteration.{\color{blue}[I don't understand this sentence]}
+We propose to accelerate the EB algorithm by parallel computing since there are some independent steps or loops at each EB iteration given the component indicator variable $\bz$.
 %In this paper, although we do not discuss model interpretation, the interpretation method in usual boosting algorithm can be implemented directly for mixture models such as variable importance, partial dependent plot, etc.
 
 	\section*{Acknowledgment}
