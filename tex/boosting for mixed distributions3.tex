@@ -51,7 +51,7 @@
 \begin{abstract}
 %Insurance loss data always cannot be well modeled by a single distribution.
 
-In actuarial practice, mixture model {\color{blue}[mixture models or mixture of models? both appear in the paper]} is one widely applied statistical method to model the insurance loss data. 
+In actuarial practice, mixture model {\color{blue}[mixture models or mixture of models? both appear in the paper. I make them consistent using mixture model.]} is one widely applied statistical method to model the insurance loss data. 
 Although the Expectation-Maximization (EM) algorithm usually plays an important tool for the parameter estimation of mixture  models, it suffers from other issues which cause unstable predictions. 
 For example, feature engineering and variable selection are two important modelling issues, which are challenging for mixture models due to several component models involving. 
 Moreover, to avoid overfitting is another technical concern of the modelling method for prediction of future losses. 
@@ -203,9 +203,9 @@ In practice we do not have the full information  $(Y,\bZ,\bx)$, but only the inc
  \begin{equation}\label{comp-reg2}
  	\left(\hat{\theta}_\mu^{(k)},\hat{\theta}_\phi^{(k)}\right)=\underset{\theta^{(k)}_\mu,\theta^{(k)}_\phi}{\arg\max}\sum_{i=1}^n\sum_{k=1}^K\hat{z}_{i,k}\log f_k\left(y_i;\mu_k\left(\bx_i;\theta_\mu^{(k)}\right),\phi_k\left(\bx_i;\theta_\phi^{(k)}\right)\right), ~\text{for} ~ k=1,\ldots,K.
  \end{equation}
-{\color{blue}[why using bold $\bp,\bmu,\bphi,\by$? Need to define some new notions above?]} These optimizations are similar to those in \eqref{p-reg} and \eqref{comp-reg}. 
+{\color{blue}[why using bold $\bp,\bmu,\bphi,\by$? Need to define some new notions above? I correct them.]} These optimizations are similar to those in \eqref{p-reg} and \eqref{comp-reg}. 
 The only difference is that ${z}_{i,k}\in\{0,1\}$ in \eqref{p-reg} and \eqref{comp-reg} while $\hat{z}_{i,k}\in(0,1)$ in  \eqref{p-reg2} and \eqref{comp-reg2}.
-Therefore, in the maximization step we perform a multinomial logistic classification with {\it fractional} response $\hat{z}_{i,k}$ {\color{blue}[No illustration for a fractional response]} and $K$ {weighted}-regressions {\color{blue}[No illustration as well]} fitted to {\it all} samples with weights $\hat{z}_{i,k}$.
+Therefore, in the maximization step we perform a multinomial logistic classification with {\it fractional} response $\hat{z}_{i,k}$ {\color{blue}[No illustration for a fractional response]} and $K$ {weighted}-regressions {\color{blue}[No illustration as well. I add more explanation.]} fitted to {\it all} samples with weights $\hat{z}_{i,k}$.
 
 \section{Expectation-Boosting algorithm}\label{sec:EB}
 In the EM algorithm, the functions $p(\bx), \mu_k(\bx), \phi_k(\bx)$ are always assumed to be parametric functions.
@@ -213,7 +213,7 @@ To make component models more flexible, we replace the maximization step in the 
 Boosting algorithm estimates the regression functions non-parametrically and facilitates more flexible shapes of regression function.
 With negative log-likelihood function as the loss function in boosting algorithm, the boosting step increases the likelihood at each iteration, but overfitting-sensitively.
 The boosting step follows a generic functional gradient descent algorithm.
-We first describe generic functional gradient descent algorithm, then propose the EB algorithm, finally discuss interpretation, hyperparameter tuning and initialization in the EB algorithm. {\color{blue}[why not put the review of generic functional gradient descent algorithm in Section 2.]}
+We first describe generic functional gradient descent algorithm, then propose the EB algorithm, finally discuss interpretation, hyperparameter tuning and initialization in the EB algorithm. {\color{blue}[why not put the review of generic functional gradient descent algorithm in Section 2. I prefer to put it here. Section 2 is about mixture models.]}
 
 \subsection{Generic functional gradient descent algorithm}
 
@@ -242,7 +242,7 @@ $$g(\text{odds})=\frac{1}{2}\log(\text{odds})=\frac{1}{2}\log\left(\frac{\Pr[Y=1
 In $L_2$Boost, we have an identify link function $g:\R\rightarrow\R$
 $$g(\text{mean})=\text{mean}=\E(Y|\bx)=F(\bx).$$
 Remark that in our setting of statistical modeling, we first specify the likelihood function and the link function, then we derive the cost function.
-{\color{blue}[The link function is not defined and not pointed to. It is better to give some descriptions for both loss and link functions].}
+{\color{blue}[The link function is not defined and not pointed to. It is better to give some descriptions for both loss and link functions. More explanations are added.]}
 
 %	Commonly used {link functions} and loss functions in different boosting algorithms are listed below:
 %	\begin{itemize}
@@ -260,7 +260,7 @@ We follow \citet{buehlmann:2003} to briefly describe the generic functional grad
 The algorithm estimates $F$ in an additive form
 $$\hat{F}(\bx)=\hat{F}^{[0]}(\bx)+\sum_{m=1}^M\hat{f}^{[m]}(\bx),$$
 where $\hat{F}^{[0]}$ is the initial value and $\hat{f}^{[m]}$ is called the $m$-th weak learner which involves only a small number of covariates.
-{\color{blue}[Consider using {\tt algorithm} package here]}
+{\color{blue}[Consider using {\tt algorithm} package here. I use it now. Thanks.]}
 \begin{algorithm}[htp!] % enter the algorithm environment
 	\caption{The generic functional gradient decent algorithm.} % give the algorithm a caption
 	\label{alg1} % and a label for \ref{} commands later in the document
@@ -269,7 +269,7 @@ where $\hat{F}^{[0]}$ is the initial value and $\hat{f}^{[m]}$ is called the $m$
 		\FOR{$m=1$ to $M$}
 		\STATE Projection of gradient to weak learner.
 		Calculate \textit{negative gradient} $$u_i=\left.-\frac{\partial C(y_i,F)}{\partial F}\middle|_{F=\hat{F}^{[m-1]}(\bx_i)}\right., i=1,\ldots,n.$$
-		Data $(u_i,\bx_i)_{i=1:n}$ is used to calibrate a weak learner $\hat{f}^{[m]}(\bx;\hat{\theta}^{[m]})$ with \textit{loss function $L_2$} \eqref{l2}.{\color{blue} [The weaker learner is not defined or described, and appear in the algorithm at the first time. It is better to put this sentence in the article and give this step a straightforward description.]}
+		Data $(u_i,\bx_i)_{i=1:n}$ is used to calibrate a weak learner $\hat{f}^{[m]}(\bx;\hat{\theta}^{[m]})$ with \textit{loss function $L_2$} \eqref{l2}.{\color{blue} [The weaker learner is not defined or described, and appear in the algorithm at the first time. It is better to put this sentence in the article and give this step a straightforward description. Yes. I have added more explanations in Section 3.1.]}
 		\STATE One-dimensional optimization and update.
 		Solve a one-dimensional optimization  to find \textit{expansion coefficient} $\hat{\omega}^{[m]}$:
 		$$\hat{\omega}^{[m]}=\underset{\omega}{\arg\min}\sum_{i=1}^n C(y_i, \hat{F}^{[m-1]}(\bx_i)+\omega\hat{f}^{[m]}(\bx_i))$$
@@ -313,7 +313,8 @@ In mixture models, the log-likelihood function is already given by \eqref{likeli
 Therefore, we only need to specify the link functions for mixing probabilities, component means and component dispersions, respectively.
 %In the EB algorithm, we need to specify link functions and loss functions, which determines negative gradient function.
 
-For mixing probabilities, we connect the mixing probabilities $p_1(\bx),\ldots,p_K(\bx)$ with the to-be-boosted regression functions $F_1(\bx),\ldots,F_K(\bx)$ by the multiple logistic link function $g_k:(0,1)^K\rightarrow \R$: {\color{blue}[Using $p(\bx;F(\bx))$ or $p(F(\bx))$? They are different. Similarly for other functions.]}	
+For mixing probabilities, we connect the mixing probabilities $p_1(\bx),\ldots,p_K(\bx)$ with the to-be-boosted regression functions $F_1(\bx),\ldots,F_K(\bx)$ by the multiple logistic link function $g_k:(0,1)^K\rightarrow \R$: {\color{blue}[Using $p(\bx;F(\bx))$ or $p(F(\bx))$? They are different. Similarly for other functions. I clarify them now.]}
+	
 	\begin{equation}\label{inv-logistic}
 		g_k(p_1(\bx),\ldots,p_K(\bx))=\log p_k(\bx)-\frac{1}{K}\sum_{l=1}^K\log p_l(\bx)=F_k(\bx),~~k=1,\ldots,K.
 \end{equation}
@@ -322,7 +323,7 @@ or equivalently
 	g_k^{-1}(F_1(\bx),\ldots,F_K(\bx))=\frac{\exp\left(F_k(\bx)\right)}{\sum_{l=1}^{K}\exp\left(F_l(\bx)\right)}=	p_k(\bx),~~k=1,\ldots,K.
 	\end{equation}
 	 {\color{blue}[It is not clear the difference between $p$ or $p_k$, $F$ and $F_k$. Similarly for other functions. Need definition of notions?]}
-{\color{blue}[$p_k(\bx)$ appears. The notions are not consistent. Similarly for other functions]}
+{\color{blue}[$p_k(\bx)$ appears. The notions are not consistent. Similarly for other functions. They are now fully defined and consistent.]}
 With the negative log-likelihood function \eqref{p-reg2} of multinomial distribution, we derive the loss function as
 \begin{equation}\label{p-loss}
 		{C_{Z}\left((Z_k, F_k(\bx))_{k=1:K}\right)}= - \sum_{k=1}^K Z_k \log p_k(\bx).
@@ -349,7 +350,7 @@ Note that we have assumed that dispersion $\phi_k$ is fixed among samples (not r
 	%\blue{The extension to dispersion modelling is straightforward; please refer to the real data analysis in Section \ref{sec:third example}.}
 Upon the above defined notations, we are ready to introduce the proposed EB algorithm.
 We first summarize the proposed EB algorithm in Algorithm \ref{EB}.
-{\color{blue}[Consider using {\tt algorithm} package here. It is better to write it into two loops as described in the following]}
+{\color{blue}[Consider using {\tt algorithm} package here. It is better to write it into two loops as described in the following. I have moved to this package.]}
 \begin{algorithm}[htp!]
 	\caption{The Expectation-Boosting algorithm.} % give the algorithm a caption
 	\label{EB} % and a label for \ref{} commands later in the document
@@ -397,7 +398,7 @@ In the loop 6-9, the functions $(F_k)_{k=1:K}$ are boosted independently.
 In the loop 14-20, the component means are boosted independently.
 Thus, those  boostings can be conducted simultaneously to reduce the running time; see Table \ref{gaussian-summary}.
 Remark that the loop 14-20 and the loop 15-18  are exchangeable since $\hat{\mu}_k^{[t,m]}$ only depends on $\hat{G}_k^{[t,m]}$. However, the loop 5-11 and the loop 6-9 are not exchangeable since $\hat{p}_k^{[t,m]}$ depends on all $(\hat{F}_k^{[t,m]})_{k=1:K}$ via equation \eqref{logistic}.
-{\color{blue}[Would it imply a parallel computation approach?]}
+{\color{blue}[Would it imply a parallel computation approach? Yes. I talked about parallel computing later.]}
 
 Note that  in the algorithm we have assumed that dispersion $\phi_k$ is fixed among samples (not related to $\bx$). The extension to joint modelling of both mean and dispersion  is not straightforward since they are not independent; please refer to \citet{jorgensen:1997} for dispersion modelling.
 Joint modelling both mean and dispersion is not considered in this paper. 
@@ -595,7 +596,7 @@ This would lead a {smaller} required inner boosting iterations (i.e., an {earlie
 	One solution is to apply an additional boosting step with default initialization \eqref{ini-1} and \eqref{ini-2} given the {last conditional expectations of the latent variables $\hat{\bz}^{[T]}_i$}. 
 	In the following applications, we only implement the uncorrelated boosting.
 
-{\color{blue}[As mentioned in the introduction, boosting algorithms possess good properties to deal with some issues like variable selection, feature engineering and overfitting problems. Currently there is no discussion about these topics in this section and no illustration in the next simulation or real data analysis. It is better to address these aspects of EB algorithm and add some results in the next section. For example, variable importance plots and partial dependence plots. These are very useful for the interpretation of real data analyses.]}
+{\color{blue}[As mentioned in the introduction, boosting algorithms possess good properties to deal with some issues like variable selection, feature engineering and overfitting problems. Currently there is no discussion about these topics in this section and no illustration in the next simulation or real data analysis. It is better to address these aspects of EB algorithm and add some results in the next section. For example, variable importance plots and partial dependence plots. These are very useful for the interpretation of real data analyses. Good suggestions. I have added more discussions on boosting at the end of Section 3.2. This section is also extended. I calculate relative importance in applications.]}
 
 	
 \section{Applications}\label{sec:application}
@@ -624,7 +625,7 @@ The ZIP model is a mixture of a probability mass of 1 at 0 and a Poisson distrib
 The probability density function can be written as
 $$f_\text{ZIP}(N;\lambda,\pi_0)= \pi_0\mathbbm{1}_{0}(N) + 
 (1-\pi_0)\frac{e^{-\lambda}\lambda^N}{N!}.$$
-Suppose that five covariates $\bx=(x_1,\ldots,x_5)$ have systematic effects on both $\pi_0$ and $\lambda$: {\color{blue}[It is better to give brackets for the exp function. Similarly for those in the rest of paper]}
+Suppose that five covariates $\bx=(x_1,\ldots,x_5)$ have systematic effects on both $\pi_0$ and $\lambda$: {\color{blue}[It is better to give brackets for the exp function. Similarly for those in the rest of paper. Change them thoroughly.]}
 \begin{equation}
 	\pi_0(\bx)=\frac{\exp \left(F(\bx)\right)}{1+\exp\left( F(\bx)\right)}, ~~
 	\lambda(\bx)=\exp\left( G(\bx)\right), 
@@ -687,7 +688,7 @@ We consider three different mixture models, heterogeneous Poisson parameters onl
 	F(\bx)&=\langle \boldsymbol{\alpha},\bx \rangle, ~~G(\bx)=\langle \boldsymbol{\beta}, \bx \rangle, \label{zip-v}
 \end{align}  
 where $\langle \boldsymbol{\beta}, \bx \rangle$ denotes the dot product of two vectors $\boldsymbol{\beta}, \bx$.
-{\color{blue}[Define inner product?]}The MLE of regression coefficients $\boldsymbol{\alpha}$ and $\boldsymbol{\beta}$ can be obtained by the EM algorithm.
+{\color{blue}[Define inner product? Yes.]}The MLE of regression coefficients $\boldsymbol{\alpha}$ and $\boldsymbol{\beta}$ can be obtained by the EM algorithm.
 We have summarized the results in Table \ref{zip}.
 Model \eqref{zip-v} has the best out-of-sample performance followed by Model \eqref{zip-cp}, while Model \eqref{zip-cl} has the worst out-of-sample performance.
 All the three models are better than the null model \eqref{zip-null}.
@@ -834,7 +835,7 @@ indicating that the component means are not quite related to the covariates.
 
 
 \begin{table}[htp!]
-	\caption{Comparison of different models in terms of test loss and running time. Note that Models \eqref{gaussian-0}, \eqref{gaussian-glm-mu}, \eqref{gaussian-glm-p} and \eqref{gaussian-glm-b} are estimated via the EM algorithm, while Models \eqref{gaussian-bst-mu}, \eqref{gaussian-bst-p} and \eqref{gaussian-bst-b} are estimated via the EB algorithm.  {\color{blue}[Not easy to distinguish the results between EM and EB]}}\label{gaussian-summary}
+	\caption{Comparison of different models in terms of test loss and running time. Note that Models \eqref{gaussian-0}, \eqref{gaussian-glm-mu}, \eqref{gaussian-glm-p} and \eqref{gaussian-glm-b} are estimated via the EM algorithm, while Models \eqref{gaussian-bst-mu}, \eqref{gaussian-bst-p} and \eqref{gaussian-bst-b} are estimated via the EB algorithm.  {\color{blue}[Not easy to distinguish the results between EM and EB. Add notes.]}}\label{gaussian-summary}
 	\centering
 	\begin{tabular}{c|ccc}
 		\hline
@@ -892,7 +893,7 @@ It turns out that parallel computing accelerates the EB algorithm significantly.
 
 \subsection{Real data example: claims severity modelling}\label{sec:third example}
 
-{\color{blue}[Is it necessary to separate the simulation and real data analysis into two subsections? Instead of saying the real data analysis the third example]}
+{\color{blue}[Is it necessary to separate the simulation and real data analysis into two subsections? Instead of saying the real data analysis the third example. I changed the section names as first simulated example, second simulated example and real data example. But not sure.]}
 In this example, we study the claims amount data {\tt freMTPL2sev} from R package {\it CASdatasets}, which contains risk features and  claim amounts from $n=24,938$ motor third-part liabilities policies (after data cleaning). 
 The claims severities are calculated as the ratio of the totoal claims amount to the number of claims for each policy.
 
@@ -1027,7 +1028,7 @@ First, boosting algorithm is a flexible non-parametric regression facilitating b
 There is no need for specifying the form of component regression functions.
 Automated feature engineering is performed during the EB algorithm.
 Second, boosting algorithm is {overfitting-sensitive}, and {variable selection} is conducted simultaneously during the EB algorithm.
-The cost of more flexibility is more required computing time than the EM algorithm, since the boosting iterations are embedded into each EB iteration.{\color{blue}[I don't understand this sentence]}
+The cost of more flexibility is more required computing time than the EM algorithm, since the boosting iterations are embedded into each EB iteration.{\color{blue}[I don't understand this sentence. I have rewritten this one.]}
 We propose to accelerate the EB algorithm by parallel computing since there are some independent steps or loops at each EB iteration given the component indicator variable $\bz$.
 %In this paper, although we do not discuss model interpretation, the interpretation method in usual boosting algorithm can be implemented directly for mixture models such as variable importance, partial dependent plot, etc.
 
