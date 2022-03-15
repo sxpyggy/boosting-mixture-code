@@ -1,0 +1,49 @@
+This is BibTeX, Version 0.99d (TeX Live 2021/W32TeX)
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: boosting for mixed distributions4.aux
+The style file: boosting.bst
+Database file #1: boosting.bib
+Warning--I didn't find a database entry for "embrechts2013modeling"
+Warning--empty booktitle in lindsay1995mixture
+You've used 28 entries,
+            2921 wiz_defined-function locations,
+            809 strings with 9296 characters,
+and the built_in function-call counts, 113639 in all, are:
+= -- 18414
+> -- 1649
+< -- 0
++ -- 8710
+- -- 497
+* -- 9821
+:= -- 22907
+add.period$ -- 56
+call.type$ -- 28
+change.case$ -- 389
+chr.to.int$ -- 27
+cite$ -- 29
+duplicate$ -- 408
+empty$ -- 913
+format.name$ -- 610
+if$ -- 20417
+int.to.chr$ -- 6
+int.to.str$ -- 0
+missing$ -- 31
+newline$ -- 115
+num.names$ -- 293
+pop$ -- 77
+preamble$ -- 1
+purify$ -- 420
+quote$ -- 0
+skip$ -- 385
+stack$ -- 0
+substring$ -- 25850
+swap$ -- 61
+text.length$ -- 392
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 106
+warning$ -- 1
+while$ -- 634
+width$ -- 0
+write$ -- 392
+(There were 2 warnings)
