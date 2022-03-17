@@ -625,29 +625,29 @@ This example demonstrates how to choose component models and mixing structures i
 
 \subsection{First simulated example: zero-inflated Poisson model}
 
-We consider a simulated data set generated from a zero-inflated Poisson (ZIP) model. This simulated data mimics the number of claims with an excess of zeros.
+We consider a simulated data set generated from a zero-inflated Poisson (ZIP) model. This simulated data mimics the numbers of claims with an excess of zeros.
 The underlying  model is given by:
-\begin{equation}
+\begin{equation*}
 	f_{\text{ZIP}}(N;\lambda,\pi_0) = \left\{ 
 	\begin{array}{ccl}
 		\pi_0+(1-\pi_0)e^{-\lambda} & \mbox{for}
 		& N=0 \\
 		(1-\pi_0)\frac{e^{-\lambda}\lambda^N}{N!} & \mbox{for} &N\in\N_+.
 	\end{array}\right.
-\end{equation}
+\end{equation*}
 The ZIP model is a mixture of a probability mass of 1 at 0 and a Poisson distribution. The mixing probabilities are $\pi_0$ and $1-\pi_0$.
 The probability density function can be written as
 $$f_\text{ZIP}(N;\lambda,\pi_0)= \pi_0\mathbbm{1}_{0}(N) + 
 (1-\pi_0)\frac{e^{-\lambda}\lambda^N}{N!}.$$
 Suppose that five covariates $\bx=(x_1,\ldots,x_5)$ have systematic effects on both $\pi_0$ and $\lambda$:
-\begin{equation}
+\begin{equation*}
 	\pi_0(\bx)=\frac{\exp \left(F(\bx)\right)}{1+\exp\left( F(\bx)\right)}, ~~
 	\lambda(\bx)=\exp\left( G(\bx)\right), 
-\end{equation}
+\end{equation*}
 where
-\begin{equation}
+\begin{equation*}
 	F(\bx)=0.3-2x_2^2+x_2+0.2x_5, ~~G(\bx)=\log 0.5+x_1^2 + 0.2\log x_3 - 0.2x_1 x_4.
-\end{equation}
+\end{equation*}
 The covariates are generated from the following distributions:
 \begin{align*}
 	x_1~&\sim~N(0,0.5^2),\\
@@ -657,9 +657,9 @@ The covariates are generated from the following distributions:
 	x_5~&\sim~Bernulli(0.2).
 \end{align*}
 Note that we use shape-rate parameters for gamma distribution $\Gamma$.
-We generate for $n=10,000$ samples $(N_i,\bx_i)_{i=1:n}$, which are partitioned into a learning data $i\in\mathcal{I}_\text{learn}$ of sample size $8,000$ and a test data $i\in\mathcal{I}_{test}$ of sample size $2,000$. 
+We generate for $n=10,000$ samples $(N_i,\bx_i)_{i=1:n}$, which are partitioned into a learning set $i\in\mathcal{I}_\text{learn}$ of sample size $8,000$ and a test set $i\in\mathcal{I}_{test}$ of sample size $2,000$. 
 %The empirical proportion of zero claims in the test data is $83.10\%$. 
-If a Poisson distribution is fitted to the learning data, the MLE of Poisson mean is $1/|\mathcal{I}_\text{learn}|\sum_{i\in\mathcal{I}_\text{learn}}N_i=0.2136$, implying the estimated proportion of zero claims as $\exp(-0.2136)=80.77\%$ less than the empirical proportion $83.10\%$ for the test data. 
+If a Poisson distribution is fitted to the learning data, the MLE of Poisson mean is $1/|\mathcal{I}_\text{learn}|\sum_{i\in\mathcal{I}_\text{learn}}N_i=0.2136$, implying the estimated proportion of zero claims as $\exp(-0.2136)=80.77\%$ less than the empirical proportion $83.10\%$ in the test data. 
 
 We will compare different models in terms of test loss defined as the average negative log-likelihood on the test data:
 \begin{equation}\label{zip-test-loss}
@@ -667,7 +667,7 @@ We will compare different models in terms of test loss defined as the average ne
 	(1-\hat{\pi}_0(\bx_i))\frac{e^{-\hat{\lambda}(\bx_i)}\hat{\lambda}(\bx_i)^{N_i}}{N_i!}\right),
 \end{equation} 
 where $\hat{\pi}_0$ and $\hat{\lambda}$ are estimated on the learning data. 
-Since we know the underlying $\pi_0(\bx)$ and $\lambda(\bx)$, we define another two test metrics based on $F$ and $G$:
+Since we know the true underlying model, we define another two test metrics for $\pi$ and $\lambda$ in terms of $F$ and $G$, respectively:
 \begin{equation}\label{t1}
 	e_\pi=\frac{1}{|\mathcal{I}_\text{test}|}\sum_{i\in\mathcal{I}_\text{test}}(\hat{F}(\bx_i)-F(\bx_i))^2,
 \end{equation}
@@ -683,9 +683,9 @@ We start with a null ZIP model without any covariates:
 The MLE is obtained as $\bar{\pi}_0=0.5604, \bar{\lambda}=0.4860$ via the EM algorithm on the learning data.
 The test loss is calculated as $0.5299$. 
 The estimated proportion of zero claims for the test data is calculated as 
-$$\frac{1}{|\mathcal{I}_T|}\sum_{i\in\mathcal{I}_T}\left(\bar{\pi}_0+(1-\bar{\pi}_0)e^{-\bar{\lambda}}\right)=\bar{\pi}_0+(1-\bar{\pi}_0)e^{-\bar{\lambda}}=0.8308,$$
+$$\frac{1}{|\mathcal{I}_\text{test}|}\sum_{i\in\mathcal{I}_\text{test}}\left(\bar{\pi}_0+(1-\bar{\pi}_0)e^{-\bar{\lambda}}\right)=\bar{\pi}_0+(1-\bar{\pi}_0)e^{-\bar{\lambda}}=0.8308,$$
 which is quite close to the empirical proportion of 83.10\%.
-Since we know the underlying $\pi_0(\bx)$ and $\lambda(\bx)$, we can calculate the true test loss as 
+Since we know the true underlying $\pi_0(\bx)$ and $\lambda(\bx)$, we can calculate the true test loss as 
 \begin{equation}
 	-\frac{1}{|\mathcal{I}_\text{test}|}\sum_{i\in\mathcal{I}_\text{test}}\log \left({\pi}_0(\bx_i)\mathbbm{1}_0(N_i) + 
 	(1-{\pi}_0(\bx_i))\frac{e^{-{\lambda}(\bx_i)}{\lambda}(\bx_i)^{N_i}}{N_i!}\right)=0.5150,
@@ -695,35 +695,35 @@ The test metrics \eqref{t1} and \eqref{t2} are calculated as $e_\pi=0.1151, e_\l
 
 Next ZIP models with linear predictors are fitted, where $F(x)$ and $G(x)$ are assumed to be linear functions of $\bx$.
 One component model degenerates into a probability mass 1 at $N=0$, so there is no coefficient in this component model. 
-We consider three different mixture models, heterogeneous Poisson parameters only \eqref{zip-cp}, heterogeneous mixing probabilities only \eqref{zip-cl} and both heterogeneous  mixing probabilities and Poisson parameters \eqref{zip-v}:
+We consider three different mixture models,  heterogeneous Poisson means only  \eqref{zip-cp},  heterogeneous mixing probabilities only \eqref{zip-cl} and both heterogeneous  mixing probabilities and Poisson means \eqref{zip-v}:
 \begin{align}
 	F(\bx)&=\alpha_0, ~~G(\bx)=\langle \boldsymbol{\beta}, \bx\rangle, \label{zip-cp} \\
 	F(\bx)&=\langle \boldsymbol{\alpha},\bx\rangle, ~~G(\bx)=\beta_0, \label{zip-cl} \\
 	F(\bx)&=\langle \boldsymbol{\alpha},\bx \rangle, ~~G(\bx)=\langle \boldsymbol{\beta}, \bx \rangle, \label{zip-v}
 \end{align}  
-where $\langle \boldsymbol{\beta}, \bx \rangle$ denotes the dot product of two vectors $\boldsymbol{\beta}, \bx$. The MLE of regression coefficients $\boldsymbol{\alpha}$ and $\boldsymbol{\beta}$ can be obtained by the EM algorithm.
+where $\langle \boldsymbol{\beta}, \bx \rangle$ denotes the dot product of two vectors $\boldsymbol{\beta}, \bx$. The MLE of the regression coefficients $\boldsymbol{\alpha}$ and $\boldsymbol{\beta}$ can be obtained by the EM algorithm.
 We have summarized the results in Table \ref{zip}.
 Model \eqref{zip-v} has the best out-of-sample performance followed by Model \eqref{zip-cp}, while Model \eqref{zip-cl} has the worst out-of-sample performance.
 All three models are better than the null model \eqref{zip-null}.
 Note that those models ignore the potential non-linearity and interactions in covariates.
 
-Finally, we estimate $F$ and $G$ non-parametrically via the proposed EB algorithm. We also consider three different mixing structures, heterogeneous Poisson parameters only  \eqref{zip-bst-cp}, heterogeneous mixing probabilities only \eqref{zip-bst-cl} and both heterogeneous mixing probabilities and Poisson parameters \eqref{zip-bst-v}: 
+Finally, we estimate $F$ and $G$ non-parametrically via the proposed EB algorithm. We also consider three different mixture models, heterogeneous Poisson means only  \eqref{zip-bst-cp}, heterogeneous mixing probabilities only \eqref{zip-bst-cl} and both heterogeneous mixing probabilities and Poisson means \eqref{zip-bst-v}: 
 \begin{align}
-	F(\bx)&=\alpha_0, ~~G(\bx)=G_0(\bx)+\sum_{m=1}^{M_\lambda} s_\lambda\omega_\lambda^{[m]} g^{[m]}(\bx), \label{zip-bst-cp} \\
-	F(\bx)&=F_0(\bx)+\sum_{m=1}^{M_\pi} s_\pi\omega_\pi^{[m]} f^{[m]}(\bx), ~~G(\bx)=\beta_0, \label{zip-bst-cl} \\
-	F(\bx)&=F_0(\bx)+\sum_{m=1}^{M_\pi} s_\pi\omega_\pi^{[m]} f^{[m]}(\bx),  ~~G(\bx)=G_0(\bx)+\sum_{m=1}^{M_\lambda} s_\lambda\omega_\lambda^{[m]} g^{[m]}(\bx). \label{zip-bst-v}
+	F(\bx)&=\alpha_0, ~~G(\bx)=G^{[0]}(\bx)+\sum_{m=1}^{M_\lambda} s_\lambda\omega_\lambda^{[m]} g^{[m]}(\bx), \label{zip-bst-cp} \\
+	F(\bx)&=F^{[0]}(\bx)+\sum_{m=1}^{M_\pi} s_\pi\omega_\pi^{[m]} f^{[m]}(\bx), ~~G(\bx)=\beta_0, \label{zip-bst-cl} \\
+	F(\bx)&=F^{[0]}(\bx)+\sum_{m=1}^{M_\pi} s_\pi\omega_\pi^{[m]} f^{[m]}(\bx),  ~~G(\bx)=G_0(\bx)+\sum_{m=1}^{M_\lambda} s_\lambda\omega_\lambda^{[m]} g^{[m]}(\bx). \label{zip-bst-v}
 \end{align}  
 The results are listed in Table \ref{zip}.
-Although the test losses change slightly among different models, we can clearly order the considered models according to the two metrics $e_\pi$ and $e_\lambda$.
+Although the test losses \eqref{zip-test-loss} change slightly among different models, we can clearly order the considered models according to the other two metrics $e_\pi$ \eqref{t1} and $e_\lambda$ \eqref{t2}.
 We observe that Model \eqref{zip-bst-v} has the best out-of-sample performance in terms of all the metrics.
 Furthermore, all the models can address the excess of zeros since they are all based on the ZIP distribution.
-We conclude that when a complicated effect of a covariate on parameters, the EB algorithm is more appropriate than the EM algorithm since more flexible regression functions are allowed in the EB algorithm.   
+We conclude that when there is a complicated effect of covariates on parameters, the EB algorithm is more appropriate than the EM algorithm since more flexible regression functions are allowed in the EB algorithm.   
 \begin{table}[htp!]
 	\caption{Comparison of different ZIP models on the test data. Note that Models \eqref{zip-null}, \eqref{zip-cp}, \eqref{zip-cl} and \eqref{zip-v} are estimated via the EM algorithm, while Models \eqref{zip-bst-cp}, \eqref{zip-bst-cl} and \eqref{zip-bst-v} are estimated via the EB algorithm.} \label{zip}
 	\centering
 	\begin{tabular}{ccccc}
 		
-		\hline
+		\hline\hline
 		model   & test loss \eqref{zip-test-loss}  & $e_\pi$ \eqref{t1}& $e_\lambda$ \eqref{t2} & proportion of zero claims \\ \hline
 		Null \eqref{zip-null}    & 0.5299 & 0.1151     & 0.1795     & 0.8308        \\
 		Varying $\lambda$ \eqref{zip-cp} & 0.5258 & 0.1112     & 0.1654     & 0.8305        \\
@@ -734,27 +734,29 @@ We conclude that when a complicated effect of a covariate on parameters, the EB 
 		Varying $\pi$   \eqref{zip-bst-cl} & 0.5256 & 0.0579     & 0.1738     & 0.8293        \\
 		Varying $\pi$ and $\lambda$  \eqref{zip-bst-v}  & 0.5199 & 0.0687     & 0.0588     & 0.8336        \\
 		\hline
-		True    & 0.5150  & 0.0000         & 0.0000         & 0.8310         \\ \hline
+		True    & 0.5150  & 0.0000         & 0.0000         & 0.8310         \\ \hline\hline
 	\end{tabular}
 \end{table}
 
 {\bf Remarks.}
 In the case of $K=2$, there is only one to-be-boosted function $F$ in mixing probabilities. 
-We replace the boosting loop (lines 5-12) of Algorithm \ref{EB} by Algorithm 5 $L_2$\_TreeBoost in \citet{friedman2001greedy}. 
-However, one can still implement the original boosting in Algorithm \ref{EB}, where $F_1$ and $F_2$ are boosted. They are related to $F$ of the underlying model by $F_1-F_2=F.$
-The running time in this example takes only several seconds since there are only two regression functions $F$ and $G$ to be estimated.
-When mixture models contain $K>2$ components, the boosting of mixing probabilities takes much more time since $K$ functions are to be boosted. It will be discussed in the second example.
+Here, we replace the boosting loop (lines 5-12) in Algorithm \ref{EB} by the $L_2$\_TreeBoost algorithm in \citet{friedman2001greedy},
+which boosts only one function $F$.   
+Indeed, we might still apply the boosting loop (lines 5-12), which boosts two functions $F_1$ and $F_2$. The difference between $F_1$ and $F_2$ is $F$, i.e., $F_1-F_2=F.$
+In this example, the EB algorithm takes only several seconds since there are only two regression functions $F$ and $G$ to be estimated.
+When mixture models contain $K>2$ components, the boosting of mixing probabilities takes much more time since $K$ functions are to be boosted. This will be discussed in the next example.
 
 
 \subsection{Second simulated example: mixture of Gaussians}
 
-The underlying model is a mixture of three Gaussians. The mixing probabilities are related to covariates, while the parameters of component Gaussians are homogeneous among all samples.
+We consider a mixture of three Gaussians. 
+Suppose that the mixing probabilities are related to covariates, while the parameters of component models are homogeneous among all samples.
 The probability density function is given by
 \begin{equation}\label{gaussian-true}
-f(y|\bx; \mu,\sigma,p)=p_1(\bx)f_N(y;\mu_1,\sigma_1)+p_2(\bx)f_N(y;\mu_2,\sigma_2)+p_3(\bx)f_N(y;\mu_3,\sigma_3),
+f(Y|\bx)=p_1(\bx)f_N(Y;\mu_1,\sigma_1)+p_2(\bx)f_N(Y;\mu_2,\sigma_2)+p_3(\bx)f_N(Y;\mu_3,\sigma_3),
 \end{equation}
-where $f_N(\cdot;\mu,\sigma)$ is the probability density function of a Gaussian distribution with mean $\mu$ and standard deviation $\sigma$.
-We assume that the mixing probabilities depend on the covariates vector $\bx=(x_1,x_2,x_3,x_4)$ via the following equations
+where $f_N(\cdot;\mu,\sigma)$ is the Gaussian probability density function with mean $\mu$ and standard deviation $\sigma$.
+We assume that the mixing probabilities depend on the covariate vector $\bx=(x_1,x_2,x_3,x_4)$ via the following equations
 \begin{equation}\label{logistic-ex}
 	p_k(\bx)=\frac{\exp\left(F_k(\bx)\right)}{\sum_{l=1}^{3}\exp\left(F_l(\bx)\right)}, \text{ for } k=1,2,3,
 \end{equation}
@@ -766,7 +768,7 @@ F_1(\bx)&=x_1+\log x_2,\\
 	\end{align*}
 Note that covariate $x_4$ is a redundant variable.
 % and the relationship between mixing probabilities and covariates is non-linear with interaction. 
-We specify $\mu_1=-5,\mu_2=0,\mu_3=5, \sigma_1=\sigma_2=\sigma_3=1$. We generate the four covariates from the following distribution independently:
+We specify other parameters as $\mu_1=-5,\mu_2=0,\mu_3=5, \sigma_1=\sigma_2=\sigma_3=1$. We generate the  covariates from the following distributions:
    \begin{align*}
    	x_1~&\sim~ N(2,1),\\
    	x_2~&\sim~ Exp(2), \\
@@ -776,16 +778,16 @@ We specify $\mu_1=-5,\mu_2=0,\mu_3=5, \sigma_1=\sigma_2=\sigma_3=1$. We generate
 Note that we use shape-rate parameters for gamma distribution $\Gamma$.
 We generate $n=12,000$ samples, among which $10,000$ samples are learning data and $2,000$ samples are test data.
 
-We first consider the parametric mixture models calibrated by the EM algorithm. The following mixtures of three linear regressions (or distributions) are fitted:
+First, we  consider the parametric mixture models calibrated by the EM algorithm. The following mixtures of three linear regressions (or distributions) are fitted:
 \begin{itemize}
-	\item 	Mixture of three distributions with homogeneous mixing probabilities (homogeneous null model without any covariates):
+	\item 	Mixture of three distributions with homogeneous mixing probabilities (null model without any covariates):
 	\begin{equation}\label{gaussian-0}
-		f(y|\bx;\mu,\sigma,p)=p_1f_N(y;\mu_1,\sigma_1)+p_2f_N(y;\mu_2,\sigma_2)+p_3f_N(y;\mu_3,\sigma_3).
+		f(Y|\bx)=p_1f_N(Y;\mu_1,\sigma_1)+p_2f_N(Y;\mu_2,\sigma_2)+p_3f_N(Y;\mu_3,\sigma_3).
 	\end{equation}
 
 	\item 	Mixture of three linear regressions with homogeneous mixing probabilities:
 \begin{equation}\label{gaussian-glm-mu}
-	f(y|\bx;p,\mu,\sigma)=p_1f_N(y;\mu_1(\bx),\sigma_1)+p_2f_N(y;\mu_2(\bx),\sigma_2)+p_3f_N(y;\mu_3(\bx),\sigma_3),
+	f(Y|\bx)=p_1f_N(Y;\mu_1(\bx),\sigma_1)+p_2f_N(Y;\mu_2(\bx),\sigma_2)+p_3f_N(Y;\mu_3(\bx),\sigma_3),
 \end{equation}
 where
 \begin{equation}\label{linear-mu}
@@ -794,7 +796,7 @@ where
 
 \item 	Mixture of three distributions with heterogeneous mixing probabilities modeled by a multiclass logistic regression:
 \begin{equation}\label{gaussian-glm-p}
-	f(y|\bx;p,\mu,\sigma)=p_1(\bx)f_N(y;\mu_1,\sigma_1)+p_2(\bx)f_N(y;\mu_2,\sigma_2)+p_3(\bx)f_N(y;\mu_3,\sigma_3)
+	f(Y|\bx)=p_1(\bx)f_N(Y;\mu_1,\sigma_1)+p_2(\bx)f_N(Y;\mu_2,\sigma_2)+p_3(\bx)f_N(Y;\mu_3,\sigma_3)
 \end{equation}
 where
 \begin{equation}\label{linear-p}
@@ -805,55 +807,53 @@ and
 	F_1(\bx)=\langle \boldsymbol{a},\bx\rangle, F_2(\bx)=\langle \boldsymbol{b},\bx\rangle,F_3(\bx)=\langle \boldsymbol{c},\bx\rangle.
 \end{equation}
 Note that this model follows the underlying mixture model. 
-However, this model cannot address the non-linear effects of covariates and their interactions on the mixing probabilities.
+However, this model cannot address the non-linearity and interaction of covariates on the mixing probabilities.
 
-	\item 	Mixture of three linear regressions with both heterogeneous mean and heterogeneous mixing probabilities:
+	\item 	Mixture of three linear regressions with both heterogeneous means and heterogeneous mixing probabilities:
 	\begin{equation}\label{gaussian-glm-b}
-		f(y|\bx;p,\mu,\sigma)=p_1(\bx)f_N(y;\mu_1(\bx),\sigma_1)+p_2(\bx)f_N(y;\mu_2(\bx),\sigma_2)+p_3(\bx)f_N(y;\mu_3(\bx),\sigma_3)
+		f(Y|\bx)=p_1(\bx)f_N(Y;\mu_1(\bx),\sigma_1)+p_2(\bx)f_N(Y;\mu_2(\bx),\sigma_2)+p_3(\bx)f_N(Y;\mu_3(\bx),\sigma_3)
 	\end{equation}
-where the means and mixing probabilities follow equations \eqref{linear-mu}, \eqref{linear-p} and \eqref{linear-p2}.
+where the means and the mixing probabilities follow equations \eqref{linear-mu}, \eqref{linear-p} and \eqref{linear-p2}.
 \end{itemize}
 
 Next, we consider non-parametric mixture models calibrated by the proposed EB algorithm. The following mixture models are fitted:
 \begin{itemize}
-\item Mixture model with heterogeneous mean and homogeneous mixing probabilities:
+\item Mixture model with heterogeneous means and homogeneous mixing probabilities:
 \begin{equation}\label{gaussian-bst-mu}
-	f(y|\bx;p,\mu,\sigma)=p_1f_N(y;\mu_1(\bx),\sigma_1)+p_2f_N(y;\mu_2(\bx),\sigma_2)+p_3f_N(y;\mu_3(\bx),\sigma_3),
+	f(Y|\bx)=p_1f_N(Y;\mu_1(\bx),\sigma_1)+p_2f_N(Y;\mu_2(\bx),\sigma_2)+p_3f_N(Y;\mu_3(\bx),\sigma_3),
 \end{equation}
 where $\mu_1,\mu_2,\mu_3$ are estimated non-parametrically via the boosting algorithm. This model is comparable to model \eqref{gaussian-glm-mu}.
 
 \item Mixture model with heterogeneous mixing probabilities:
 \begin{equation}\label{gaussian-bst-p}
-	f(y|\bx;p,\mu,\sigma)=p_1(\bx)f_N(y;\mu_1,\sigma_1)+p_2(\bx)f_N(y;\mu_2,\sigma_2)+p_3(\bx)f_N(y;\mu_3,\sigma_3)
+	f(Y|\bx)=p_1(\bx)f_N(Y;\mu_1,\sigma_1)+p_2(\bx)f_N(Y;\mu_2,\sigma_2)+p_3(\bx)f_N(Y;\mu_3,\sigma_3)
 \end{equation}
 where
 \begin{equation}\label{bst-p}
 	p_k(\bx)=\frac{\exp\left(F_k(\bx)\right)}{\sum_{l=1}^{3}\exp\left(F_l(\bx)\right)}, \text{ for } k=1,2,3.
 \end{equation}
-Here $F_1,F_2,F_3$ are estimated non-parametrically via boosting algorithm. This model is comparable to model \eqref{gaussian-glm-p}.
+Here, $F_1,F_2,F_3$ are estimated non-parametrically via the boosting algorithm. This model is comparable to model \eqref{gaussian-glm-p}.
 
-\item Mixture model with both heterogeneous mean and heterogeneous mixing probabilities:
+\item Mixture model with both heterogeneous means and heterogeneous mixing probabilities:
 \begin{equation}\label{gaussian-bst-b}
-	f(y|\bx;p,\mu,\sigma)=p_1(\bx)f_N(y;\mu_1(\bx),\sigma_1)+p_2(\bx)f_N(y;\mu_2(\bx),\sigma_2)+p_3(\bx)f_N(y;\mu_3(\bx),\sigma_3)
+	f(Y|\bx)=p_1(\bx)f_N(Y;\mu_1(\bx),\sigma_1)+p_2(\bx)f_N(Y;\mu_2(\bx),\sigma_2)+p_3(\bx)f_N(Y;\mu_3(\bx),\sigma_3)
 \end{equation}
-where both means and mixing probabilities are estimated non-parametrically via boosting algorithm. This model is comparable to model \eqref{gaussian-glm-b}.
+where both means and mixing probabilities are estimated non-parametrically via the boosting algorithm. This model is comparable to model \eqref{gaussian-glm-b}.
 \end{itemize}
 
 We summarize the results of the seven models in Table \ref{gaussian-summary} including average negative log-likelihood on the test data and the running time of the EM algorithm or the EB algorithm. 
-Note that the true negative log-likelihood is calculated based on the simulated parameters $p(\bx), \mu,\sigma$.
+Note that the true negative log-likelihood is calculated based on the true underlying model (i.e., without estimation error).
 All three models with linear predictors  \eqref{gaussian-glm-mu}, \eqref{gaussian-glm-p} and \eqref{gaussian-glm-b} have a larger test loss 
-than their counterpart boosted models \eqref{gaussian-bst-mu}, \eqref{gaussian-bst-p} and \eqref{gaussian-bst-b} 
+than their counterpart non-parametric models \eqref{gaussian-bst-mu}, \eqref{gaussian-bst-p} and \eqref{gaussian-bst-b}, respectively,
 since they cannot capture non-linear effects and interactions of covariates.
 %Thus, when there are complicated effects of covariates on the parameters, the EB algorithm is better than the EM algorithm.
 The two models with both heterogeneous means and mixing probabilities \eqref{gaussian-glm-b} and \eqref{gaussian-bst-b}  have no evident better out-of-sample performance than the two models with only heterogeneous probabilities \eqref{gaussian-glm-p} and \eqref{gaussian-bst-p}, respectively,
 indicating that the component means are not entirely related to the covariates.
-
-
 \begin{table}[htp!]
 	\caption{Comparison of different models in terms of test loss and running time. Note that Models \eqref{gaussian-0}, \eqref{gaussian-glm-mu}, \eqref{gaussian-glm-p} and \eqref{gaussian-glm-b} are estimated via the EM algorithm, while Models \eqref{gaussian-bst-mu}, \eqref{gaussian-bst-p} and \eqref{gaussian-bst-b} are estimated via the EB algorithm.}\label{gaussian-summary}
 	\centering
 	\begin{tabular}{c|ccc}
-		\hline
+		\hline\hline
 		\multirow{2}{*}{model} & test       & running time               & running time            \\
 		& loss & without parallel computing & with parallel computing \\ \hline
 		Null \eqref{gaussian-0}                   & 2.4821         & $<$ 10 seconds       & NA    \\
@@ -865,7 +865,7 @@ indicating that the component means are not entirely related to the covariates.
 		Varying $p$ \eqref{gaussian-bst-p}                 & 2.1330          &            650 seconds                & 381 seconds           \\
 		Varying $\mu$ and $p$ \eqref{gaussian-bst-b}              & 2.1320          &              1054 seconds              & 597 seconds               \\
 		\hline
-		True                   & 2.1231         &            NA                &               NA         \\ \hline
+		True                   & 2.1231         &            NA                &               NA         \\ \hline\hline
 	\end{tabular}
 \end{table}
 
@@ -874,8 +874,8 @@ It shows that the EB algorithm converges after around 10 iterations.
 At the last EB iteration $T$, we draw the trace plot of the loss during the boosting iterations $m=1,\ldots,M_0$ for mixing probabilities in Figure \ref{gaussian-trace}.
 It shows that the boosting is robust against overfitting.
 At the last EB iteration $T$, we also draw the trace plot of the loss during the boosting iterations $m=1,\ldots,M_k$ for each component mean in Figure \ref{gaussian-comp}.
-It shows that the boosting cannot find heterogeneity in component means, and the boostings stop early at the very beginning. 
-We calculate the overall relative importance (scaled to sum 100) of $x_1,x_2,x_3,x_4$ in mixing probabilities $(IP_j)_{j=1:4}$ as $48.23,34.51,17.00,0.25$, which aligns with the underlying model.
+It shows that the boosting stops early at the very beginning  without finding heterogeneity in component means. 
+We calculate the overall relative importance (scaled to sum 100) of $x_1,x_2,x_3,x_4$ in the mixing probabilities $(IP_j)_{j=1:4}$ as $48.23,34.51,17.00,0.25$, which aligns with the underlying model.
 
 \begin{figure}[htp!]
 		\centering
@@ -889,7 +889,7 @@ We calculate the overall relative importance (scaled to sum 100) of $x_1,x_2,x_3
 	\includegraphics[width=0.3\linewidth]{../plots/three_gaussians/loss-bst-both-1}
 	\includegraphics[width=0.3\linewidth]{../plots/three_gaussians/loss-bst-both-2}
 	\includegraphics[width=0.3\linewidth]{../plots/three_gaussians/loss-bst-both-3}
-	\caption{The trace plots of the loss during the boosting iterations for component means  at last EB iteration $T$.}\label{gaussian-comp}
+	\caption{The trace plots of loss during the boosting iterations for component means  at last EB iteration $T$.}\label{gaussian-comp}
 \end{figure} 
 %while the two models with only heterogeneous mixing probabilities \eqref{gaussian-glm-p} and \eqref{gaussian-bst-p} have a much better out-of-sample performance than the null model \eqref{gaussian-0}.
 
@@ -898,9 +898,9 @@ We calculate the overall relative importance (scaled to sum 100) of $x_1,x_2,x_3
 
 Comparison of the running times for models \eqref{gaussian-bst-mu} and \eqref{gaussian-bst-p} without parallel computing implies that 
 the boosting of the mixing probabilities takes much more time than the boosting of the component means.
-One reason is that the boosting of the component means stops early while the boosting of mixing probabilities takes more time to discover the heterogeneity; see Figures \ref{gaussian-trace} and \ref{gaussian-comp}. 
-We accelerate the EB algorithm by applying parallel computing in the boosting of mixing probabilities, i.e., in lines 6-9 of Algorithm \ref{EB} we fit $K$ trees simultaneously.
-It turns out that parallel computing accelerates the EB algorithm significantly.   
+One reason is that the boosting of component means stops early while the boosting of mixing probabilities takes more time to discover the heterogeneity; see Figures \ref{gaussian-trace} and \ref{gaussian-comp}. 
+We accelerate the EB algorithm by applying parallel computation in the boosting of mixing probabilities, i.e., in lines 6-9 of Algorithm \ref{EB} we fit $K$ trees simultaneously.
+The last few lines in Table \ref{gaussian-summary} show  that parallel computing accelerates the EB algorithm significantly.   
 
 
 %In the EB algorithm, we need to determine when to stop inner boosting loop and when to stop outer EB loop.
@@ -928,9 +928,9 @@ An intuitive choice of component distributions is that
 three peaks are modeled by three gamma distributions, the resting non-tail part by a fourth gamma distribution, and the tail part by a Pareto distribution.
 Therefore, the probability density function (of the null model) is given by
 \begin{equation}\label{sev-0}
-	f(y|\bx;p,\mu,\phi,\alpha)=\sum_{k=1}^4p_kf_{G}(y;\mu_k,\phi_k)+p_5f_{P}(y;\alpha,M),
+	f(Y|\bx)=\sum_{k=1}^4p_kf_{G}(Y;\mu_k,\phi_k)+p_5f_{P}(Y;\alpha,M),
 \end{equation}
-	where $\mu,\phi$ are mean and dispersion parameters of gamma distribution, and $\alpha, M$ are tail index and threshold of Pareto distribution. 
+	where $\mu,\phi$ are the mean and dispersion parameters of gamma distribution, and $\alpha, M$ are the tail index and threshold of Pareto distribution. 
 \begin{figure}[h!]
 	\centering
 	\includegraphics[width=0.4\linewidth]{../plots/sev/hist.png}
