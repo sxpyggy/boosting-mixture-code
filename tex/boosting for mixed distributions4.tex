@@ -525,7 +525,7 @@ The MLE $\hat{\phi}_k^{[t]}$ is derived given the conditional expectation $\hat{
 \end{equation}
 
 In summary, a total of $(KM_0+M_1+\ldots,+M_K)\times T$ weak learners are calibrated in the EB algorithm. 
-In lines 6-9, the $K$ weak learners can be calibrated simultaneously at each $m$.
+In lines 6-9, $(F_k)_{k=1:K}$ can be boosted simultaneously at each $m$.
 Furthermore, in lines 14-20, the $K$ boosting algorithms can be conducted simultaneously at each $t$. 
 Such parallel computing will accelerate the EB algorithm significantly; see Table \ref{gaussian-summary}.
 
@@ -546,63 +546,69 @@ One remarkable feature of boosting is the resistance to overfitting, which owes 
 We usually specify a large $M$ and early stop iterating by minimizing the validation loss before reaching $M$.
 For a sufficiently small learning rate, we usually do not observe a typical tick shape of validation loss but a leveling-off pattern; see Figure 1 in \cite{friedman2001greedy}.
 
-\subsection{Interpretation, hyperparameters tuning and initialization in the EB algorithm}
+\subsection{Interpretation, hyperparameter tuning and initialization in the EB algorithm}
 A particularly useful interpretative tool for boosting is relative importance proposed by \cite{breiman1983classification}.
 In mixture models, we consider the relative importance of covariates in each component and the overall relative importance.
-In the weak learner of tree $\hat{f}_k^{[T,m]}$,  the relative importance of covariate $x_j$ is
+Considering the weak learner of tree $\hat{f}_k^{[T,m]}$ at the last EB iteration $T$,  the relative importance of covariate $x_j$ is
 \begin{equation}\label{influence}
-	I_j(\hat{f}_k^{[T,m]})=\sum_{l=1}^{L-1}{e}_l\mathbbm{1}_{d_l}(j),
+	I_j(\hat{f}_k^{[T,m]})=\sum_{l=1}^{L-1}{e}_l\mathbbm{1}_{d_l}(j), ~~ j=1,\ldots,J,
 \end{equation}
-where the summation is over the nonterminal nodes $l$ of the $L$-terminal node tree $\hat{f}^{[T,m]}_k$, $d_l$ is the splitting variable associated with node $l$, and $e_l$ is the corresponding empirical improvement in squared error as a result of the split given by 
-$$e_l=\frac{c_lc_r}{c_l+c_r}(\bar{a}_l-\bar{a}_l)^2.$$
-Here, $\bar{a}_l,\bar{a}_r$ are the left and right split gradient means respectively, and $c_l$ and $c_r$ are the corresponding sums of the weights.
-For a collection of trees $(\hat{f}^{[T,m]}_k)_{m=1:M_0}$ for the $k$-th component, \eqref{influence} can be generalized by its average over all of the trees
+where the summation is over the non-terminal nodes $l$ of the $L$-terminal node tree $\hat{f}^{[T,m]}_k$, $d_l$ is the splitting variable associated with node $l$, and $e_l$ is the corresponding empirical improvement in squared error as a result of the split given by 
+$$e_l=\frac{w_\text{left}w_\text{right}}{w_\text{left}+w_\text{right}}\times(m_\text{left}-m_\text{right})^2.$$
+Here, $m_\text{left}$ and $m_\text{right}$ are the gradient means in the left and right splits, respectively, 
+and $w_\text{left}$ and $w_\text{right}$ are the corresponding sums of the weights.
+Considering a collection of trees $(\hat{f}^{[T,m]}_k)_{m=1:M_0}$ in the $k$-th mixing probability $\hat{p}_k^{[T]}$, \eqref{influence} can be generalized by its average over all of the trees
 \begin{equation}
-	IP_{j,k}=\frac{1}{M_0}\sum_{m=1}^{M_0} I_j(\hat{f}_k^{[T,m]}),
+	IP_{j,k}=\frac{1}{M_0}\sum_{m=1}^{M_0} I_j(\hat{f}_k^{[T,m]}), ~~ j=1,\ldots,J,
 \end{equation}
 which is interpreted as the relative importance of $x_j$ in separating component $k$ from the other components.
 The overall relative importance of $x_j$ is obtained by averaging over all components:
 $$
-IP_{j}=\frac{1}{K}\sum_{k=1}^K IP_{j,k}.
+IP_{j}=\frac{1}{K}\sum_{k=1}^K IP_{j,k}, ~~ j=1,\ldots,J.
 $$
+
 The above formulae are about the relative importance of covariates in mixing probabilities. Similarly, we can obtain the relative importance of covariates in each component mean as
 \begin{equation}
-	IM_{j,k}=\frac{1}{M_k}\sum_{m=1}^{M_k} I_j(\hat{g}_k^{[T,m]}),~~ k=1,\ldots,K,
+	IM_{j,k}=\frac{1}{M_k}\sum_{m=1}^{M_k} I_j(\hat{g}_k^{[T,m]}),~~ j=1,\ldots,J,
 \end{equation}
 and the overall relative importance of covariates in means as
 $$
-IM_{j}=\frac{1}{K}\sum_{k=1}^K IM_{j,k}.
+IM_{j}=\frac{1}{K}\sum_{k=1}^K IM_{j,k}, ~~j=1\ldots,J.
 $$
 
-The EB algorithms have four types of hyperparameters: the number of EB iterations $T$, numbers of boosting iterations $M_0$ and $M_k$, learning rates $s_p$ and $s_\mu$, and hyperparameters in weak learners. 
-We denote the index of training data by $\mathcal{I}_\text{train}=\{1,\ldots,n\}$, the index of validation data by $\mathcal{I}_\text{val}$ and the index of test data by $\mathcal{I}_\text{test}$. They are mutually exclusive.
-The number of EB iterations $T$ can be determined by screening the trace plot of the likelihood on the learning data $\mathcal{I}_\text{learn}=\mathcal{I}_\text{train}\cup\mathcal{I}_\text{val}$ at each iteration $t$:
-$$\prod_{i\in\mathcal{I}_\text{learn}}\sum_{k=1}^K\hat{p}_k^{[t]}(\bx_i)f_k(y_i;\hat{\mu}_k^{[t]}(\bx_i),\phi_k^{[t]}).$$
+The EB algorithm has four types of hyperparameters: the number of EB iterations $T$, the numbers of boosting iterations $M_0$ and $(M_k)_{k=1:K}$, the learning rates $s_p$ and $s_\mu$, and hyperparameters in weak learners. 
+Although there are methods to systematically tune hyperparameters, such as grid research and Bayesian optimization, tuning hyperparameters in many practical algorithms is more art than a science.
+In predictive modelling with hyperparameters, we usually split the data into three mutually exclusive sets, training set, validation set and test set, whose indices are denoted by $\mathcal{I}_\text{train}$, $\mathcal{I}_\text{val}$ and  $\mathcal{I}_\text{test}$, respectively.
+
+The number of EB iterations $T$ can be tuned by screening the trace plot of the log-likelihood on the learning data $\mathcal{I}_\text{learn}=\mathcal{I}_\text{train}\cup\mathcal{I}_\text{val}$ at each iteration $t$:
+$$\sum_{i\in\mathcal{I}_\text{learn}}\log\left(\sum_{k=1}^K\hat{p}_k^{[t]}(\bx_i)f_k\left(y_i;\hat{\mu}_k^{[t]}(\bx_i),\phi_k^{[t]}\right)\right).$$
 If there is no noticeable improvement, the EB algorithm converges.
-For the numbers of boosting iterations  {$M_0,M_k$}, we specify a sufficiently large $M_0,M_k$ and calculate the validation loss on $\mathcal{I}_\text{val}$ at each iteration $m$:
+
+For the numbers of boosting iterations  {$M_0,(M_k)_{k=1:K}$}, we specify a sufficiently large maximal iteration number and calculate the following $K+1$ validation losses on $\mathcal{I}_\text{val}$ at each iteration $m$:
 \begin{equation}\label{loss-p}
-\sum_{i\in\mathcal{I}_\text{val}}\sum_{k=1}^K \hat{z}_{i,k}^{[t]}\log \hat{p}_k^{[t,m]}(\bx_i),
+-\sum_{i\in\mathcal{I}_\text{val}}\sum_{k=1}^K \hat{z}_{i,k}^{[t]}\log \hat{p}_k^{[t,m]}(\bx_i),
 \end{equation}
 \begin{equation}\label{loss-mu}
-\sum_{i\in\mathcal{I}_\text{val}} \hat{z}^{[t]}_{i,k}\log f_k\left(y_i;\hat{\mu}_k^{[t,m]}\left(\bx_i\right),\hat{\phi}_k^{[t]}\right), ~ k=1,\ldots,K.
+-\sum_{i\in\mathcal{I}_\text{val}} \hat{z}^{[t]}_{i,k}\log f_k\left(y_i;\hat{\mu}_k^{[t,m]}\left(\bx_i\right),\hat{\phi}_k^{[t]}\right), ~ k=1,\ldots,K.
 \end{equation}
-If there is no noticeable improvement of the validation loss, the corresponding boosting can be early stopped before reaching $M_0$ or $M_k$.  
+If there is no noticeable improvement of the validation loss, the corresponding boosting can be early stopped before reaching the maximal iteration number.  
+
 For the learning rates {$s_p$} and $s_\mu$, lower learning rates tend to lead to a better fitting and predictive performance but require more boosting iterations.
 We adjust the learning rates by monitoring the validation loss \eqref{loss-p} and \eqref{loss-mu}, respectively.
 Note that we can specify different learning rates $s_\mu$ for different component means.
-The hyperparameters in weak learners of regression trees include complexity parameters, maximum depth, number of terminal nodes.
+
+The hyperparameters in weak learners of regression trees include complexity parameters, maximum depth, number of terminal nodes, etc.
 Those hyperparameters can be tuned as in typical regression trees. One may refer to \citet{hastie2009elements} for more details.
-Although there are methods to systematically tune hyperparameters, such as grid research and Bayesian optimization, tuning hyperparameters in many practical algorithms is more art than a science.
 %In the following applications, we particularly focus on two hyperparameters, learning rates and maximum depth. 
 
-In lines 4 and 13 for the initialization of boosting, 
-we initialize parameters at iteration $t$ {independently} with the previously boosted estimates $\hat{p}_k^{[t-1]}, \hat{\mu}_k^{[t-1]}$; see equations \eqref{ini-1} and \eqref{ini-2}. We call this uncorrelated boosting. However, one may spot that boosting at iteration $t$ is not independent with boosting at iteration $t-1$ 
+In lines 4 and 13 of the initialization of boosting, 
+we initialize parameters at iteration $t$ {independently} with the previously boosted estimates $\hat{p}_k^{[t-1]}, \hat{\mu}_k^{[t-1]}$; see equations \eqref{ini-1} and \eqref{ini-2}. We call this {\it uncorrelated boosting}. However, one may spot that boosting at iteration $t$ is not independent with boosting at iteration $t-1$ 
 since boosting at iteration $t$ is based on $\hat{\bz}_i^{[t]}$ which depends on the boosted results at iteration $t-1$. The gains from the boosting at iteration $t-1$ are passed to  the boosting at iteration $t$ via the conditional expectation $\hat{\bz}_i^{[t]}$. 
 	
-	We might initialize parameters at iteration $t$ as the previously boosted estimates $$\hat{p}_k^{[t,0]}=\hat{p}_k^{[t-1]}, \hat{\mu}_k^{[t,0]}=\hat{\mu}_k^{[t-1]}.$$
-It would lead to fewer inner boosting iterations (i.e., an {earlier} stop on the validation loss) since the boosting starts from better initial values.
-	We call this forward boosting. 
-	However, with forward boosting, it is difficult to predict for new data due to the {iterative initialization}. 
+We might initialize parameters at iteration $t$ as the previously boosted estimates $$\hat{p}_k^{[t,0]}=\hat{p}_k^{[t-1]}, \hat{\mu}_k^{[t,0]}=\hat{\mu}_k^{[t-1]}.$$
+It would lead to fewer inner boosting iterations $M_0,(M_k)_{k=1:K}$ (i.e., an {earlier} stop on the validation loss) since the boosting starts from better initial values.
+	We call this {\it forward boosting}. 
+	However, with forward boosting, it is impossible to predict for new data using the fitted model at the last iteration $(\hat{p}_k^{[T]},\hat{\mu}_k^{[T]},\hat{\phi}_k^{[T]})_{k=1:K}$ due to the {iterative initialization}. 
 	One solution is to apply an additional boosting step with default initialization \eqref{ini-1} and \eqref{ini-2} given the {last conditional expectations of the latent variables $\hat{\bz}^{[T]}_i$}. 
 	In the following applications, we only implement uncorrelated boosting.
 
@@ -613,7 +619,7 @@ In this section, we conduct two simulation studies and one real data analysis.
 The first simulated data follows a zero-inflated Poisson model, which mimics claim count data with an excess of zeros.
 We use this example to illustrate the advantages of the EB algorithm over the EM algorithm.
 The second simulated data follows a mixture of Gaussian models. 
-We discuss constraints on mixing structure and parallel computing in this example.
+We compare different mixing structures and  investigate parallel computing in this example.
 The real data contains the claims amount data of an insurance company. 
 This example demonstrates how to choose component models and mixing structures in practice.
 
