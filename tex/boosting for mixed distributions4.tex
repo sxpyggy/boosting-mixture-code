@@ -740,7 +740,7 @@ We conclude that when there is a complicated effect of covariates on parameters,
 
 {\bf Remarks.}
 In the case of $K=2$, there is only one to-be-boosted function $F$ in mixing probabilities. 
-Here, we replace the boosting loop (lines 5-12) in Algorithm \ref{EB} by the $L_2$\_TreeBoost algorithm in \citet{friedman2001greedy},
+Here, we replace the boosting loop (lines 5-12) in Algorithm \ref{EB} by a binary logistic gradient boosting,
 which boosts only one function $F$.   
 Indeed, we might still apply the boosting loop (lines 5-12), which boosts two functions $F_1$ and $F_2$. The difference between $F_1$ and $F_2$ is $F$, i.e., $F_1-F_2=F.$
 In this example, the EB algorithm takes only several seconds since there are only two regression functions $F$ and $G$ to be estimated.
@@ -938,7 +938,7 @@ Therefore, the probability density function (of the null model) is given by
 	\caption{The histogram and the cumulative distribution function of logged claims severities.}\label{hist}
 \end{figure}
 
-	The logged survival function for logged claims severities as shown in Figure \ref{tail} indicates a regularly varying  tail at infinity \citep{embrechts2013modeling}.
+	The logged survival function for logged claims severities as shown in Figure \ref{tail} indicates a regularly varying  tail at infinity \citep{embrechts2013modelling}.
 	The threshold of Pareto distribution is selected as $M=8158.13$ according to the Hill plot \citep{resnick1997heavy} as shown in Figure \ref{tail}. One may refer to \citet{wuthrich2022statistical} for more discussions on this data.
 	
 	
@@ -949,14 +949,14 @@ Therefore, the probability density function (of the null model) is given by
 	\caption{The logged survival function and the Hill plot for logged claims severities.}\label{tail}
 \end{figure}
 	
-	The three peaks as shown in Figure \ref{hist} imply a way of initialization through the latent component indicator variable:
+The three peaks as shown in Figure \ref{hist} imply a way of initialization through the latent component indicator variable:
 	\begin{equation}
 		\begin{aligned}
 			\hat{\bz}^{[0]}_i&=(\hat{z}^{[0]}_{i,1},\hat{z}^{[0]}_{i,2},\hat{z}^{[0]}_{i,3},\hat{z}^{[0]}_{i,4},\hat{z}^{[0]}_{i,5})\\
 			&=(\mathbbm{1}_{(0,500]}y_i,\mathbbm{1}_{(500, 1000]}y_i,\mathbbm{1}_{(1000,1200]}y_i,\mathbbm{1}_{(1200,8158.13]}y_i,\mathbbm{1}_{(8158.13,\infty)}y_i).
 		\end{aligned}
 	\end{equation}
-Given the latent component indicator variable $\hat{\bz}^{[0]}_{i=1:n}$, the parameters $p,\mu,\phi,\alpha$ can be initialized as the MLEs in the homogeneous model on the full information $(y_i,\hat{\bz}_i^{[0]},\bx_i)_{i=1:n}$.
+Given the latent component indicator variable $\hat{\bz}^{[0]}_{i=1:n}$, the parameters can be initialized as the MLEs in the null model on the full information $(y_i,\hat{\bz}_i^{[0]},\bx_i)_{i=1:n}$.
 %, i.e., the MLEs of parameters in gamma/Pareto distribution fitted to the partial samples in five intervals $(0,500], (500,1000], (1000,1200],(1200,8158.13],(8158.13,\infty)$, respectively.
 We split the data into a training data set, a validation data set and a test data set by a ratio of 3:1:1. 
 	
@@ -968,24 +968,24 @@ We first fit a mixture of distributions \eqref{sev-0} to the data via the EM alg
 %		\caption{The trace plot the learning loss for the homogeneous model \eqref{sev-0} during the EM iterations.}\label{null_sev}
 %	\end{figure}
 The estimated component parameters are listed in Table \ref{null-gamma}. We observe that the three peaks are captured by the first three component gamma distributions.
-	\begin{table}[h!]
-		\centering
-		\caption{The MLEs of component parameters in the homogeneous model \eqref{sev-0}. Tail index is estimated as $\hat{\alpha}=1.0773$.}\label{null-gamma}
-		\begin{tabular}{crrrr}
-			\hline
-			component $k$ & \multicolumn{1}{c}{$\mu_k$} & \multicolumn{1}{c}{shape $(1/\phi_k)$} & \multicolumn{1}{c}{scale} & \multicolumn{1}{c}{rate} \\ \hline
-			1         & 76.8727                & 105.556                   & 0.7283                    & 1.3731                   \\
-			2         & 592.5909               & 653.539                   & 0.9067                    & 1.1029                   \\
-			3         & 1171.3811              & 999.9999                  & 1.1714                    & 0.8537                   \\
-			4         & 1534.5143              & 1.0377                    & 1478.7768                 & 7e-04                    \\ \hline
-		\end{tabular}
-	\end{table}
-	The first three large shape parameters (small dispersion) imply the  difficulties with {mean modeling} in the first three component models.
+	The first three large shape parameters (small dispersions) imply the  difficulties with {mean modeling} in the first three component models.
 	 The test loss is calculated as 7.5815. The mixing probabilities are estimated as $\hat{p}_1=0.0409,~ \hat{p}_2=0.0300, ~\hat{p}_3=0.4100,~ \hat{p}_4=0.4973$ and $\hat{p}_5=0.0218.$
+\begin{table}[h!]
+	\centering
+	\caption{The MLEs of component parameters in the homogeneous model \eqref{sev-0}. Tail index is estimated as $\hat{\alpha}=1.0773$.}\label{null-gamma}
+	\begin{tabular}{crrrr}
+		\hline
+		component $k$ & \multicolumn{1}{c}{$\mu_k$} & \multicolumn{1}{c}{shape $(1/\phi_k)$} & \multicolumn{1}{c}{scale} & \multicolumn{1}{c}{rate} \\ \hline
+		1         & 76.8727                & 105.556                   & 0.7283                    & 1.3731                   \\
+		2         & 592.5909               & 653.539                   & 0.9067                    & 1.1029                   \\
+		3         & 1171.3811              & 999.9999                  & 1.1714                    & 0.8537                   \\
+		4         & 1534.5143              & 1.0377                    & 1478.7768                 & 7e-04                    \\ \hline
+	\end{tabular}
+\end{table}
 
 Next we fit a mixture of distributions with heterogeneous mixing probabilities to the data via the proposed EB algorithm:
 \begin{equation}\label{sev-bst-p}
-f(y|\bx;p,\mu,\phi,\alpha)=\sum_{k=1}^4p_k(\bx)f_{G}(y;\mu_k,\phi_k)+p_5(\bx)f_{P}(y;\alpha,M).
+f(Y|\bx)=\sum_{k=1}^4p_k(\bx)f_{G}(Y;\mu_k,\phi_k)+p_5(\bx)f_{P}(Y;\alpha,M).
 \end{equation}
 For the last EB iteration, we draw the trace plot of the multiclass logistic loss during the boosting of mixing probabilities in Figure \ref{bx-bst-p}, which shows that the boosting is quite robust against overfitting.
 We draw the boxplot of the estimated mixing probabilities in Figure \ref{bx-bst-p}.
@@ -999,11 +999,11 @@ The test loss is  7.5580, smaller than the null model.
 	\end{figure}
 
 We calculate the relative importance of risk features in each mixing probability, respectively. 
-The unscaled relative importance $(IP_{j,k})_{j=1:9,k=1:5}$ shown in Figure \ref{sev-var-imp} indicates that the risk features have much stronger systematic effects on $p_3,p_4$ than $p_1,p_2,p_5$, which is consistent with the observation in Figure \ref{bx-bst-p}.
+The unscaled relative importance $(IP_{j,k})_{j=1:9,k=1:5}$ shown in Figure \ref{sev-var-imp}  indicates that the risk features have much stronger systematic effects on $p_3,p_4$ than $p_1,p_2,p_5$, which is consistent with the observation in Figure \ref{bx-bst-p}.
 The overall relative importance $(IP_{j})_{j=1:9}$ is shown in the last plot of Figure \ref{sev-var-imp}.
 The most important risk features in predicting claims severity are the bonus-malus score and the driver age.   
 The vehicle age and brand are two important vehicle-related features, while the vehicle power and gas are not important in predicting claims severity.
-All region-related risk features are important. Since {\tt Area} has a strong colinearity with {\tt Dens}, we do not need the first risk feature if the second one is in the model.
+All region-related risk features are important. Since {\tt Area} has a strong linearity with {\tt Dens}, we do not need the first risk feature if the second one is in the model.
 	\begin{figure}[htp!]
 	\centering
 
@@ -1040,12 +1040,14 @@ where both the mixing probabilities and the component models can be modeled non-
 
 The core of the proposed algorithm is to replace the maximization step of the EM algorithm with a generic functional gradient descent algorithm.
 There are several advantages of the EB algorithm over the EM algorithm. 
-First, boosting algorithm is a flexible non-parametric regression facilitating both {non-linear effects and interaction}.  
-There is no need to specify the form of component regression functions.
-Automated feature engineering is performed during the EB algorithm.
-Second, boosting algorithm is {overfitting-sensitive}, and {variable selection} is conducted simultaneously during the EB algorithm.
+First, boosting is a flexible non-parametric regression facilitating both {non-linearity  and interaction among the covariates}.  
+%There is no need to specify the form of component regression functions.
+Automated feature engineering in mixing probabilities and all component models is performed in the EB algorithm.
+Second, boosting is {overfitting-sensitive}, and {variable selection} in mixing probabilities and all component models is conducted simultaneously during model fitting.
 The proposed algorithm requires more computing time for modeling flexibility than the EM algorithm since the boosting is nested inside each EB iteration.
-We propose accelerating the EB algorithm by parallel computing since there are some independent steps or loops at each EB iteration given the component indicator variable $\bz$.
+To accelerate the EB algorithm, 
+one approach is to apply parallel computation since there are some independent steps or loops at each EB iteration given the component indicator variable.
+Another approach is to use iterative initialization in the boosting, i.e., the boosting starts with an iteratively better initialization and stops earlier.
 %In this paper, although we do not discuss model interpretation, the interpretation method in usual boosting algorithm can be implemented directly for mixture models such as variable importance, partial dependent plot, etc.
 
 	\section*{Acknowledgment}

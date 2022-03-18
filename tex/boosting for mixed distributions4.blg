@@ -3,47 +3,44 @@ Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
 The top-level auxiliary file: boosting for mixed distributions4.aux
 The style file: boosting.bst
 Database file #1: boosting.bib
-Warning--I didn't find a database entry for "embrechts2013modeling"
-Warning--empty booktitle in lindsay1995mixture
-You've used 28 entries,
+You've used 29 entries,
             2921 wiz_defined-function locations,
-            809 strings with 9296 characters,
-and the built_in function-call counts, 113639 in all, are:
-= -- 18414
-> -- 1649
+            812 strings with 9412 characters,
+and the built_in function-call counts, 119281 in all, are:
+= -- 19357
+> -- 1719
 < -- 0
-+ -- 8710
-- -- 497
-* -- 9821
-:= -- 22907
-add.period$ -- 56
-call.type$ -- 28
-change.case$ -- 389
-chr.to.int$ -- 27
++ -- 9181
+- -- 518
+* -- 10323
+:= -- 24033
+add.period$ -- 58
+call.type$ -- 29
+change.case$ -- 400
+chr.to.int$ -- 28
 cite$ -- 29
-duplicate$ -- 408
-empty$ -- 913
-format.name$ -- 610
-if$ -- 20417
+duplicate$ -- 415
+empty$ -- 936
+format.name$ -- 634
+if$ -- 21421
 int.to.chr$ -- 6
 int.to.str$ -- 0
-missing$ -- 31
-newline$ -- 115
-num.names$ -- 293
-pop$ -- 77
+missing$ -- 35
+newline$ -- 119
+num.names$ -- 304
+pop$ -- 85
 preamble$ -- 1
-purify$ -- 420
+purify$ -- 435
 quote$ -- 0
-skip$ -- 385
+skip$ -- 375
 stack$ -- 0
-substring$ -- 25850
-swap$ -- 61
-text.length$ -- 392
+substring$ -- 27215
+swap$ -- 54
+text.length$ -- 406
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 106
-warning$ -- 1
-while$ -- 634
+type$ -- 104
+warning$ -- 0
+while$ -- 654
 width$ -- 0
-write$ -- 392
-(There were 2 warnings)
+write$ -- 407
