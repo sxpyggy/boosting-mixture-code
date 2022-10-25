@@ -1,12 +1,3 @@
----
-title: "Gaussian Mixture Boosting"
-author: "Jiahong Li"
-date: "2021/9/16"
-output: html_document
-editor_options: 
-  chunk_output_type: console
----
-
 # negative log-likelihood
 
 ```{r}
@@ -68,6 +59,12 @@ which.min(model_homo$test_loss)
 unique(model_homo$fitted$mu1)
 unique(model_homo$fitted$mu2)
 unique(model_homo$fitted$mu3)
+
+dat_test$null_mu<-model_homo$test$mu1*model_homo$test$p1+model_homo$test$mu2*model_homo$test$p2+model_homo$test$mu3*model_homo$test$p3
+(null_test_mse_mu<-mean((dat_test$Y-dat_test$null_mu)^2))
+
+dat_test$true_mu<-dat_test$MU1*dat_test$P1+dat_test$MU2*dat_test$P2+dat_test$MU3*dat_test$P3
+(true_test_mse_mu<-mean((dat_test$Y-dat_test$true_mu)^2))
 ```
 
 # GLMs 
@@ -103,6 +100,9 @@ true_test_loss
 
 (eGLM_mu<-c(mean((dat_test$MU1-model_glm_mu$test$mu1)^2),mean((dat_test$MU2-model_glm_mu$test$mu2)^2),mean((dat_test$MU3-model_glm_mu$test$mu3)^2),mean((dat_test$F1-model_glm_mu$test$plinear1)^2), mean((dat_test$F2-model_glm_mu$test$plinear2)^2), mean((dat_test$F3-model_glm_mu$test$plinear3)^2) ))
 eH
+
+dat_test$glm_mu<-model_glm_mu$test$mu1*model_glm_mu$test$p1+model_glm_mu$test$mu2*model_glm_mu$test$p2+model_glm_mu$test$mu3*model_glm_mu$test$p3
+(glm_test_mse_mu<-mean((dat_test$Y-dat_test$glm_mu)^2))
 ```
 
 ## with varying p
@@ -139,6 +139,9 @@ true_test_loss
 (eGLM_p<-c(mean((dat_test$MU1-model_glm_p$test$mu1)^2),mean((dat_test$MU2-model_glm_p$test$mu2)^2),mean((dat_test$MU3-model_glm_p$test$mu3)^2),mean((dat_test$F1-model_glm_p$test$plinear1)^2), mean((dat_test$F2-model_glm_p$test$plinear2)^2), mean((dat_test$F3-model_glm_p$test$plinear3)^2) ))
 eGLM_mu
 eH
+
+dat_test$glm_p<-model_glm_p$test$mu1*model_glm_p$test$p1+model_glm_p$test$mu2*model_glm_p$test$p2+model_glm_p$test$mu3*model_glm_p$test$p3
+(glm_test_mse_p<-mean((dat_test$Y-dat_test$glm_p)^2))
 ```
 
 ## with both
@@ -177,6 +180,9 @@ true_test_loss
 eGLM_mu
 eGLM_p
 eH
+
+dat_test$glm_both<-model_glm_both$test$mu1*model_glm_both$test$p1+model_glm_both$test$mu2*model_glm_both$test$p2+model_glm_both$test$mu3*model_glm_both$test$p3
+(glm_test_mse_both<-mean((dat_test$Y-dat_test$glm_both)^2))
 ```
 
 # Boosting 
@@ -218,6 +224,9 @@ dat_test$sigma3<-unique(model_bst_mu$sigma[3])
 
 dat_test[,c("p1","p2","p3")]<-predict(model_bst_mu$p_model,newdata = dat_test, type="probs")
 (bst_test_loss_mu <- neg_ll3(dat_test$Y, dat_test[, c("mu1", "mu2", "mu3")], dat_test[, c("sigma1", "sigma2", "sigma3")], dat_test[, c("p1", "p2", "p3")]))
+
+dat_test$bst_mu<-dat_test$mu1*dat_test$p1+dat_test$mu2*dat_test$p2+dat_test$mu3*dat_test$p3
+(bst_test_mse_mu<-mean((dat_test$Y-dat_test$bst_mu)^2))
 ```
 
 ## with varying p
@@ -256,6 +265,9 @@ dat_test$sigma3<-unique(model_bst_p$sigma[3])
 dat_test[,c("p1","p2","p3")]<-predict_BST(Xtest, model_bst_p$p_model, Pinit=NULL, M_best = which.min(model_bst_p$p_model$Valid_loss),type="response")
 
 (bst_test_loss_p <- neg_ll3(dat_test$Y, dat_test[, c("mu1", "mu2", "mu3")], dat_test[, c("sigma1", "sigma2", "sigma3")], dat_test[, c("p1", "p2", "p3")]))
+
+dat_test$bst_p<-dat_test$mu1*dat_test$p1+dat_test$mu2*dat_test$p2+dat_test$mu3*dat_test$p3
+(bst_test_mse_p<-mean((dat_test$Y-dat_test$bst_p)^2))
 ```
 
 ## with varying both
@@ -286,6 +298,9 @@ dat_test$sigma3<-unique(model_bst_both$sigma[3])
 dat_test[,c("p1","p2","p3")]<-predict_BST(Xtest, model_bst_both$p_model, Pinit=NULL, M_best = which.min(model_bst_both$p_model$Valid_loss), type="response")
 
 (bst_test_loss_both <- neg_ll3(dat_test$Y, dat_test[, c("mu1", "mu2", "mu3")], dat_test[, c("sigma1", "sigma2", "sigma3")], dat_test[, c("p1", "p2", "p3")]))
+
+dat_test$bst_both<-dat_test$mu1*dat_test$p1+dat_test$mu2*dat_test$p2+dat_test$mu3*dat_test$p3
+(bst_test_mse_both<-mean((dat_test$Y-dat_test$bst_both)^2))
 ```
 
 ## trace of loss and variable importance
@@ -369,6 +384,32 @@ box()
 
 ```
 
+# Single Gaussian boosting
+```{r}
+X<-dat[1:8000,c("X1","X2","X3","X4")]
+Y<-dat$Y[1:8000]
+Xval<-dat[8001:10000,c("X1","X2","X3","X4")]
+Yval<-dat$Y[8001:10000]
+Xtest<-dat_test[,c("X1","X2","X3","X4")]
+Ytest<-dat_test$Y
+M0<-2000
+shrinkage0<-0.05
+structure<-"mu"
+trace<-T
+
+mu_bst0 <- gbm(c(Y,Yval) ~ ., data = rbind(X,Xval),
+                       distribution = "gaussian", n.trees = M0,
+                       interaction.depth = 4, shrinkage =shrinkage0,
+                       bag.fraction = 1,
+                       train.fraction = length(Y)/(length(Y)+length(Yval)),
+                       verbose = T)
+ 
+mu_iter0<- gbm.perf(mu_bst0,plot.it = T)
+dat_test$mu0<-predict(mu_bst0,newdata = dat_test, n.trees =mu_iter0)
+dat_test$sigma0<-sqrt(mean((dat_test$Y-dat_test$mu0)^2))
+(bst_test_mse_0<-mean((dat_test$Y-dat_test$mu0)^2))
+```
+
 # save results
 
 ```{r}
@@ -382,6 +423,7 @@ loss_mat <-
       "bst_mu",
       "bst_p",
       "bst_both",
+      "single",
       "true"
     ),
     negL = c(
@@ -392,7 +434,19 @@ loss_mat <-
       bst_test_loss_mu,
       bst_test_loss_p,
       bst_test_loss_both,
+      NA,
       true_test_loss
+    ),
+    mse = c(
+      null_test_mse_mu,
+      glm_test_mse_mu,
+      glm_test_mse_p,
+      glm_test_mse_both,
+      bst_test_mse_mu,
+      bst_test_mse_p,
+      bst_test_mse_both,
+      bst_test_mse_0,
+      true_test_mse_mu
     ),
     runT = c(
       time_null[[3]],
@@ -402,11 +456,12 @@ loss_mat <-
       time_m,
       time_p*60,
       time_b*60,
-      0
+      NA,
+      NA
     )
   )
 loss_mat
-loss_mat[,2:3]<-round(loss_mat[,2:3],4)
+loss_mat[,2:4]<-round(loss_mat[,2:4],4)
 # write.csv(loss_mat,"./plots/three_gaussians/three_gaussian_loss.csv")
 ```
 
