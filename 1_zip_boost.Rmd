@@ -112,6 +112,10 @@ mean(lambda);null_mle[[2]]
 # null model loss
 (loss_null<-mean(neg_ll(dat_test$y,dat_test$pi_null,dat_test$lambda_null)))
 
+dat_test$pi_null0<-0
+dat_test$lambda_null0<-(1-dat_test$pi_null)*dat_test$lambda_null
+(loss0_null<-mean(neg_ll(dat_test$y,dat_test$pi_null0,dat_test$lambda_null0)))
+
 (eNULL_eta<-mean((dat_test$eta-log(dat_test$lambda_null))^2))
 (eNULL_pif<-mean((dat_test$pi_f-p_linear(dat_test$pi_null))^2))
 
@@ -168,6 +172,10 @@ loss_null
 exp(-mean(dat_test$y))
 sum(dat_test$y==0)/length(dat_test$y)
 (zero_glm_cp<-mean(dat_test$pi_glm+(1-(dat_test$pi_glm))*exp(-(dat_test$lambda_glm))))
+
+dat_test$pi_glm0<-0
+dat_test$lambda_glm0<-(1-dat_test$pi_glm)*dat_test$lambda_glm
+(loss0_glm_cp<-mean(neg_ll(dat_test$y,dat_test$pi_glm0,dat_test$lambda_glm0)))
 ```
 
 ## constant lambda
@@ -218,6 +226,10 @@ loss_null
 exp(-mean(dat_test$y))
 sum(dat_test$y==0)/length(dat_test$y)
 (zero_glm_cl<-mean(dat_test$pi_glm+(1-(dat_test$pi_glm))*exp(-(dat_test$lambda_glm))))
+
+dat_test$pi_glm0<-0
+dat_test$lambda_glm0<-(1-dat_test$pi_glm)*dat_test$lambda_glm
+(loss0_glm_cl<-mean(neg_ll(dat_test$y,dat_test$pi_glm0,dat_test$lambda_glm0)))
 ```
 
 ## varying both
@@ -273,6 +285,10 @@ loss_null
 exp(-mean(dat_test$y))
 sum(dat_test$y==0)/length(dat_test$y)
 (zero_glm_vp<-mean(dat_test$pi_glm+(1-(dat_test$pi_glm))*exp(-(dat_test$lambda_glm))))
+
+dat_test$pi_glm0<-0
+dat_test$lambda_glm0<-(1-dat_test$pi_glm)*dat_test$lambda_glm
+(loss0_glm_vp<-mean(neg_ll(dat_test$y,dat_test$pi_glm0,dat_test$lambda_glm0)))
 ```
 
 # zip boost
@@ -353,6 +369,10 @@ loss_null
 exp(-mean(dat_test$y))
 sum(dat_test$y==0)/length(dat_test$y)
 (zero_bst_cp<-mean(dat_test$pi_boost)+(1-mean(dat_test$pi_boost))*exp(-mean(dat_test$lambda_boost)))
+
+dat_test$pi_boost0<-0
+dat_test$lambda_boost0<-(1-dat_test$pi_boost)*dat_test$lambda_boost
+(loss0_BST_cp<-mean(neg_ll(dat_test$y,dat_test$pi_boost0,dat_test$lambda_boost0)))
 ```
 
 ## constant lambda
@@ -434,6 +454,10 @@ loss_null
 exp(-mean(dat_test$y))
 sum(dat_test$y==0)/length(dat_test$y)
 (zero_bst_cl<-mean(dat_test$pi_boost+(1-dat_test$pi_boost)*exp(-dat_test$lambda_boost)))
+
+dat_test$pi_boost0<-0
+dat_test$lambda_boost0<-(1-dat_test$pi_boost)*dat_test$lambda_boost
+(loss0_BST_cl<-mean(neg_ll(dat_test$y,dat_test$pi_boost0,dat_test$lambda_boost0)))
 ```
 
 ## varying p
@@ -522,16 +546,53 @@ loss_null
 exp(-mean(dat_test$y))
 sum(dat_test$y==0)/length(dat_test$y)
 (zero_bst_vp<-mean(dat_test$pi_boost+(1-dat_test$pi_boost)*exp(-dat_test$lambda_boost)))
+
+dat_test$pi_boost0<-0
+dat_test$lambda_boost0<-(1-dat_test$pi_boost)*dat_test$lambda_boost
+(loss0_BST_vp<-mean(neg_ll(dat_test$y,dat_test$pi_boost0,dat_test$lambda_boost0)))
+```
+
+# Poisson boosting
+
+```{r}
+library("mboost")
+library("rpart")
+library("rpart.plot")
+
+# initialization
+# dat1$bst_off<-log(sum(dat1$y)/nrow(dat1))
+Mstop<-300
+nu<-0.1
+K<-3
+
+# maximization of lambda
+boost_0 <-
+    blackboost(
+      y ~ x1 + x2 + x3 + x4 + x5,
+      family = Poisson(),
+      data = dat1,
+      control = boost_control(mstop = Mstop, nu = nu))
+dat1$lambda_boost0 <- predict(boost_0,type="response",newdata=dat1)
+dat_vali$lambda_boost0 <- predict(boost_0,type="response", newdata = dat_vali)
+dat_test$lambda_boost0 <- predict(boost_0,type="response", newdata = dat_test)
+
+dat_test$pi_bst<-0
+(loss0_BST0<-mean(neg_ll(dat_test$y,dat_test$pi_bst,dat_test$lambda_boost0))) # under Poisson loss
+(zero_bst_0<-mean(exp(-dat_test$lambda_boost0)))
+
+dat_test$bst_T<-(1-dat_test$pi0)*dat_test$lambda
+(loss0_True<-mean(neg_ll(dat_test$y,dat_test$pi_bst,dat_test$bst_T)))
 ```
 
 # comparison
 
 ```{r}
-loss_mat<-data.frame(model=c("null","glm_cp","glm_cl","glm_v","bst_cp","bst_cl","bst_v","true"),negL=c(loss_null,loss_glm_cp,loss_glm_cl,loss_glm_vp,loss_BST_cp,loss_BST_cl,loss_BST_vp,loss_true),error_pif=NA,error_eta=NA)
-loss_mat$error_pif<-c(eNULL_pif,eGLM_cp_pif,eGLM_cl_pif,eGLM_vp_pif,eBST_cp_pif,eBST_cl_pif,eBST_vp_pif,NA)
-loss_mat$error_eta<-c(eNULL_eta, eGLM_cp_eta,eGLM_cl_eta,eGLM_vp_eta,eBST_cp_eta,eBST_cl_eta,eBST_vp_eta,NA)
-loss_mat$proportion_0<-c(zero_NULL,zero_glm_cp,zero_glm_cl,zero_glm_vp,zero_bst_cp,zero_bst_cl,zero_bst_vp,zero_true)
-loss_mat[,2:5]<-round(loss_mat[,2:5],4)
+loss_mat<-data.frame(model=c("null","glm_cp","glm_cl","glm_v","bst_cp","bst_cl","bst_v","non_mix","true"),negL=c(loss_null,loss_glm_cp,loss_glm_cl,loss_glm_vp,loss_BST_cp,loss_BST_cl,loss_BST_vp,NA,loss_true),error_pif=NA,error_eta=NA,loss0=NA)
+loss_mat$error_pif<-c(eNULL_pif,eGLM_cp_pif,eGLM_cl_pif,eGLM_vp_pif,eBST_cp_pif,eBST_cl_pif,eBST_vp_pif,NA,NA)
+loss_mat$error_eta<-c(eNULL_eta, eGLM_cp_eta,eGLM_cl_eta,eGLM_vp_eta,eBST_cp_eta,eBST_cl_eta,eBST_vp_eta,NA,NA)
+loss_mat$loss0<-c(loss0_null,loss0_glm_cp,loss0_glm_cl,loss0_glm_vp,loss0_BST_cp,loss0_BST_cl,loss0_BST_vp,loss0_BST0,loss0_True)
+loss_mat$proportion_0<-c(zero_NULL,zero_glm_cp,zero_glm_cl,zero_glm_vp,zero_bst_cp,zero_bst_cl,zero_bst_vp,zero_bst_0,zero_true)
+loss_mat[,2:6]<-round(loss_mat[,2:6],4)
 loss_mat
 # write.csv(loss_mat,"./plots/zip/zip_loss_mat.csv")
 ```
