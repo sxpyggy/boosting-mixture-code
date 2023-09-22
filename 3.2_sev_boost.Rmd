@@ -1,0 +1,1090 @@
+---
+title: "Real data analysis"
+author: "Hou, Li, Gao"
+date: "2023/7/27"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+# Preliminary analysis
+
+## Pareto threshold and data split (Stratified)
+
+```{r}
+rm(list=ls())
+draw_figure=F
+# load pre-defined functions; pre-process the data
+source("0_sev_process.R")
+source("0_sev_functions.R")
+source("0_multiclass_bst.R")
+
+variables_name<-c("RegionOrd","AreaGLM","DensityGLM","DrivAge","BonusMalus","VehPower","VehAge","VehBrandOrd","VehGasGLM")
+var_short_name<-c("Reg", "Area", "Dens", "DrivA", "BM", "VehP","VehA","VehB","VehG")
+
+# set up for parallel computing
+cores <- detectCores(logical = FALSE)
+c1 <- makeCluster(cores)
+clusterEvalQ(c1,library(rpart))
+clusterEvalQ(c1,library(partykit))
+
+hill_a<-hill_alpha(dat$Sev)
+ind<-5:1000
+limts<-c(min(hill_a$alpha[ind]-2*hill_a$alpha_se[ind]),max(hill_a$alpha[ind]+2*hill_a$alpha_se[ind]))
+thres<-600
+(alpha<-hill_a$alpha[thres])
+(M<-sort(dat$Sev,decreasing = T)[thres])
+
+# split into 3 buckets: one peak (1), main body (2), tail (3).
+split<-c(1000,1200,M)
+dat$bucket<-NA
+dat$bucket[dat$Sev<split[1]]<-2
+dat$bucket[dat$Sev>=split[1]&dat$Sev<split[2]]<-1
+dat$bucket[dat$Sev>=split[2]&dat$Sev<split[3]]<-2
+dat$bucket[dat$Sev>=split[3]]<-3
+
+dat<-dat[order(dat$Sev),]
+dat$ind<-rep(1:5,5000)[1:nrow(dat)]
+dat_low<-dat[which(dat$Sev<5000),]
+
+# train, validation, test data have similar distribution
+par(mfrow=c(2,1),pty="m")
+plot(density(dat_low$Sev[dat_low$ind>1],width = 100),main="")
+plot(density(dat_low$Sev[dat_low$ind<5],width = 100),main="")
+
+dat_test<-dat[dat$ind==5,]
+dat_valid<-dat[dat$ind==4,]
+dat_train<-dat[dat$ind<4,]
+dat_learn<-dat[dat$ind<5,]
+par(mfrow=c(1,1),pty="m")
+dtest<-xgb.DMatrix(data=as.matrix(dat_test[,variables_name]))
+```
+
+# Null model
+
+## Initialization
+
+```{r}
+# range of loss tracing
+ylim0<-c(7.60,7.84)
+
+### z (bucket selected)
+(K<-length(unique(dat_learn$bucket)))
+z_hat_learn0<-matrix(NA,nrow=nrow(dat_learn),ncol=K)
+for ( k in 1:K){
+  z_hat_learn0[,k]<-ifelse(dat_learn$bucket==k,1,0)
+}
+
+### mixing probabilities
+(p_hat0<-apply(z_hat_learn0,2,mean))
+
+### shape and scale 
+par_mat0<-data.frame(mu=rep(NA,K-1),shape=rep(NA,K-1),
+                    scale=rep(NA,K-1),rate=rep(NA,K-1))
+for (k in 1:(K-1)){
+  coef_v0<-gamma_mle(dat_learn$Sev, z_hat_learn0[,k])
+  par_mat0$mu[k]<-coef_v0$mu
+  par_mat0$shape[k]<-coef_v0$shape
+  par_mat0$scale[k]<-coef_v0$scale
+  par_mat0$rate[k]<-coef_v0$rate
+}
+round(par_mat0,4)
+if(draw_figure==T) write.csv(round(par_mat0,4),"./plots/sev/3_null_int.csv")
+aggregate(dat_learn$Sev,by=list(dat_learn$bucket),mean)
+
+### pareto threshold and tail index
+theta<-M
+(alpha<-alpha_wmle(y=dat_learn$Sev, z=z_hat_learn0[,K],theta=theta))
+```
+
+## Iterations
+
+```{r}
+## hyperpremeters 
+J <-10#iterations of EM algorithm
+null_loss_learn<-NULL
+p_hat<-p_hat0
+z_hat_learn<-z_hat_learn0
+par_mat<-par_mat0
+for(i in 1:J){
+  
+  # MLE of p (given Z)
+  p_hat<-apply(z_hat_learn,2,mean)
+  
+  # MLE of shape and scale (given Z)
+  for (k in 1:(K-1)){
+    coef_v<-gamma_mle(dat_learn$Sev, z_hat_learn[,k])
+    par_mat$mu[k]<-coef_v$mu
+    par_mat$shape[k]<-coef_v$shape
+    par_mat$scale[k]<-coef_v$scale
+    par_mat$rate[k]<-coef_v$rate
+  }
+  
+  # MLE of alpha
+  alpha<-alpha_wmle(y=dat_learn$Sev, z=z_hat_learn[,K],theta=theta)
+  
+  # expectation of Z
+  f_mat<-matrix(NA,nrow=nrow(dat_learn),ncol=K)
+for (k in 1:(K-1)){
+    shape0<-par_mat$shape[k]
+    scale0<-par_mat$scale[k]
+    f_mat[,k]<-dgamma(dat_learn$Sev,shape = shape0, scale = scale0)
+}
+  f_mat[,K]<-dpareto(y=dat_learn$Sev,theta=theta,alpha=alpha)
+
+  pf_mat<-t(t(f_mat)*p_hat)
+  pf_sum<-apply(pf_mat,1,sum)
+  z_hat_learn = pf_mat/pf_sum
+  
+  null_loss_learn[i]<-mean(-log(f_mix_cp(dat_learn$Sev,p_hat,par_mat,alpha,theta)))
+  print(c(i,round(null_loss_learn[i],4)))
+}
+if(draw_figure==T) png("./plots/sev/3_null_loss_trace.png")
+plot(null_loss_learn,type="l",xlab="iterations of EM", ylab="neg L",ylim=ylim0)
+legend("topright",c("learn loss"),lty=c(1),col=c("black"))
+if(draw_figure==T) dev.off()
+
+# estimated parameter 
+p_hat
+par_mat
+alpha
+
+# estimated density
+at_y<-seq(0.1,theta,1)
+if(draw_figure==T) png("./plots/sev/3_null_density.png")
+plot(at_y,f_mix_cp(at_y,p_hat,par_mat,alpha,theta),type="l")
+if(draw_figure==T) dev.off()
+
+(null_loss<-mean(-log(f_mix_cp(dat_test$Sev,p_hat,par_mat,alpha,theta))))
+
+z_hat_null_learn<-z_hat_learn
+(p_hat_null<-p_hat)
+par_mat_null<-par_mat
+(alpha_null<-alpha)
+par_mat_null$dispersion=1/par_mat_null$shape
+(par_mat_null<-par_mat_null[,c("mu","dispersion","shape","scale","rate")])
+if(draw_figure==T) write.csv(round(par_mat_null,4),"./plots/sev/3_null_parameter.csv")
+
+dat_test$pred_mean_null<-sum(c(par_mat_null$mu,alpha_null*M/(alpha_null-1))*p_hat_null)
+(mse_null<-mean((log(dat_test$pred_mean_null)-log(dat_test$Sev))^2))
+```
+
+# Boosting 1 varying mean
+
+## Initialization
+
+```{r}
+### z_hat 
+z_hat_train<-z_hat_null_learn[dat_learn$ind<4,]
+z_hat_valid<-z_hat_null_learn[dat_learn$ind==4,]
+
+### pareto threshold and tail index
+(theta<-M)
+(alpha<-alpha_null)
+
+```
+
+## Iterations 
+
+```{r}
+## hyperpremeters
+J <- 5 #iterations of EB algorithm (selected by the convergence)
+bst_loss_train <- NULL
+bst_loss_valid <-NULL
+bst_loss_test <- NULL
+Mstop<-500
+set.seed(1)
+for (i in 1:J) {
+  # Expectation of z 
+  if (i > 1){
+      z_hat_train = pf_mat_train / pf_sum_train
+      z_hat_valid = pf_mat_valid / pf_sum_valid
+      z_hat_test<-pf_mat_test/pf_sum_test}
+  
+  # Boosting for p (given Z)
+  bst3_p<- BST(X=dat_train[,variables_name], Y=z_hat_train, Pinit=NULL, Xval = dat_valid[,variables_name], Yval=z_hat_valid, Pvalinit = NULL, M=100, cp=0.001, maxdepth = 4, lr=0.2, trace = T, patience = 2,parallel = T)
+  p_hat_mat_train<-bst3_p$fitted[,c("BST_p1","BST_p2","BST_p3")]
+  p_hat_mat_valid<-bst3_p$valid[,c("BST_p1","BST_p2","BST_p3")]
+  p_hat_mat_test<-predict_BST(X=dat_test[,variables_name], bst3_p, Pinit=NULL, M_best = NULL, type="response")
+  
+  # MLE of shape1 and scale1 (given Z)
+  coef_v<-gamma_mle(dat_train$Sev, z_hat_train[,1])
+  
+  # Boosting for mu2 (given Z)
+  param<-list(max_depth=4, eta =0.3, objective="reg:gamma")
+  dtrain<-xgb.DMatrix(data=as.matrix(dat_train[,variables_name]), label = dat_train$Sev,weight=z_hat_train[,2])
+  dvalid<-xgb.DMatrix(data=as.matrix(dat_valid[,variables_name]),label=dat_valid$Sev, weight=z_hat_valid[,2])
+  setinfo(dtrain, "base_margin", rep(log(par_mat_null$mu[2]),nrow(dat_train)))
+  setinfo(dvalid, "base_margin", rep(log(par_mat_null$mu[2]),nrow(dat_valid)))
+  setinfo(dtest, "base_margin", rep(log(par_mat_null$mu[2]),nrow(dat_test)))
+  watchlist=list(train=dtrain, eval= dvalid)
+  bst3_m2 <-xgb.train(param, dtrain, nrounds=100,verbose = 0,watchlist,early_stopping_rounds = 2)
+  
+  dat_train$two_bst <- predict(bst3_m2,newdata = dtrain, type = "response")
+  dat_valid$two_bst <- predict(bst3_m2,newdata = dvalid, type = "response")
+  dat_test$two_bst <-predict(bst3_m2, newdata = dtest, type = "response")
+  logL_shape2 <- function(shape_mle) {
+    sum(z_hat_train[, 2]) * shape_mle * log(shape_mle) -
+      sum(z_hat_train[, 2] * log(dat_train$two_bst)) * shape_mle -
+      sum(z_hat_train[, 2]) * lgamma(shape_mle) +
+      (shape_mle - 1) * sum(z_hat_train[, 2] * log(dat_train$Sev)) -
+      shape_mle * sum(z_hat_train[, 2] * dat_train$Sev / dat_train$two_bst)
+  }
+  shape2 <- optimise(logL_shape2,
+                     maximum = T,
+                     interval = c(0, 5000))$maximum
+  
+  # MLE of alpha
+  alpha <- alpha_wmle(y = dat_train$Sev,
+                      z = z_hat_train[, K],
+                      theta = theta)
+  
+
+  # Expectation of Z
+  f_mat_train <- matrix(NA, nrow = nrow(dat_train), ncol = K)
+  f_mat_valid <-matrix(NA, nrow = nrow(dat_valid), ncol = K)
+  f_mat_test <- matrix(NA, nrow = nrow(dat_test), ncol = K)
+  
+  f_mat_train[, 1] <-
+    dgamma(dat_train$Sev, shape = coef_v$shape, scale = coef_v$scale)
+  f_mat_valid[, 1] <-
+    dgamma(dat_valid$Sev, shape = coef_v$shape, scale = coef_v$scale)
+  f_mat_test[, 1] <-
+    dgamma(dat_test$Sev, shape = coef_v$shape, scale = coef_v$scale)
+
+  f_mat_train[, 2] <-
+    dgamma(dat_train$Sev,
+           shape = shape2,
+           scale = dat_train$two_bst / shape2)
+  f_mat_valid[, 2] <-
+    dgamma(dat_valid$Sev,
+           shape = shape2,
+           scale = dat_valid$two_bst / shape2)
+  f_mat_test[, 2] <-
+    dgamma(dat_test$Sev,
+           shape = shape2,
+           scale = dat_test$two_bst / shape2)
+  
+  f_mat_train[, K] <- dpareto(y = dat_train$Sev,
+                        theta = theta,
+                        alpha = alpha)
+  f_mat_valid[, K] <- dpareto(y = dat_valid$Sev,
+                        theta = theta,
+                        alpha = alpha)
+  f_mat_test[, K] <- dpareto(y = dat_test$Sev,
+                             theta = theta,
+                             alpha = alpha)
+  
+  pf_mat_train<-f_mat_train*p_hat_mat_train
+  pf_sum_train <- apply(pf_mat_train, 1, sum)
+
+  pf_mat_valid<-f_mat_valid*p_hat_mat_valid
+  pf_sum_valid <- apply(pf_mat_valid, 1, sum)
+
+  pf_mat_test <- f_mat_test*p_hat_mat_test
+  pf_sum_test <- apply(pf_mat_test, 1, sum)
+
+  bst_loss_train[i] <- mean(-log(pf_sum_train))
+  bst_loss_valid[i] <- mean(-log(pf_sum_valid))
+  bst_loss_test[i] <- mean(-log(pf_sum_test))
+  print(paste("iteration   train loss  validation loss   test loss"))
+  print(c(i, round(bst_loss_train[i],4),round(bst_loss_valid[i],4),round(bst_loss_test[i],4)))
+}
+
+if(draw_figure==T) png("./plots/sev/3_boosting_trace.png")
+matplot(cbind(bst_loss_train,bst_loss_valid),type="l",col=c("blue","red"),xlab="iterations of EB", ylab="neg L")
+legend("topright",c("train loss", "validation loss"),col=c("blue","red"),lty=c(1,2))
+abline(v=which.min(bst_loss_valid),lty=3,col="red")
+if(draw_figure==T) dev.off()
+
+# average mixing probabilities
+apply(p_hat_mat_test,2,mean);p_hat
+
+# estimated constant parameter
+coef_v;1/shape2;alpha
+
+(bst_loss<-bst_loss_test[J])
+null_loss
+```
+
+## Trace plot of loss
+
+```{r}
+bst3_m2$best_iteration
+
+# trace plot of loss in the mixing probabilities
+if (draw_figure==T) png("./plots/sev/bst3-loss-prob.png",)
+matplot(1:length(bst3_p$Train_loss), cbind(bst3_p$Train_loss, bst3_p$Valid_loss),
+        type="l",xlab = "boosting iterations", ylab="loss", col=c("blue","red"), lty=1:2, lwd=1.5)
+legend("topright",c("training loss","validation loss"),col=c("blue","red"),lty=1:2,lwd=1.5)
+abline(v=which.min(bst3_p$Valid_loss),lty=2,col="red")
+if (draw_figure==T) dev.off()
+
+# trace plot of loss in the component mean boosting
+if (draw_figure==T) png("./plots/sev/bst3-loss-mu2.png")
+  bst_mu<-bst3_m2
+  init_train_loss<--logL_gamma(z_hat_train[,2],dat_train$Sev, par_mat_null$mu[2],1)/sum(z_hat_train[,2])
+  init_valid_loss<--logL_gamma(z_hat_valid[,2],dat_valid$Sev, par_mat_null$mu[2],1)/sum(z_hat_valid[,2])
+  trace_loss<-rbind(t(c(init_train_loss,init_valid_loss)),as.matrix(bst_mu$evaluation_log[,2:3]))
+  print(c(init_valid_loss,min(trace_loss),init_valid_loss-min(trace_loss)))
+matplot(0:(nrow(trace_loss)-1),trace_loss,type="l",xlab = "boosting iterations",ylab="gamma loss",col=c("blue","red"),lty=1:2,lwd=1.5, main=paste("mu",k,sep=""))
+  legend("topright",c("training loss","validation loss"),col=c("blue","red"),lty=1:2,lwd=1.5)
+  abline(v=which.min(bst_mu$evaluation_log$eval_gamma_nloglik),lty=2,col="red")
+if (draw_figure==T) dev.off()
+
+
+#check the log gamma loss
+bst3_m2$evaluation_log[bst3_m2$niter-2,2:3]
+-logL_shape2(1)/sum(z_hat_train[,2])
+-logL_gamma(z_hat_valid[,2],dat_valid$Sev, dat_valid$two_bst,1)/sum(z_hat_valid[,2])
+```
+
+## Variable importance
+
+```{r}
+# variable importance in mixing probabilities
+vimp_mix<-array(0,dim=c(K=K,length(bst3_p$Tree_0),9))
+for (k in 1:K){
+  for (m in 1: length(bst3_p$Tree_0)){
+    VI<-bst3_p$Tree_0[[m]][[k]]$variable.importance
+    if (length(VI)>0){
+    for (i in 1:length(VI)){
+      for (v in 1:length(variables_name)){
+        if (names(VI)[i]==variables_name[v]){
+        vimp_mix[k,m,v]<-VI[i]
+      }
+    }
+    }
+  }
+}
+}
+
+vi_mix<-data.frame(p1=NA,p2=NA,p3=NA,total=NA,var_name=variables_name)
+
+for (k in 1:K){
+  vi_mix[,k]<-apply(vimp_mix[k,,],2,sum)
+  }
+vi_mix[,4]<-apply(vi_mix[,1:3],1,sum)
+vi_mix
+
+par(mfrow=c(2,2))
+for (k in 1:3){
+  if(draw_figure==T) png(paste(c("./plots/sev/3F-"),k,c(".png"),sep=""))
+  barplot(vi_mix[,k], names.arg = var_short_name, ylab="relative importance",main=paste("relative importance of covariates in F",k,sep=""),ylim=range(vi_mix[,1:4]))
+  box()
+  if(draw_figure==T) dev.off()
+}
+if(draw_figure==T) png(paste(c("./plots/sev/3F-total.png")))
+barplot(vi_mix[,4], names.arg = var_short_name, ylab="relative importance",main="overall relative importance in mixing probabilities", ylim=range(vi_mix[,1:4]))
+box()
+if(draw_figure==T) dev.off()
+
+# variable importance in component mean
+tree_bst<-xgb.model.dt.tree(model = bst3_m2)
+gain_mat<-aggregate(Quality ~ Feature, data=tree_bst,FUN=sum)
+gain_mat<-gain_mat[-which(gain_mat$Feature=="Leaf"),]
+var_ind<-data.frame(var=variables_name,ind=1:length(variables_name))
+gain_mat<-merge(var_ind,gain_mat,by.x="var",by.y="Feature",all=T)
+(gain_mat<-gain_mat[order(gain_mat$ind),])
+gain_mat$var<-var_short_name
+
+tree_mat<-aggregate(Quality ~ Tree, data=tree_bst[tree_bst$Feature!="Leaf"],FUN=sum)
+plot(tree_mat,type="l")
+
+if(draw_figure==T) png("./plots/sev/3M.png")
+barplot(gain_mat$Quality, names.arg = gain_mat$var_short,ylab="relative importance",main=c("relative importance in mu2"))
+box()
+if(draw_figure==T) dev.off()
+
+if (draw_figure==T) {
+  gain_mat$Quality<-round(gain_mat$Quality,2)
+  write.csv(gain_mat,"./plots/sev/3M_importance.csv")
+  vi_mix[,1:4]<-round(vi_mix[,1:4],2)
+  write.csv(vi_mix,"./plots/sev/3F_importance.csv")
+}
+```
+
+## Prediction in the test data 
+
+```{r}
+dat_test$m1_bst<-coef_v$mu
+dat_test$m2_bst<-dat_test$two_bst
+dat_test$m3_bst<-alpha*M/(alpha-1)
+dat_test$p1_bst<-p_hat_mat_test[,1]
+dat_test$p2_bst<-p_hat_mat_test[,2]
+dat_test$p3_bst<-p_hat_mat_test[,3]
+dat_test$pred_class_bst<-apply(p_hat_mat_test,1,which.is.max)
+boxplot(p_hat_mat_test)
+summary(p_hat_mat_test)
+dat_test$pred_mean_bst<-dat_test$p1_bst*dat_test$m1_bst+dat_test$p2_bst*dat_test$m2_bst+dat_test$p3_bst*dat_test$m3_bst
+
+(cor_pearson_bst<-cor(log(dat_test$pred_mean_bst),log(dat_test$Sev),method="pearson"))
+(cor_kendall_bst<-cor(log(dat_test$pred_mean_bst),log(dat_test$Sev),method="kendall"))
+(cor_spearman_bst<-cor(log(dat_test$pred_mean_bst),log(dat_test$Sev),method="spearman"))
+(mse_bst<-mean((log(dat_test$pred_mean_bst)-log(dat_test$Sev))^2))
+```
+
+## Marginal effects 
+
+```{r}
+variables_name
+summary(dat_test[,c("p1_bst","p2_bst","p3_bst","m2_bst")])
+(p1_lim<-range(dat_test[,c("p1_bst","p2_bst")]))
+p2_lim<-p1_lim
+p3_lim<-range(dat_test[,c("p3_bst")])
+m2_lim<-range(dat_test$m2_bst)
+boxplot(dat_test[,c("p1_bst","p2_bst","p3_bst")])
+
+# region
+par(mfrow=c(2,3))
+if (draw_figure==T) png("./plots/sev/3-p1-reg.png")
+boxplot(dat_test$p1_bst ~ dat_test$Region, outline=F, xlab="region", ylab="p1",ylim=p1_lim)
+abline(h=mean(dat_test$p1_bst),col="red")
+if (draw_figure==T) dev.off()
+
+if (draw_figure==T) png("./plots/sev/3-p2-reg.png")
+boxplot(dat_test$p2_bst ~ dat_test$Region, outline=F, xlab="region", ylab="p2", ylim=p2_lim)
+abline(h=mean(dat_test$p2_bst),col="red")
+if (draw_figure==T) dev.off()
+
+if (draw_figure==T) png("./plots/sev/3-p3-reg.png")
+boxplot(dat_test$p3_bst ~ dat_test$Region, outline=F, xlab="region", ylab="p3")
+abline(h=mean(dat_test$p3_bst),col="red")
+if (draw_figure==T) dev.off()
+aggregate(dat_test$p3_bst,by=list(dat_test$Region),summary)
+
+if (draw_figure==T) png("./plots/sev/3-m2-reg.png")
+boxplot(dat_test$m2_bst ~ dat_test$Region, outline=F, xlab="region", ylab="mu2", ylim=m2_lim)
+abline(h=mean(dat_test$m2_bst),col="red")
+if (draw_figure==T) dev.off()
+
+if (draw_figure==T) png("./plots/sev/3-sev-reg.png")
+boxplot((dat_test$Sev) ~ dat_test$Region,outline=F, xlab="region", ylab="logged severity",ylim=m2_lim)
+abline(h=mean((dat_test$Sev)),col="red")
+if (draw_figure==T) dev.off()
+
+# area
+if (draw_figure==T) png("./plots/sev/3-p1-area.png")
+boxplot(dat_test$p1_bst ~ dat_test$AreaGLM, outline=F, xlab="area", ylab="p1",ylim=p1_lim)
+abline(h=mean(dat_test$p1_bst),col="red")
+if (draw_figure==T) dev.off()
+
+if (draw_figure==T) png("./plots/sev/3-p2-area.png")
+boxplot(dat_test$p2_bst ~ dat_test$AreaGLM, outline=F, xlab="area", ylab="p2",ylim=p2_lim)
+abline(h=mean(dat_test$p2_bst),col="red")
+if (draw_figure==T) dev.off()
+
+if (draw_figure==T) png("./plots/sev/3-p3-area.png")
+boxplot(dat_test$p3_bst ~ dat_test$AreaGLM, outline=F, xlab="area", ylab="p3")
+abline(h=mean(dat_test$p3_bst),col="red")
+if (draw_figure==T) dev.off()
+
+if (draw_figure==T) png("./plots/sev/3-m2-area.png")
+boxplot(dat_test$m2_bst ~ dat_test$AreaGLM, outline=F, xlab="area", ylab="mu2",ylim=m2_lim)
+abline(h=mean(dat_test$m2_bst),col="red")
+if (draw_figure==T) dev.off()
+
+if (draw_figure==T) png("./plots/sev/3-sev-area.png")
+boxplot((dat_test$Sev) ~ dat_test$AreaGLM,outline=F, xlab="area", ylab="logged severity",ylim=m2_lim)
+abline(h=mean((dat_test$Sev)),col="red")
+if (draw_figure==T) dev.off()
+
+# driver age
+
+if (draw_figure==T) png("./plots/sev/3-p1-drive.png")
+boxplot(dat_test$p1_bst ~ dat_test$DrivAgeGLM, outline=F, xlab="driver age", ylab="p1",ylim=p1_lim)
+abline(h=mean(dat_test$p1_bst),col="red")
+if (draw_figure==T) dev.off()
+
+if (draw_figure==T) png("./plots/sev/3-p2-drive.png")
+boxplot(dat_test$p2_bst ~ dat_test$DrivAgeGLM, outline=F, xlab="driver age", ylab="p2",ylim=p2_lim)
+abline(h=mean(dat_test$p2_bst),col="red")
+if (draw_figure==T) dev.off()
+
+if (draw_figure==T) png("./plots/sev/3-p3-drive.png")
+boxplot(dat_test$p3_bst ~ dat_test$DrivAgeGLM, outline=F, xlab="driver age", ylab="p3")
+abline(h=mean(dat_test$p3_bst),col="red")
+if (draw_figure==T) dev.off()
+
+if (draw_figure==T) png("./plots/sev/3-m2-drive.png")
+boxplot(dat_test$m2_bst ~ dat_test$DrivAgeGLM, outline=F, xlab="driver age", ylab="mu2",ylim=m2_lim)
+abline(h=mean(dat_test$m2_bst),col="red")
+if (draw_figure==T) dev.off()
+
+if (draw_figure==T) png("./plots/sev/3-sev-drive.png")
+boxplot((dat_test$Sev) ~ dat_test$DrivAgeGLM,outline=F, xlab="driver age", ylab=" severity",ylim=m2_lim)
+abline(h=mean((dat_test$Sev)),col="red")
+if (draw_figure==T) dev.off()
+
+# BM
+if (draw_figure==T) png("./plots/sev/3-p1-bm.png")
+dat_test$BM<-round(dat_test$BonusMalusGLM/10,0)*10
+boxplot(dat_test$p1_bst ~ dat_test$BM, outline=F, xlab="BM", ylab="p1",ylim=p1_lim)
+abline(h=mean(dat_test$p1_bst),col="red")
+if (draw_figure==T) dev.off()
+
+if (draw_figure==T) png("./plots/sev/3-p2-bm.png")
+boxplot(dat_test$p2_bst ~ dat_test$BM, outline=F, xlab="BM", ylab="p2",ylim=p2_lim)
+abline(h=mean(dat_test$p2_bst),col="red")
+if (draw_figure==T) dev.off()
+
+if (draw_figure==T) png("./plots/sev/3-p3-bm.png")
+boxplot(dat_test$p3_bst ~ dat_test$BM, outline=F, xlab="BM", ylab="p3")
+abline(h=mean(dat_test$p3_bst),col="red")
+if (draw_figure==T) dev.off()
+
+if (draw_figure==T) png("./plots/sev/3-m2-bm.png")
+boxplot(dat_test$m2_bst ~ dat_test$BM, outline=F, xlab="BM", ylab="mu2",ylim=m2_lim)
+abline(h=mean(dat_test$m2_bst),col="red")
+if (draw_figure==T) dev.off()
+
+if (draw_figure==T) png("./plots/sev/3-sev-bm.png")
+boxplot((dat_test$Sev) ~ dat_test$BM,outline=F, xlab="BM", ylab="severity",ylim=m2_lim)
+abline(h=mean((dat_test$Sev)),col="red")
+if (draw_figure==T) dev.off()
+
+# Vehicle power
+if (draw_figure==T) png("./plots/sev/3-p1-vehp.png")
+boxplot(dat_test$p1_bst ~ dat_test$VehPower, outline=F, xlab="vehicle power", ylab="p1",ylim=p1_lim)
+abline(h=mean(dat_test$p1_bst),col="red")
+if (draw_figure==T) dev.off()
+
+if (draw_figure==T) png("./plots/sev/3-p2-vehp.png")
+boxplot(dat_test$p2_bst ~ dat_test$VehPower, outline=F, xlab="vehicle power", ylab="p2",ylim=p2_lim)
+abline(h=mean(dat_test$p2_bst),col="red")
+if (draw_figure==T) dev.off()
+
+if (draw_figure==T) png("./plots/sev/3-p3-vehp.png")
+boxplot(dat_test$p3_bst ~ dat_test$VehPower, outline=F, xlab="vehicle power", ylab="p3")
+abline(h=mean(dat_test$p3_bst),col="red")
+if (draw_figure==T) dev.off()
+
+if (draw_figure==T) png("./plots/sev/3-m2-vehp.png")
+boxplot(dat_test$m2_bst ~ dat_test$VehPower, outline=F, xlab="vehicle power", ylab="mu2",ylim=m2_lim)
+abline(h=mean(dat_test$m2_bst),col="red")
+if (draw_figure==T) dev.off()
+
+if (draw_figure==T) png("./plots/sev/3-sev-vehp.png")
+boxplot((dat_test$Sev) ~ dat_test$VehPower,outline=F, xlab="vehicle power", ylab=" severity",ylim=m2_lim)
+abline(h=mean((dat_test$Sev)),col="red")
+if (draw_figure==T) dev.off()
+
+# Vehicle age
+if (draw_figure==T) png("./plots/sev/3-p1-veha.png")
+boxplot(dat_test$p1_bst ~ dat_test$VehAgeGLM, outline=F, xlab="vehicle age", ylab="p1",ylim=p1_lim)
+abline(h=mean(dat_test$p1_bst),col="red")
+if (draw_figure==T) dev.off()
+
+if (draw_figure==T) png("./plots/sev/3-p2-veha.png")
+boxplot(dat_test$p2_bst ~ dat_test$VehAgeGLM, outline=F, xlab="vehicle age", ylab="p2",ylim=p2_lim)
+abline(h=mean(dat_test$p2_bst),col="red")
+if (draw_figure==T) dev.off()
+
+if (draw_figure==T) png("./plots/sev/3-p3-veha.png")
+boxplot(dat_test$p3_bst ~ dat_test$VehAgeGLM, outline=F, xlab="vehicle age", ylab="p3")
+abline(h=mean(dat_test$p3_bst),col="red")
+if (draw_figure==T) dev.off()
+
+if (draw_figure==T) png("./plots/sev/3-m2-veha.png")
+boxplot(dat_test$m2_bst ~ dat_test$VehAgeGLM, outline=F, xlab="vehicle age", ylab="mu2",ylim=m2_lim)
+abline(h=mean(dat_test$m2_bst),col="red")
+if (draw_figure==T) dev.off()
+
+if (draw_figure==T) png("./plots/sev/3-sev-veha.png")
+boxplot((dat_test$Sev) ~ dat_test$VehAgeGLM, outline=F, xlab="vehicle age", ylab=" severity",ylim=m2_lim)
+abline(h=mean((dat_test$Sev)),col="red")
+if (draw_figure==T) dev.off()
+
+# Vehicle brand
+if (draw_figure==T) png("./plots/sev/3-p1-vehb.png")
+boxplot(dat_test$p1_bst ~ dat_test$VehBrand, outline=F, xlab="vehicle brand", ylab="p1",ylim=p1_lim)
+abline(h=mean(dat_test$p1_bst),col="red")
+if (draw_figure==T) dev.off()
+
+if (draw_figure==T) png("./plots/sev/3-p2-vehb.png")
+boxplot(dat_test$p2_bst ~ dat_test$VehBrand, outline=F, xlab="vehicle brand", ylab="p2",ylim=p2_lim)
+abline(h=mean(dat_test$p2_bst),col="red")
+if (draw_figure==T) dev.off()
+
+if (draw_figure==T) png("./plots/sev/3-p3-vehb.png")
+boxplot(dat_test$p3_bst ~ dat_test$VehBrand, outline=F, xlab="vehicle brand", ylab="p3")
+abline(h=mean(dat_test$p3_bst),col="red")
+if (draw_figure==T) dev.off()
+
+if (draw_figure==T) png("./plots/sev/3-m2-vehb.png")
+boxplot(dat_test$m2_bst ~ dat_test$VehBrand, outline=F, xlab="vehicle brand", ylab="mu2",ylim=m2_lim)
+abline(h=mean(dat_test$m2_bst),col="red")
+if (draw_figure==T) dev.off()
+
+if (draw_figure==T) png("./plots/sev/3-sev-vehb.png")
+boxplot((dat_test$Sev) ~ dat_test$VehBrand, outline=F, xlab="vehicle brand", ylab="severity",ylim=m2_lim)
+abline(h=mean((dat_test$Sev)),col="red")
+if (draw_figure==T) dev.off()
+```
+
+# Boosting all constant means
+
+## Initialization
+
+```{r}
+### z_hat 
+z_hat_train<-z_hat_null_learn[dat_learn$ind<4,]
+z_hat_valid<-z_hat_null_learn[dat_learn$ind==4,]
+
+### pareto threshold and tail index
+(theta<-M)
+(alpha<-alpha_null)
+```
+
+## Iterations 
+
+```{r}
+## hyperpremeters
+J <- 5 #iterations of EB algorithm (selected by the convergence)
+bst_loss_train <- NULL
+bst_loss_valid <-NULL
+bst_loss_test <- NULL
+Mstop<-500
+set.seed(1)
+for (i in 1:J) {
+  # Expectation of Z
+  if (i > 1){
+      z_hat_train = pf_mat_train / pf_sum_train
+      z_hat_valid = pf_mat_valid / pf_sum_valid
+      z_hat_test  = pf_mat_test/pf_sum_test}
+  
+  # Boosting for p (given Z)
+  bst3_p<- BST(X=dat_train[,variables_name], Y=z_hat_train, Pinit=NULL, Xval = dat_valid[,variables_name], Yval=z_hat_valid, Pvalinit = NULL, M=100, cp=0.001, maxdepth = 4, lr=0.2, trace = T, patience = 2,parallel = T)
+  p_hat_mat_train<-bst3_p$fitted[,c("BST_p1","BST_p2","BST_p3")]
+  p_hat_mat_valid<-bst3_p$valid[,c("BST_p1","BST_p2","BST_p3")]
+  p_hat_mat_test<-predict_BST(X=dat_test[,variables_name], bst3_p, Pinit=NULL, M_best = NULL, type="response")
+  
+  # MLE of shape1 and scale1 (given Z)
+  coef_v1<-gamma_mle(dat_train$Sev, z_hat_train[,1])
+  coef_v2<-gamma_mle(dat_train$Sev, z_hat_train[,2])
+  
+  # MLE of alpha
+  alpha <- alpha_wmle(y = dat_train$Sev,
+                      z = z_hat_train[, K],
+                      theta = theta)
+  
+  # Expectation of Z
+  f_mat_train <- matrix(NA, nrow = nrow(dat_train), ncol = K)
+  f_mat_valid <-matrix(NA, nrow = nrow(dat_valid), ncol = K)
+  f_mat_test <- matrix(NA, nrow = nrow(dat_test), ncol = K)
+  
+  f_mat_train[, 1] <-
+    dgamma(dat_train$Sev, shape = coef_v1$shape, scale = coef_v1$scale)
+  f_mat_valid[, 1] <-
+    dgamma(dat_valid$Sev, shape = coef_v1$shape, scale = coef_v1$scale)
+  f_mat_test[, 1] <-
+    dgamma(dat_test$Sev, shape = coef_v1$shape, scale = coef_v1$scale)
+
+  f_mat_train[, 2] <-
+    dgamma(dat_train$Sev, shape = coef_v2$shape, scale = coef_v2$scale)
+  f_mat_valid[, 2] <-
+    dgamma(dat_valid$Sev, shape = coef_v2$shape, scale = coef_v2$scale)
+  f_mat_test[, 2] <-
+    dgamma(dat_test$Sev, shape = coef_v2$shape, scale = coef_v2$scale)
+  
+  f_mat_train[, K] <- dpareto(y = dat_train$Sev,
+                        theta = theta,
+                        alpha = alpha)
+  f_mat_valid[, K] <- dpareto(y = dat_valid$Sev,
+                        theta = theta,
+                        alpha = alpha)
+  f_mat_test[, K] <- dpareto(y = dat_test$Sev,
+                             theta = theta,
+                             alpha = alpha)
+  
+  pf_mat_train<-f_mat_train*p_hat_mat_train
+  pf_sum_train <- apply(pf_mat_train, 1, sum)
+  
+  pf_mat_valid<-f_mat_valid*p_hat_mat_valid
+  pf_sum_valid <- apply(pf_mat_valid, 1, sum)
+  
+  pf_mat_test <- f_mat_test*p_hat_mat_test
+  pf_sum_test <- apply(pf_mat_test, 1, sum)
+  
+  bst_loss_train[i] <- mean(-log(pf_sum_train))
+  bst_loss_valid[i] <- mean(-log(pf_sum_valid))
+  bst_loss_test[i] <- mean(-log(pf_sum_test))
+  print(paste("iteration   train loss  validation loss   test loss"))
+  print(c(i, round(bst_loss_train[i],4),round(bst_loss_valid[i],4),round(bst_loss_test[i],4)))
+}
+
+if(draw_figure==T) png("./plots/sev/3_boosting_mix_trace.png")
+matplot(cbind(bst_loss_train,bst_loss_valid),type="l",col=c("red","blue"),ylim=ylim0,xlab="iterations of EB", ylab="neg L")
+legend("topright",c("train loss", "validation loss"),col=c("red","blue"),lty=c(1,2))
+abline(v=which.min(bst_loss_valid),lty=3,col="blue")
+if(draw_figure==T) dev.off()
+
+# average mixing probabilities
+apply(p_hat_mat_test,2,mean);p_hat
+
+# estimated constant parameter
+coef_v1;coef_v2;alpha
+
+(mix_loss<-bst_loss_test[J])
+bst_loss
+null_loss
+```
+
+## Trace plot of loss
+
+```{r}
+# trace plot of loss in the mixing probabilities
+matplot(1:length(bst3_p$Train_loss), cbind(bst3_p$Train_loss, bst3_p$Valid_loss),
+        type="l",xlab = "boosting iterations", ylab="loss", col=c("blue","red"), lty=1:2, lwd=1.5)
+legend("topright",c("training loss","validation loss"),col=c("blue","red"),lty=1:2,lwd=1.5)
+abline(v=which.min(bst3_p$Valid_loss),lty=2,col="red")
+```
+
+## Variable importance
+
+```{r}
+# variable importance in mixing probabilities
+vimp_mix<-array(0,dim=c(K=K,length(bst3_p$Tree_0),9))
+for (k in 1:K){
+  for (m in 1: length(bst3_p$Tree_0)){
+    VI<-bst3_p$Tree_0[[m]][[k]]$variable.importance
+    if (length(VI)>0){
+    for (i in 1:length(VI)){
+      for (v in 1:length(variables_name)){
+        if (names(VI)[i]==variables_name[v]){
+        vimp_mix[k,m,v]<-VI[i]
+      }
+    }
+    }
+  }
+}
+}
+
+vi_mix<-data.frame(p1=NA,p2=NA,p3=NA,total=NA,var_name=variables_name)
+
+for (k in 1:K){
+  vi_mix[,k]<-apply(vimp_mix[k,,],2,sum)
+  }
+vi_mix[,4]<-apply(vi_mix[,1:3],1,sum)
+vi_mix
+
+par(mfrow=c(2,2))
+for (k in 1:3){
+  barplot(vi_mix[,k], names.arg = var_short_name, ylab="relative importance",main=paste("relative importance of covariates in F",k,sep=""),ylim=range(vi_mix[,1:4]))
+  box()
+}
+
+barplot(vi_mix[,4], names.arg = var_short_name, ylab="relative importance",main="overall relative importance in mixing probabilities", ylim=range(vi_mix[,1:4]))
+box()
+
+if (draw_figure==T) {
+  vi_mix[,1:4]<-round(vi_mix[,1:4],2)
+  write.csv(vi_mix,"./plots/sev/3F_mix_importance.csv")
+}
+```
+
+## Prediction in the test data 
+
+```{r}
+dat_test$m1_mix<-coef_v1$mu
+dat_test$m2_mix<-coef_v2$mu
+dat_test$m3_mix<-alpha*M/(alpha-1)
+dat_test$p1_mix<-p_hat_mat_test[,1]
+dat_test$p2_mix<-p_hat_mat_test[,2]
+dat_test$p3_mix<-p_hat_mat_test[,3]
+dat_test$pred_class_mix<-apply(p_hat_mat_test,1,which.is.max)
+boxplot(p_hat_mat_test)
+summary(p_hat_mat_test)
+dat_test$pred_mean_mix<-
+  dat_test$p1_mix*dat_test$m1_mix+
+  dat_test$p2_mix*dat_test$m2_mix+
+  dat_test$p3_mix*dat_test$m3_mix
+
+cor(dat_test[,c("p1_bst","p2_bst","p3_bst","p1_mix","p2_mix","p3_mix")])
+
+(cor_pearson_mix<-cor(log(dat_test$pred_mean_mix),log(dat_test$Sev),method="pearson"))
+(cor_kendall_mix<-cor(log(dat_test$pred_mean_mix),log(dat_test$Sev),method="kendall"))
+(cor_spearman_mix<-cor(log(dat_test$pred_mean_mix),log(dat_test$Sev),method="spearman"))
+(mse_mix<-mean((log(dat_test$pred_mean_mix)-log(dat_test$Sev))^2))
+```
+
+# GLM one varying mean
+
+## Initialization
+
+```{r em}
+### z_hat_learn (from null model)
+z_hat_learn<-z_hat_null_learn
+
+### pareto threshold and tail index
+(theta<-M)
+(alpha<-alpha_null)
+```
+
+## Iterations
+
+```{r}
+## hyperpremeters
+J <- 15 #iterations of EM algorithm
+loss_learn <- NULL
+loss_test <- NULL
+Mstop<-20
+nu<-0.1
+set.seed(1)
+for (i in 1:J) {
+  # MLE of p (given Z)
+  glm_p<- multinom(z_hat_learn ~ VehPowerGLM  + VehAgeGLM + DrivAgeGLM + BonusMalusGLM + VehBrand + VehGas + AreaGLM + DensityGLM + Region, data=dat_learn, trace = F)
+  p_hat_mat_learn<-fitted(glm_p,type="probs")
+  p_hat_mat_test<-predict(glm_p,newdata = dat_test,type="probs")
+
+  # MLE of shape1 and scale1 (given Z)
+  coef_v<-gamma_mle(dat_learn$Sev, z_hat_learn[,1])
+  dat_learn$one_glm <- coef_v$mu
+  dat_test$one_glm<-coef_v$mu
+
+  glm.2<-glm(Sev ~ VehPowerGLM  + VehAgeGLM + DrivAgeGLM + BonusMalusGLM + VehBrand + VehGas + AreaGLM + DensityGLM + Region,
+      weights = z_hat_learn[, 2],
+      data = dat_learn,
+      family = Gamma(link="log")
+      )
+  dat_learn$two_glm <- fitted(glm.2, type = "response")
+  dat_test$two_glm<-predict(glm.2,newdata=dat_test,type="response")
+  logL_shape2 <- function(shape_mle) {
+    sum(z_hat_learn[, 2]) * shape_mle * log(shape_mle) -
+      sum(z_hat_learn[, 2] * log(dat_learn$two_glm)) * shape_mle -
+      sum(z_hat_learn[, 2]) * lgamma(shape_mle) +
+      (shape_mle - 1) * sum(z_hat_learn[, 2] * log(dat_learn$Sev)) -
+      shape_mle * sum(z_hat_learn[, 2] * dat_learn$Sev / dat_learn$two_glm)
+  }
+  shape2 <- optimise(logL_shape2,
+                     maximum = T,
+                     interval = c(0, 5000))$maximum
+  
+  # MLE of alpha
+  alpha <- alpha_wmle(y = dat_learn$Sev,
+                      z = z_hat_learn[, K],
+                      theta = theta)
+  
+  # expectation of Z
+  f_mat_learn <- matrix(NA, nrow = nrow(dat_learn), ncol = K)
+  f_mat_test <- matrix(NA, nrow = nrow(dat_test), ncol = K)
+  
+  f_mat_learn[, 1] <- dgamma(dat_learn$Sev,shape = coef_v$shape,scale = coef_v$scale)
+  f_mat_test[, 1] <- dgamma(dat_test$Sev,shape = coef_v$shape,scale = coef_v$scale)
+  f_mat_learn[, 2] <-dgamma(dat_learn$Sev, shape = shape2, scale = dat_learn$two_glm / shape2)
+  f_mat_test[, 2] <-dgamma(dat_test$Sev, shape = shape2, scale = dat_test$two_glm / shape2)
+  f_mat_learn[, 3] <- dpareto(y = dat_learn$Sev,theta = theta,alpha = alpha)
+  f_mat_test[, 3] <- dpareto(y = dat_test$Sev,theta = theta,alpha = alpha)
+  
+  pf_mat_learn<-f_mat_learn*p_hat_mat_learn
+  pf_sum_learn <- apply(pf_mat_learn, 1, sum)
+  z_hat_learn = pf_mat_learn / pf_sum_learn
+  
+  pf_mat_test <- f_mat_test*p_hat_mat_test
+  pf_sum_test <- apply(pf_mat_test, 1, sum)
+  z_hat_test = pf_mat_test / pf_sum_test
+  
+  loss_learn[i] <- mean(-log(pf_sum_learn))
+  loss_test[i] <- mean(-log(pf_sum_test))
+  print(c(i, round(loss_learn[i],4), round(loss_test[i],4)))
+}
+
+matplot(cbind(loss_learn,loss_test),type="l",col=c("red","blue"),lty=1)
+apply(p_hat_mat_test,2,mean);p_hat
+mean(dat_test$one_glm);coef_v;shape2
+
+(glm_loss<-loss_test[J])
+bst_loss
+null_loss
+```
+
+## Prediction in the test data 
+
+```{r}
+dat_test$m1_glm<-coef_v$mu
+dat_test$m2_glm<-dat_test$two_glm
+dat_test$m3_glm<-alpha*M/(alpha-1)
+dat_test$p1_glm<-p_hat_mat_test[,1]
+dat_test$p2_glm<-p_hat_mat_test[,2]
+dat_test$p3_glm<-p_hat_mat_test[,3]
+dat_test$pred_class_glm<-apply(p_hat_mat_test,1,which.is.max)
+boxplot(p_hat_mat_test)
+summary(p_hat_mat_test)
+dat_test$pred_mean_glm<-dat_test$p1_glm*dat_test$m1_glm+dat_test$p2_glm*dat_test$m2_glm+dat_test$p3_glm*dat_test$m3_glm
+
+(cor_pearson_glm<-cor(log(dat_test$pred_mean_glm),log(dat_test$Sev),method="pearson"))
+(cor_kendall_glm<-cor(log(dat_test$pred_mean_glm),log(dat_test$Sev),method="kendall"))
+(cor_spearman_glm<-cor(log(dat_test$pred_mean_glm),log(dat_test$Sev),method="spearman"))
+(mse_glm<-mean((log(dat_test$pred_mean_glm)-log(dat_test$Sev))^2))
+```
+
+# GLM all constant mean
+
+## Initialization
+
+```{r em}
+### z_hat_learn (from null model)
+z_hat_learn<-z_hat_null_learn
+
+### pareto threshold and tail index
+(theta<-M)
+(alpha<-alpha_null)
+```
+
+## Iterations
+
+```{r}
+## hyperpremeters
+J <- 15 #iterations of EM algorithm
+loss_learn <- NULL
+loss_test <- NULL
+Mstop<-20
+nu<-0.1
+set.seed(1)
+for (i in 1:J) {
+  # MLE of p (given Z)
+  glm_p<- multinom(z_hat_learn ~ VehPowerGLM  + VehAgeGLM + DrivAgeGLM + BonusMalusGLM + VehBrand + VehGas + AreaGLM + DensityGLM + Region, data=dat_learn, trace = F)
+  p_hat_mat_learn<-fitted(glm_p,type="probs")
+  p_hat_mat_test<-predict(glm_p,newdata = dat_test,type="probs")
+
+  # MLE of shape1 and scale1 (given Z)
+  coef_v<-gamma_mle(dat_learn$Sev, z_hat_learn[,1])
+  dat_learn$one_glm <- coef_v$mu
+  dat_test$one_glm<-coef_v$mu
+
+  glm.2<-glm(Sev ~ 1,
+      weights = z_hat_learn[, 2],
+      data = dat_learn,
+      family = Gamma(link="log")
+      )
+  dat_learn$two_glm <- fitted(glm.2, type = "response")
+  dat_test$two_glm<-predict(glm.2,newdata=dat_test,type="response")
+  logL_shape2 <- function(shape_mle) {
+    sum(z_hat_learn[, 2]) * shape_mle * log(shape_mle) -
+      sum(z_hat_learn[, 2] * log(dat_learn$two_glm)) * shape_mle -
+      sum(z_hat_learn[, 2]) * lgamma(shape_mle) +
+      (shape_mle - 1) * sum(z_hat_learn[, 2] * log(dat_learn$Sev)) -
+      shape_mle * sum(z_hat_learn[, 2] * dat_learn$Sev / dat_learn$two_glm)
+  }
+  shape2 <- optimise(logL_shape2,
+                     maximum = T,
+                     interval = c(0, 5000))$maximum
+  
+  # MLE of alpha
+  alpha <- alpha_wmle(y = dat_learn$Sev,
+                      z = z_hat_learn[, K],
+                      theta = theta)
+  
+  # expectation of Z
+  f_mat_learn <- matrix(NA, nrow = nrow(dat_learn), ncol = K)
+  f_mat_test <- matrix(NA, nrow = nrow(dat_test), ncol = K)
+  
+  f_mat_learn[, 1] <- dgamma(dat_learn$Sev,shape = coef_v$shape,scale = coef_v$scale)
+  f_mat_test[, 1] <- dgamma(dat_test$Sev,shape = coef_v$shape,scale = coef_v$scale)
+  f_mat_learn[, 2] <-dgamma(dat_learn$Sev, shape = shape2, scale = dat_learn$two_glm / shape2)
+  f_mat_test[, 2] <-dgamma(dat_test$Sev, shape = shape2, scale = dat_test$two_glm / shape2)
+  f_mat_learn[, 3] <- dpareto(y = dat_learn$Sev,theta = theta,alpha = alpha)
+  f_mat_test[, 3] <- dpareto(y = dat_test$Sev,theta = theta,alpha = alpha)
+  
+  pf_mat_learn<-f_mat_learn*p_hat_mat_learn
+  pf_sum_learn <- apply(pf_mat_learn, 1, sum)
+  z_hat_learn = pf_mat_learn / pf_sum_learn
+  
+  pf_mat_test <- f_mat_test*p_hat_mat_test
+  pf_sum_test <- apply(pf_mat_test, 1, sum)
+  z_hat_test = pf_mat_test / pf_sum_test
+  
+  loss_learn[i] <- mean(-log(pf_sum_learn))
+  loss_test[i] <- mean(-log(pf_sum_test))
+  print(c(i, round(loss_learn[i],4), round(loss_test[i],4)))
+}
+
+matplot(cbind(loss_learn,loss_test),type="l",col=c("red","blue"),lty=1)
+apply(p_hat_mat_test,2,mean);p_hat
+mean(dat_test$one_glm);coef_v;shape2
+
+(glm_mix_loss<-loss_test[J])
+glm_loss
+bst_loss
+null_loss
+```
+
+## Prediction in the test data 
+
+```{r}
+dat_test$m1_glm<-coef_v$mu
+dat_test$m2_glm<-dat_test$two_glm
+dat_test$m3_glm<-alpha*M/(alpha-1)
+dat_test$p1_glm<-p_hat_mat_test[,1]
+dat_test$p2_glm<-p_hat_mat_test[,2]
+dat_test$p3_glm<-p_hat_mat_test[,3]
+dat_test$pred_class_glm_mix<-apply(p_hat_mat_test,1,which.is.max)
+boxplot(p_hat_mat_test)
+summary(p_hat_mat_test)
+dat_test$pred_mean_glm_mix<-dat_test$p1_glm*dat_test$m1_glm+dat_test$p2_glm*dat_test$m2_glm+dat_test$p3_glm*dat_test$m3_glm
+
+(cor_pearson_glm_mix<-cor(log(dat_test$pred_mean_glm_mix),log(dat_test$Sev),method="pearson"))
+(cor_kendall_glm_mix<-cor(log(dat_test$pred_mean_glm_mix),log(dat_test$Sev),method="kendall"))
+(cor_spearman_glm_mix<-cor(log(dat_test$pred_mean_glm_mix),log(dat_test$Sev),method="spearman"))
+(mse_glm_mix<-mean((log(dat_test$pred_mean_glm_mix)-log(dat_test$Sev))^2))
+```
+
+# Single boosting
+
+```{r}
+param<-list(max_depth=4, eta =0.3, objective="reg:gamma")
+dtrain<-xgb.DMatrix(data=as.matrix(dat_train[,variables_name]), label = dat_train$Sev)
+dvalid<-xgb.DMatrix(data=as.matrix(dat_valid[,variables_name]),label=dat_valid$Sev)
+watchlist=list(train=dtrain, eval= dvalid)
+set.seed(1)
+boost.0 <-xgb.train(param, dtrain, nrounds=100,verbose = 1,watchlist,early_stopping_rounds = 5)
+dtest<-xgb.DMatrix(data=as.matrix(dat_test[,variables_name]))
+
+dat_train$pred_mean_bst0 <- predict(boost.0,newdata = dtrain, type = "response")
+dat_valid$pred_mean_bst0 <- predict(boost.0,newdata = dvalid, type = "response")
+dat_test$pred_mean_bst0 <-predict(boost.0, newdata = dtest, type = "response")
+logL_shape0 <- function(shape_mle) {
+  nrow(dat_train) * shape_mle * log(shape_mle) -
+    sum( log(dat_train$pred_mean_bst0)) * shape_mle -
+    nrow(dat_train) * lgamma(shape_mle) +
+    (shape_mle - 1) * sum( log(dat_train$Sev)) -
+    shape_mle * sum( dat_train$Sev / dat_train$pred_mean_bst0)
+}
+(shape0_bst <- optimise(logL_shape0,maximum = T, interval = c(0, 5000))$maximum)
+
+(cor_pearson_bst0<-cor(log(dat_test$pred_mean_bst0), log(dat_test$Sev),method="pearson"))
+(cor_kendall_bst0<-cor(log(dat_test$pred_mean_bst0), log(dat_test$Sev),method="kendall"))
+(cor_spearman_bst0<-cor(log(dat_test$pred_mean_bst0), log(dat_test$Sev),method="spearman"))
+(bst0_loss<- -mean(dgamma(dat_test$Sev, shape=shape0_bst, scale=dat_test$pred_mean_bst0/shape0_bst,log = T)))
+(mse_bst0<-mean((log(dat_test$pred_mean_bst0)-log(dat_test$Sev))^2))
+```
+
+# Single GLM
+```{r}
+glm0<-glm(Sev ~ VehPowerGLM  + VehAgeGLM + DrivAgeGLM + BonusMalusGLM + VehBrand + VehGas + AreaGLM  + Region, data=dat_learn, family = Gamma(link="log"))
+dat_test$pred_mean_glm0<-predict(glm0,newdata = dat_test,type="response")
+
+(cor_pearson_glm0<-cor(log(dat_test$pred_mean_glm0), log(dat_test$Sev),method="pearson"))
+(cor_kendall_glm0<-cor(log(dat_test$pred_mean_glm0), log(dat_test$Sev),method="kendall"))
+(cor_spearman_glm0<-cor(log(dat_test$pred_mean_glm0), log(dat_test$Sev),method="spearman"))
+
+(shape0_glm<-1/summary(glm0)$dispersion)
+(glm0_loss<- -mean(dgamma(dat_test$Sev, shape=shape0_glm, scale=dat_test$pred_mean_glm0/shape0_glm,log = T)))
+(mse_glm0<-mean((log(dat_test$pred_mean_glm0)-log(dat_test$Sev))^2))
+```
+
+# Results saved
+
+```{r}
+results2<-
+  data.frame(models=c("BST-3","BST-mix","MLR-3","MLR-mix","GBDT","GLM","Null"),
+             loss=round(c(bst_loss,mix_loss,glm_loss,glm_mix_loss,bst0_loss,glm0_loss,null_loss),4),
+             mse=round(c(mse_bst,mse_mix,mse_glm,mse_glm_mix,mse_bst0,mse_glm0,mse_null),4),
+             pearson=round(c(cor_pearson_bst,cor_pearson_mix,cor_pearson_glm,cor_pearson_glm_mix,cor_pearson_bst0,cor_pearson_glm0,NA),4),
+             kendall=round(c(cor_kendall_bst,cor_kendall_mix,cor_kendall_glm,cor_kendall_glm_mix,cor_kendall_bst0,cor_kendall_glm0,NA),4),
+             spearman=round(c(cor_spearman_bst,cor_spearman_mix,cor_spearman_glm,cor_spearman_glm_mix,cor_spearman_bst0,cor_spearman_glm0,NA),4)
+  )
+
+results2
+if (draw_figure==T) write.csv(results2,"./plots/sev/results2.csv")
+```
